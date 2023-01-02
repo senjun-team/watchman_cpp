@@ -4,4 +4,5 @@ project(watchman-cpp)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(src)
+add_subdirectory(third_party/libunifex)
 add_subdirectory(third_party/DockerClient)
