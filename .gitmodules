@@ -1,0 +1,3 @@
+[submodule "third_party/DockerClient"]
+	path = third_party/DockerClient
+	url = https://github.com/ShipilovDmitry/DockerClient
