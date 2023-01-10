@@ -4,7 +4,7 @@ project(watchman-cpp)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(fmt REQUIRED)
-find_package(Boost 1.69 REQUIRED COMPONENTS)
+find_package(Boost 1.66 REQUIRED)
 
 add_subdirectory(src)
 
