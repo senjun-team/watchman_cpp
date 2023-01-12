@@ -7,7 +7,7 @@ set(SOURCES
         server/server.hpp
         core/service.cpp
         core/service.hpp
-        )
+        server/parser.cpp server/parser.hpp)
 
 add_executable(
         ${PROJECT_NAME} ${SOURCES}
