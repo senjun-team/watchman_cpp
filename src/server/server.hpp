@@ -1,8 +1,8 @@
 #pragma once
 
 namespace watchman {
-    class Server {
-    public:
-        void start();
-    };
-}
+class Server {
+public:
+    void start();
+};
+}  // namespace watchman
