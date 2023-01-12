@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
+set(SOURCES
+        main.cpp
+        server/server.cpp
+        server/server.hpp
+        core/service.cpp
+        core/service.hpp
+        common/common.hpp
+)
+
 add_executable(
-        ${PROJECT_NAME} main.cpp
-        server/server.cpp server/server.hpp watchman/watchman.cpp watchman/watchman.hpp)
+        ${PROJECT_NAME} ${SOURCES}
+)
 
 target_link_libraries(${PROJECT_NAME} DockerClient unifex restinio::restinio)
