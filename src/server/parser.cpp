@@ -1,5 +1,6 @@
-//
-// Created by Dmitriy Shipilov on 12.01.2023.
-//
-
 #include "parser.hpp"
+
+namespace watchman {
+RunTaskParams Parser::parse(std::string const & body) { return {}; }
+
+}  // namespace watchman

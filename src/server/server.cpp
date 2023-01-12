@@ -4,7 +4,6 @@
 
 #include <docker.hpp>
 #include <restinio/all.hpp>
-#include <iostream>
 
 namespace watchman {
 void Server::start() {
@@ -15,15 +14,20 @@ void Server::start() {
             }
 
             auto const result = processRequest(req->body());
-            createResponse(result);
+            req->create_response()
+                .append_header(restinio::http_field::version,
+                               std::to_string(req->header().http_major()))
+                .append_header(restinio::http_field::content_type, "application/json")
+                .append_header(restinio::http_field::status_uri, std::to_string(result.first))
+                .set_body(result.second)
+                .done();
             return restinio::request_accepted();
         }));
 }
 
 std::pair<Status, Text> Server::processRequest(std::string const & body) {
-    std::cout << "Post accepted\n";
+    auto const params = m_parser.parse(body);
+    return m_service.runTask(params);
 }
-
-void Server::createResponse(std::pair<Status, Text> const & result) {}
 
 }  // namespace watchman
