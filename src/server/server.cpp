@@ -2,8 +2,7 @@
 
 #include "../common/common.hpp"
 
-#include <docker.h>
-
+#include <docker.hpp>
 #include <restinio/all.hpp>
 
 namespace watchman {
