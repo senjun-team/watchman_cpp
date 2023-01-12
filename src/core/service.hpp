@@ -5,7 +5,7 @@
 namespace watchman {
 class Service {
 public:
-    std::pair<Status, Text> runTask(RunTaskParams const & runTaskParams);
+    Response runTask(RunTaskParams const & runTaskParams);
 
 private:
 };

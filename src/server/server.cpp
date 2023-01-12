@@ -18,14 +18,15 @@ void Server::start() {
                 .append_header(restinio::http_field::version,
                                std::to_string(req->header().http_major()))
                 .append_header(restinio::http_field::content_type, "application/json")
-                .append_header(restinio::http_field::status_uri, std::to_string(result.first))
-                .set_body(result.second)
+                .append_header(restinio::http_field::status_uri,
+                               std::to_string(restinio::status_code::ok.raw_code()))
+                .set_body(result.output)
                 .done();
             return restinio::request_accepted();
         }));
 }
 
-std::pair<Status, Text> Server::processRequest(std::string const & body) {
+Response Server::processRequest(std::string const & body) {
     auto const params = m_parser.parse(body);
     return m_service.runTask(params);
 }

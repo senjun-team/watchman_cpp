@@ -2,7 +2,7 @@
 
 namespace watchman {
 
-std::pair<Status, Text> watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
-    return {200, "success"};
+Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
+    return {0, 0, "success"};
 }
 }  // namespace watchman

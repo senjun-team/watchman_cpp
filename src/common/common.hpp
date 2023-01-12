@@ -4,12 +4,17 @@
 
 namespace watchman {
 
-using Status = int32_t;
-using Text = std::string;
+using ErrorCode = int32_t;
 
 struct RunTaskParams {
     std::string containerType;
     std::string sourceTest;
     std::string sourceRun;
+};
+
+struct Response {
+    ErrorCode code;
+    ErrorCode testErrorCode;
+    std::string output;
 };
 }  // namespace watchman
