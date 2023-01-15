@@ -7,27 +7,6 @@ UseTab: Never
 
 
 ---
-Language: ObjC
-AccessModifierOffset: -4
-AllowShortBlocksOnASingleLine: Never
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: InlineOnly
-AllowShortIfStatementsOnASingleLine: Never
-AllowShortLoopsOnASingleLine: false
-BreakConstructorInitializersBeforeComma: true
-ConstructorInitializerIndentWidth: 2
-DerivePointerAlignment: false
-IndentCaseLabels: false
-NamespaceIndentation: None
-PointerAlignment: Middle
-SortIncludes: true
-ObjCBlockIndentWidth: 2
-SpacesInContainerLiterals: false
-ObjCSpaceAfterProperty: false
-ObjCSpaceBeforeProtocolList: false
-Standard: Auto
-
----
 Language: Cpp
 AccessModifierOffset: -4
 AllowShortBlocksOnASingleLine: Never
@@ -67,7 +46,6 @@ BraceWrapping:
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 FixNamespaceComments: true
 DerivePointerAlignment: false
-
 IndentCaseBlocks: false
 IndentCaseLabels: false
 IndentPPDirectives: AfterHash
@@ -98,23 +76,19 @@ SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
 ReflowComments: true
 Cpp11BracedListStyle: true
-Standard: c++17
+Standard: c++20
 
 SortIncludes: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '.*gmock.*|.*gtest.*'
-    Priority:        8
-  - Regex:           '^<.*\.h>'
-    Priority:        20
-  - Regex:           '^(<boost)'
-    Priority:        50
-  - Regex:           '^<.*'
-    Priority:        75
-  - Regex:           '.*'
-    Priority:        10
+  - Regex: '.*gmock.*|.*gtest.*'
+    Priority: 8
+  - Regex: '^<.*\.h>'
+    Priority: 20
+  - Regex: '^(<boost)'
+    Priority: 50
+  - Regex: '^<.*'
+    Priority: 75
+  - Regex: '.*'
+    Priority: 10
 IncludeIsMainRegex: '$'
-
----
-Language: Java
-BreakAfterJavaFieldAnnotations: true
