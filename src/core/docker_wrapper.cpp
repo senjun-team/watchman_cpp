@@ -15,12 +15,16 @@ DockerWrapper::Image DockerWrapper::getImage(DockerWrapper::ContainerId const & 
     return {};
 }
 
-void DockerWrapper::killContainer(const DockerWrapper::ContainerId & id) const {}
+void DockerWrapper::killContainer(DockerWrapper::ContainerId const & id) const {}
 
-void DockerWrapper::removeContainer(const DockerWrapper::ContainerId & id) const {}
+void DockerWrapper::removeContainer(DockerWrapper::ContainerId const & id) const {}
 
 DockerWrapper::ContainerId DockerWrapper::run(DockerWrapper::RunParams && params) const {
     return {};
 }
+
+DockerWrapper::ExecResult DockerWrapper::exec(ExecParams && params) const { return {}; }
+
+void DockerWrapper::put_archive(PutArchiveParams && params) const {}
 
 }  // namespace watchman
