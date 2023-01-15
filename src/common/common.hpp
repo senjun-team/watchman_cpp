@@ -13,8 +13,8 @@ struct RunTaskParams {
 };
 
 struct Response {
-    ErrorCode code;
-    ErrorCode testErrorCode;
+    ErrorCode code{0};
+    ErrorCode testErrorCode{0};
     std::string output;
 };
 }  // namespace watchman
