@@ -1,5 +1,5 @@
 #pragma once
-#include "docker.hpp"
+#include <docker.hpp>
 
 #include <optional>
 #include <string>
@@ -18,7 +18,7 @@ public:
     struct RunParams {
         Image const image;
         std::optional<bool> const tty;
-        std::optional<size_t> const memoryLimit;
+        std::optional<size_t> const memoryLimit; // in bytes
     };
     ContainerId run(RunParams && params) const;
 
@@ -29,8 +29,8 @@ public:
 
     struct ExecParams {
         std::string const command;
-        std::optional<bool> detach;
-        std::optional<bool> tty;
+        std::optional<bool> const detach;
+        std::optional<bool> const tty;
     };
     ExecResult exec(ExecParams && params) const;
 
