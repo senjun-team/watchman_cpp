@@ -37,16 +37,39 @@ public:
     DockerWrapper(DockerWrapper const &) = delete;
     DockerWrapper & operator=(DockerWrapper const &) = delete;
 
-    std::string run(DockerRunParams && params) const;
+    std::string run(DockerRunParams && params);
     DockerExecResult exec(DockerExecParams && params) const;
     std::vector<std::string> getAllContainers() const;
     bool isRunning(std::string const & id) const;
     std::string getImage(std::string const & id) const;
-    void killContainer(std::string const & id) const;
-    void removeContainer(std::string const & id) const;
+    bool killContainer(std::string const & id);
+    bool removeContainer(std::string const & id);
     void putArchive(DockerPutArchiveParams && params) const;
 
 private:
     Docker m_docker;
+    rapidjson::StringBuffer m_stringBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> m_writer;
+
+    struct JsonHelperInitializer {
+        rapidjson::StringBuffer & stringBuffer;
+        rapidjson::Writer<rapidjson::StringBuffer> & writer;
+    };
+
+    JsonHelperInitializer makeInitializer();
+
+    class JsonHelper {
+    public:
+        JsonHelper(JsonHelperInitializer const & initializer);
+        ~JsonHelper();
+
+        std::string getRunRequest(DockerRunParams && params) &&;
+
+    private:
+        rapidjson::StringBuffer & m_stringBuffer;
+        rapidjson::Writer<rapidjson::StringBuffer> & m_writer;
+    };
+
+    JsonHelper makeJsonHelper();
 };
 }  // namespace watchman
