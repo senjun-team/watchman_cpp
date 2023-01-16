@@ -47,7 +47,7 @@ bool DockerWrapper::removeContainer(std::string const & id) {
 
 std::string DockerWrapper::run(DockerRunParams && params) {
     std::string const request = makeJsonHelper().getRunRequest(std::move(params));
-    rapidjson::Document document;
+    JSON_DOCUMENT document;
     if (document.Parse(request).HasParseError()) {
         // log
         return {};
@@ -61,9 +61,29 @@ std::string DockerWrapper::run(DockerRunParams && params) {
     return response["data"].GetObject()["Id"].GetString();
 }
 
-DockerExecResult DockerWrapper::exec(DockerExecParams && params) const { return {}; }
-
 void DockerWrapper::putArchive(DockerPutArchiveParams && params) const {}
+
+DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
+    std::string execRequest = makeJsonHelper().getExecParams(std::move(params.command));
+    std::string execStartRequest = makeJsonHelper().getExecStartParams();
+
+    JSON_DOCUMENT execParams;
+    if (execParams.Parse(execRequest).HasParseError()) {
+        return {.exitCode = -1, .output = "Parse error 1"};
+    }
+
+    JSON_DOCUMENT execStartParams;
+    if (execStartParams.Parse(execStartRequest).HasParseError()) {
+        return {.exitCode = -1, .output = "Parse error 2"};
+    }
+
+    auto result = m_docker.exec(execParams, execStartParams, params.containerId);
+    if (!result.HasMember("success") || !result["success"].GetBool() || !result.HasMember("data")) {
+        return {.exitCode = -1, .output = "docker exec error"};
+    }
+
+    return {.exitCode = 0, .output = jsonToString(result["data"])};
+}
 
 DockerWrapper::JsonHelperInitializer DockerWrapper::makeInitializer() {
     return {m_stringBuffer, m_writer};
@@ -86,10 +106,8 @@ std::string DockerWrapper::JsonHelper::getRunRequest(DockerRunParams && params) 
     m_writer.Key("Image");
     m_writer.String(params.image);
 
-    if (params.tty) {
-        m_writer.Key("Tty");
-        m_writer.Bool(params.tty.value());
-    }
+    m_writer.Key("Tty");
+    m_writer.Bool(true);
 
     if (params.memoryLimit) {
         m_writer.Key("HostConfig");
@@ -102,5 +120,33 @@ std::string DockerWrapper::JsonHelper::getRunRequest(DockerRunParams && params) 
     m_writer.EndObject();
 
     return m_stringBuffer.GetString();
+}
+
+std::string DockerWrapper::JsonHelper::getExecParams(std::vector<std::string> && command) && {
+    m_writer.Key("AttachStderr");
+    m_writer.Bool(true);
+
+    m_writer.Key("AttachStdout");
+    m_writer.Bool(true);
+
+    m_writer.Key("Detach");
+    m_writer.Bool(false);
+
+    m_writer.Key("Tty");
+    m_writer.Bool(true);
+
+    m_writer.Key("Cmd");
+    m_writer.StartArray();
+    for (size_t index = 0; index < command.size(); ++index) {
+        m_writer.String(std::move(command[index]));
+    }
+    m_writer.EndArray();
+    m_writer.EndObject();
+
+    return m_stringBuffer.GetString();
+}
+std::string DockerWrapper::JsonHelper::getExecStartParams() && {
+    // TODO may be should improve
+    return R"({"Detach": false, "Tty": false})";
 }
 }  // namespace watchman

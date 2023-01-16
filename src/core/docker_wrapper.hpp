@@ -18,9 +18,8 @@ struct DockerExecResult {
 };
 
 struct DockerExecParams {
-    std::string command;
-    std::optional<bool> detach;
-    std::optional<bool> tty;
+    std::vector<std::string> command;
+    std::string containerId;
 };
 
 struct DockerPutArchiveParams {
@@ -38,7 +37,7 @@ public:
     DockerWrapper & operator=(DockerWrapper const &) = delete;
 
     std::string run(DockerRunParams && params);
-    DockerExecResult exec(DockerExecParams && params) const;
+    DockerExecResult exec(DockerExecParams && params);
     std::vector<std::string> getAllContainers() const;
     bool isRunning(std::string const & id) const;
     std::string getImage(std::string const & id) const;
@@ -64,6 +63,8 @@ private:
         ~JsonHelper();
 
         std::string getRunRequest(DockerRunParams && params) &&;
+        std::string getExecParams(std::vector<std::string> && command) &&;
+        std::string getExecStartParams() &&;
 
     private:
         rapidjson::StringBuffer & m_stringBuffer;
