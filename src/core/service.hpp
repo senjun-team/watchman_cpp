@@ -8,38 +8,42 @@
 #include <vector>
 
 namespace watchman {
+namespace detail {
+
+struct Container {
+    enum class Type { Python, Rust };
+
+    std::string const id;
+    Type const type;
+    bool isReserved{false};
+};
+
+class ContainerController {
+public:
+    explicit ContainerController(std::string const & host);
+
+private:
+    std::unordered_map<Container::Type, std::vector<Container>> m_containers;
+    std::unordered_map<Container::Type, std::string> m_containerTypeToImage;
+    std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
+
+    std::mutex m_mutex;
+    DockerWrapper m_docker;
+
+    void readConfig();
+};
+}  // namespace detail
+
 class Service {
 public:
-    Service();
-    explicit Service(std::string const & host);
+    explicit Service(std::string const & host = kDefaultHost);
+    Service(Service const &) = delete;
+    Service & operator=(Service const &) = delete;
+    Service const & operator=(Service const &) const = delete;
 
     Response runTask(RunTaskParams const & runTaskParams);
 
 private:
-    class ContainerController {
-    public:
-        ContainerController();
-        explicit ContainerController(std::string const & host);
-
-    private:
-        struct Container {
-            enum class Type { Python, Rust };
-
-            std::string const id;
-            Type const type;
-            bool isReserved{false};
-        };
-
-        std::unordered_map<Container::Type, std::vector<Container>> m_containers;
-        std::unordered_map<Container::Type, std::string> m_containerTypeToImage;
-        std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
-
-        std::mutex m_mutex;
-        DockerWrapper m_docker;
-
-        void readConfig();
-    };
-
-    ContainerController m_containerController;
+    detail::ContainerController m_containerController;
 };
 }  // namespace watchman
