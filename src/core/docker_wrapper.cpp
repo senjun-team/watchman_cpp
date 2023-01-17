@@ -17,10 +17,10 @@ void DockerWrapper::killContainer(std::string const & id) const {}
 
 void DockerWrapper::removeContainer(std::string const & id) const {}
 
-std::string DockerWrapper::run(DockerWrapper::RunParams && params) const { return {}; }
+std::string DockerWrapper::run(DockerRunParams && params) const { return {}; }
 
-DockerWrapper::ExecResult DockerWrapper::exec(ExecParams && params) const { return {}; }
+DockerExecResult DockerWrapper::exec(DockerExecParams && params) const { return {}; }
 
-void DockerWrapper::put_archive(PutArchiveParams && params) const {}
+void DockerWrapper::putArchive(DockerPutArchiveParams && params) const {}
 
 }  // namespace watchman
