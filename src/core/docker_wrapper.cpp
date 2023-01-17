@@ -7,21 +7,17 @@ DockerWrapper::DockerWrapper() {}
 DockerWrapper::DockerWrapper(std::string const & host)
     : m_docker(host) {}
 
-std::vector<DockerWrapper::ContainerId> DockerWrapper::getAllContainers() const { return {}; }
+std::vector<std::string> DockerWrapper::getAllContainers() const { return {}; }
 
-bool DockerWrapper::isRunning(DockerWrapper::ContainerId const & id) const { return false; }
+bool DockerWrapper::isRunning(std::string const & id) const { return false; }
 
-DockerWrapper::Image DockerWrapper::getImage(DockerWrapper::ContainerId const & id) const {
-    return {};
-}
+std::string DockerWrapper::getImage(std::string const & id) const { return {}; }
 
-void DockerWrapper::killContainer(DockerWrapper::ContainerId const & id) const {}
+void DockerWrapper::killContainer(std::string const & id) const {}
 
-void DockerWrapper::removeContainer(DockerWrapper::ContainerId const & id) const {}
+void DockerWrapper::removeContainer(std::string const & id) const {}
 
-DockerWrapper::ContainerId DockerWrapper::run(DockerWrapper::RunParams && params) const {
-    return {};
-}
+std::string DockerWrapper::run(DockerWrapper::RunParams && params) const { return {}; }
 
 DockerWrapper::ExecResult DockerWrapper::exec(ExecParams && params) const { return {}; }
 
