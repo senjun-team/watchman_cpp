@@ -7,9 +7,9 @@
 namespace watchman {
 
 struct DockerRunParams {
-    std::string const image;
-    std::optional<bool> const tty;
-    std::optional<size_t> const memoryLimit;  // in bytes
+    std::string image;
+    std::optional<bool> tty;
+    std::optional<size_t> memoryLimit;  // in bytes
 };
 
 struct DockerExecResult {
@@ -18,15 +18,15 @@ struct DockerExecResult {
 };
 
 struct DockerExecParams {
-    std::string const command;
-    std::optional<bool> const detach;
-    std::optional<bool> const tty;
+    std::string command;
+    std::optional<bool> detach;
+    std::optional<bool> tty;
 };
 
 struct DockerPutArchiveParams {
-    std::string const containerId;
-    std::string const pathInContainer;
-    std::string const pathToArchive;
+    std::string containerId;
+    std::string pathInContainer;
+    std::string pathToArchive;
 };
 
 class DockerWrapper {
@@ -36,7 +36,6 @@ public:
 
     DockerWrapper(DockerWrapper const &) = delete;
     DockerWrapper & operator=(DockerWrapper const &) = delete;
-    DockerWrapper const & operator=(DockerWrapper const &) const = delete;
 
     std::string run(DockerRunParams && params) const;
     DockerExecResult exec(DockerExecParams && params) const;
