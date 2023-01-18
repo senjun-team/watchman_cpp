@@ -13,8 +13,8 @@ namespace detail {
 struct Container {
     enum class Type { Python, Rust };
 
-    std::string const id;
-    Type const type;
+    std::string id;
+    Type type;
     bool isReserved{false};
 };
 
@@ -39,7 +39,6 @@ public:
     explicit Service(std::string const & host = kDefaultHost);
     Service(Service const &) = delete;
     Service & operator=(Service const &) = delete;
-    Service const & operator=(Service const &) const = delete;
 
     Response runTask(RunTaskParams const & runTaskParams);
 
