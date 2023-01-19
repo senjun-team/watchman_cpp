@@ -40,3 +40,13 @@ TEST(DockerWrapper, list_of_containers) {
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
 }
+
+TEST(DockerWrapper, is_running) {
+    DockerWrapper dockerWrapper;
+    DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
+    std::string const id = dockerWrapper.run(std::move(params));
+    bool const isRunning = dockerWrapper.isRunning(id);
+    ASSERT_TRUE(isRunning);
+    ASSERT_TRUE(dockerWrapper.killContainer(id));
+    ASSERT_TRUE(dockerWrapper.removeContainer(id));
+}

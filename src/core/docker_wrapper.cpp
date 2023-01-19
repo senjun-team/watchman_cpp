@@ -30,7 +30,17 @@ std::vector<Container> DockerWrapper::getAllContainers() {
     return containers;
 }
 
-bool DockerWrapper::isRunning(std::string const & id) const { return false; }
+bool DockerWrapper::isRunning(std::string const & id) {
+    auto const response = m_docker.inspect_container(id);
+    auto const & dataValue = response["data"];
+    if (!response["success"].GetBool() || !dataValue.IsObject()
+        || !dataValue.GetObject().HasMember("State") || !dataValue.GetObject()["State"].IsObject()
+        || !dataValue.GetObject()["State"].GetObject().HasMember("Running")) {
+        return false;
+    }
+
+    return dataValue.GetObject()["State"].GetObject()["Running"].GetBool();
+}
 
 std::string DockerWrapper::getImage(std::string const & id) const { return {}; }
 
