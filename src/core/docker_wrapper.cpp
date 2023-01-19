@@ -6,7 +6,29 @@ DockerWrapper::DockerWrapper(std::string const & host)
     : m_docker(host)
     , m_writer(m_stringBuffer) {}
 
-std::vector<std::string> DockerWrapper::getAllContainers() const { return {}; }
+std::vector<Container> DockerWrapper::getAllContainers() {
+    auto const response = m_docker.list_containers(true);
+    auto const & dataValue = response["data"];
+    if (!response["success"].GetBool() || !dataValue.IsArray()) {
+        return {};
+    }
+
+    auto const rawContainers = dataValue.GetArray();
+    size_t const size = rawContainers.Size();
+
+    std::vector<Container> containers;
+    containers.reserve(size);
+    for (size_t index = 0; index < size; ++index) {
+        if (!rawContainers[index].HasMember("Id") || !rawContainers[index].HasMember("Image")) {
+            continue;
+        }
+
+        containers.push_back(
+            {rawContainers[index]["Id"].GetString(), rawContainers[index]["Image"].GetString()});
+    }
+
+    return containers;
+}
 
 bool DockerWrapper::isRunning(std::string const & id) const { return false; }
 

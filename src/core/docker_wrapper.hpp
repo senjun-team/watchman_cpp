@@ -28,6 +28,11 @@ struct DockerPutArchiveParams {
     std::string pathToArchive;
 };
 
+struct Container {
+    std::string id;
+    std::string image;
+};
+
 namespace detail {
 
 struct JsonHelperInitializer {
@@ -60,7 +65,7 @@ public:
 
     std::string run(DockerRunParams && params);
     DockerExecResult exec(DockerExecParams && params);
-    std::vector<std::string> getAllContainers() const;
+    std::vector<Container> getAllContainers();
     bool isRunning(std::string const & id) const;
     std::string getImage(std::string const & id) const;
     bool killContainer(std::string const & id);
