@@ -42,7 +42,18 @@ bool DockerWrapper::isRunning(std::string const & id) {
     return dataValue.GetObject()["State"].GetObject()["Running"].GetBool();
 }
 
-std::string DockerWrapper::getImage(std::string const & id) const { return {}; }
+std::string DockerWrapper::getImage(std::string const & id) {
+    auto const response = m_docker.inspect_container(id);
+    auto const & dataValue = response["data"];
+    if (!response["success"].GetBool() || !dataValue.IsObject()
+        || !dataValue.GetObject().HasMember("Name")
+        || !dataValue.GetObject()["Config"].IsObject()
+        || !dataValue.GetObject()["Config"].GetObject().HasMember("Image")) {
+        return {};
+    }
+
+    return dataValue.GetObject()["Config"].GetObject()["Image"].GetString();
+}
 
 bool DockerWrapper::killContainer(std::string const & id) {
     if (id.empty()) {

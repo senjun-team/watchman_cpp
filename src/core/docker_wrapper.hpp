@@ -67,7 +67,7 @@ public:
     DockerExecResult exec(DockerExecParams && params);
     std::vector<Container> getAllContainers();
     bool isRunning(std::string const & id);
-    std::string getImage(std::string const & id) const;
+    std::string getImage(std::string const & id);
     bool killContainer(std::string const & id);
     bool removeContainer(std::string const & id);
     void putArchive(DockerPutArchiveParams && params) const;
