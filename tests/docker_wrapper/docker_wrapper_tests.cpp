@@ -66,10 +66,11 @@ TEST(DockerWrapper, put_archive) {
     DockerWrapper dockerWrapper;
     DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
-    makeTar("");
+    std::string const pathInContainer = "/home/code_runner";
+    std::string pythonTar = std::string{TEST_DATA_DIR} + "example.tgz";
 
-    std::string const image = dockerWrapper.getImage(id);
-    ASSERT_EQ(image, kPythonImage);
+    bool const success = dockerWrapper.putArchive({id, pathInContainer, pythonTar});
+    ASSERT_TRUE(success);
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
 }

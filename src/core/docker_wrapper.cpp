@@ -56,13 +56,11 @@ std::string DockerWrapper::getImage(std::string const & id) {
 
 bool DockerWrapper::killContainer(std::string const & id) {
     if (id.empty()) {
-        // log
         return false;
     }
 
     auto const responseKill = m_docker.kill_container(id);
     if (!responseKill["success"].GetBool()) {
-        // log
         return false;
     }
 
@@ -71,13 +69,11 @@ bool DockerWrapper::killContainer(std::string const & id) {
 
 bool DockerWrapper::removeContainer(std::string const & id) {
     if (id.empty()) {
-        // log
         return false;
     }
 
     auto const responseKill = m_docker.delete_container(id);
     if (!responseKill["success"].GetBool()) {
-        // log
         return false;
     }
 
@@ -88,12 +84,10 @@ std::string DockerWrapper::run(DockerRunParams && params) {
     std::string const request = makeJsonHelper().getRunRequest(std::move(params));
     JSON_DOCUMENT document;
     if (document.Parse(request).HasParseError()) {
-        // log
         return {};
     }
     auto const response = m_docker.run_container(document);
     if (!response["success"].GetBool() || !response["data"].GetObject().HasMember("Id")) {
-        // log
         return {};
     }
 
@@ -102,7 +96,7 @@ std::string DockerWrapper::run(DockerRunParams && params) {
 
 bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
     auto const result =
-        m_docker.put_archive(params.containerId, params.pathInContainer, params.pathInContainer);
+        m_docker.put_archive(params.containerId, params.pathInContainer, params.pathToArchive);
     return result["success"].GetBool();
 }
 
