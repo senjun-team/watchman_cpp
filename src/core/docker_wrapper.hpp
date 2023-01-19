@@ -53,8 +53,7 @@ private:
 
 class DockerWrapper {
 public:
-    DockerWrapper();
-    explicit DockerWrapper(std::string const & host);
+    explicit DockerWrapper(std::string const & host = kDefaultHost);
 
     DockerWrapper(DockerWrapper const &) = delete;
     DockerWrapper & operator=(DockerWrapper const &) = delete;

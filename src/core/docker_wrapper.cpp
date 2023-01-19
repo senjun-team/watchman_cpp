@@ -2,9 +2,6 @@
 
 namespace watchman {
 
-DockerWrapper::DockerWrapper()
-    : m_writer(m_stringBuffer) {}
-
 DockerWrapper::DockerWrapper(std::string const & host)
     : m_docker(host)
     , m_writer(m_stringBuffer) {}
