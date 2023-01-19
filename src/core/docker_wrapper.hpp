@@ -70,7 +70,7 @@ public:
     std::string getImage(std::string const & id);
     bool killContainer(std::string const & id);
     bool removeContainer(std::string const & id);
-    void putArchive(DockerPutArchiveParams && params) const;
+    bool putArchive(DockerPutArchiveParams && params);
 
 private:
     Docker m_docker;

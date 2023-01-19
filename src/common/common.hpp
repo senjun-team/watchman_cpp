@@ -17,4 +17,6 @@ struct Response {
     ErrorCode testErrorCode{0};
     std::string output;
 };
+
+void makeTar(std::string const & pathToFile);
 }  // namespace watchman

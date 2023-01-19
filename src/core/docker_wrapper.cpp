@@ -46,8 +46,7 @@ std::string DockerWrapper::getImage(std::string const & id) {
     auto const response = m_docker.inspect_container(id);
     auto const & dataValue = response["data"];
     if (!response["success"].GetBool() || !dataValue.IsObject()
-        || !dataValue.GetObject().HasMember("Name")
-        || !dataValue.GetObject()["Config"].IsObject()
+        || !dataValue.GetObject().HasMember("Config") || !dataValue.GetObject()["Config"].IsObject()
         || !dataValue.GetObject()["Config"].GetObject().HasMember("Image")) {
         return {};
     }
@@ -101,7 +100,11 @@ std::string DockerWrapper::run(DockerRunParams && params) {
     return response["data"].GetObject()["Id"].GetString();
 }
 
-void DockerWrapper::putArchive(DockerPutArchiveParams && params) const {}
+bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
+    auto const result =
+        m_docker.put_archive(params.containerId, params.pathInContainer, params.pathInContainer);
+    return result["success"].GetBool();
+}
 
 DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
     std::string const execRequest = makeJsonHelper().getExecParams(std::move(params.command));

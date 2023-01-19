@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "common/common.hpp"
 #include "core/docker_wrapper.hpp"
 
 using namespace watchman;
@@ -55,6 +56,18 @@ TEST(DockerWrapper, get_image) {
     DockerWrapper dockerWrapper;
     DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
+    std::string const image = dockerWrapper.getImage(id);
+    ASSERT_EQ(image, kPythonImage);
+    ASSERT_TRUE(dockerWrapper.killContainer(id));
+    ASSERT_TRUE(dockerWrapper.removeContainer(id));
+}
+
+TEST(DockerWrapper, put_archive) {
+    DockerWrapper dockerWrapper;
+    DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
+    std::string const id = dockerWrapper.run(std::move(params));
+    makeTar("");
+
     std::string const image = dockerWrapper.getImage(id);
     ASSERT_EQ(image, kPythonImage);
     ASSERT_TRUE(dockerWrapper.killContainer(id));
