@@ -74,3 +74,23 @@ TEST(DockerWrapper, put_archive) {
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
 }
+
+TEST(DockerWrapper, run_user_code) {
+    DockerWrapper dockerWrapper;
+    DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
+    std::string const id = dockerWrapper.run(std::move(params));
+    std::string const pathInContainer = "/home/code_runner";
+    std::string pythonTar = std::string{TEST_DATA_DIR} + "example.tgz";
+
+    bool const success = dockerWrapper.putArchive({id, pathInContainer, pythonTar});
+    ASSERT_TRUE(success);
+
+    std::string const reference = "42";
+    std::vector<std::string> const args{"sh", "run.sh", "example.py"};
+
+    auto result = dockerWrapper.exec({args, id});
+    ASSERT_TRUE(result.exitCode == 0);
+    ASSERT_EQ(result.output, reference);
+    ASSERT_TRUE(dockerWrapper.killContainer(id));
+    ASSERT_TRUE(dockerWrapper.removeContainer(id));
+}
