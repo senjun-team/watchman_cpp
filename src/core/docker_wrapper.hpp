@@ -28,6 +28,29 @@ struct DockerPutArchiveParams {
     std::string pathToArchive;
 };
 
+namespace detail {
+
+struct JsonHelperInitializer {
+    rapidjson::StringBuffer & stringBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> & writer;
+};
+
+class JsonHelper {
+public:
+    JsonHelper(JsonHelperInitializer const & initializer);
+    ~JsonHelper();
+
+    std::string getRunRequest(DockerRunParams && params) &&;
+    std::string getExecParams(std::vector<std::string> && command) &&;
+    std::string getExecStartParams() &&;
+
+private:
+    rapidjson::StringBuffer & m_stringBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> & m_writer;
+};
+
+}  // namespace detail
+
 class DockerWrapper {
 public:
     DockerWrapper();
@@ -50,27 +73,7 @@ private:
     rapidjson::StringBuffer m_stringBuffer;
     rapidjson::Writer<rapidjson::StringBuffer> m_writer;
 
-    struct JsonHelperInitializer {
-        rapidjson::StringBuffer & stringBuffer;
-        rapidjson::Writer<rapidjson::StringBuffer> & writer;
-    };
-
-    JsonHelperInitializer makeInitializer();
-
-    class JsonHelper {
-    public:
-        JsonHelper(JsonHelperInitializer const & initializer);
-        ~JsonHelper();
-
-        std::string getRunRequest(DockerRunParams && params) &&;
-        std::string getExecParams(std::vector<std::string> && command) &&;
-        std::string getExecStartParams() &&;
-
-    private:
-        rapidjson::StringBuffer & m_stringBuffer;
-        rapidjson::Writer<rapidjson::StringBuffer> & m_writer;
-    };
-
-    JsonHelper makeJsonHelper();
+    detail::JsonHelperInitializer makeInitializer();
+    detail::JsonHelper makeJsonHelper();
 };
 }  // namespace watchman

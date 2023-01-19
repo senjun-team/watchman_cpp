@@ -64,8 +64,8 @@ std::string DockerWrapper::run(DockerRunParams && params) {
 void DockerWrapper::putArchive(DockerPutArchiveParams && params) const {}
 
 DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
-    std::string execRequest = makeJsonHelper().getExecParams(std::move(params.command));
-    std::string execStartRequest = makeJsonHelper().getExecStartParams();
+    std::string const execRequest = makeJsonHelper().getExecParams(std::move(params.command));
+    std::string const execStartRequest = makeJsonHelper().getExecStartParams();
 
     JSON_DOCUMENT execParams;
     if (execParams.Parse(execRequest).HasParseError()) {
@@ -85,24 +85,24 @@ DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
     return {.exitCode = 0, .output = jsonToString(result["data"])};
 }
 
-DockerWrapper::JsonHelperInitializer DockerWrapper::makeInitializer() {
+detail::JsonHelperInitializer DockerWrapper::makeInitializer() {
     return {m_stringBuffer, m_writer};
 }
 
-DockerWrapper::JsonHelper DockerWrapper::makeJsonHelper() { return {makeInitializer()}; }
+detail::JsonHelper DockerWrapper::makeJsonHelper() { return {makeInitializer()}; }
 
-DockerWrapper::JsonHelper::JsonHelper(DockerWrapper::JsonHelperInitializer const & initializer)
+detail::JsonHelper::JsonHelper(detail::JsonHelperInitializer const & initializer)
     : m_stringBuffer(initializer.stringBuffer)
     , m_writer(initializer.writer) {
     m_writer.StartObject();
 }
 
-DockerWrapper::JsonHelper::~JsonHelper() {
+detail::JsonHelper::~JsonHelper() {
     m_stringBuffer.Clear();
     m_writer.Reset(m_stringBuffer);
 }
 
-std::string DockerWrapper::JsonHelper::getRunRequest(DockerRunParams && params) && {
+std::string detail::JsonHelper::getRunRequest(DockerRunParams && params) && {
     m_writer.Key("Image");
     m_writer.String(params.image);
 
@@ -122,7 +122,7 @@ std::string DockerWrapper::JsonHelper::getRunRequest(DockerRunParams && params) 
     return m_stringBuffer.GetString();
 }
 
-std::string DockerWrapper::JsonHelper::getExecParams(std::vector<std::string> && command) && {
+std::string detail::JsonHelper::getExecParams(std::vector<std::string> && command) && {
     m_writer.Key("AttachStderr");
     m_writer.Bool(true);
 
@@ -145,7 +145,7 @@ std::string DockerWrapper::JsonHelper::getExecParams(std::vector<std::string> &&
 
     return m_stringBuffer.GetString();
 }
-std::string DockerWrapper::JsonHelper::getExecStartParams() && {
+std::string detail::JsonHelper::getExecStartParams() && {
     // TODO may be should improve
     return R"({"Detach": false, "Tty": false})";
 }

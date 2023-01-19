@@ -19,15 +19,15 @@ TEST(DockerWrapper, run_kill_delete) {
 
 TEST(DockerWrapper, exec) {
     DockerWrapper dockerWrapper;
-    //    DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
-    //    std::string const id = dockerWrapper.run(std::move(params));
-    //
-    //    std::vector<std::string> args{"sh", "run.sh", "m.py"};
+    DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
+    std::string const id = dockerWrapper.run(std::move(params));
 
-    std::string id = "8770ff79498e";
-    std::vector<std::string> args{"touch", "m.py"};
+    std::string const reference = "42";
+    std::vector<std::string> const args{"echo", reference};
+
     auto result = dockerWrapper.exec({args, id});
-    args = {"echo", "m.py"};  // find combination for set text
-    result = dockerWrapper.exec({std::move(args), std::move(id)});
     ASSERT_TRUE(result.exitCode == 0);
+    ASSERT_EQ(result.output, reference);
+    ASSERT_TRUE(dockerWrapper.killContainer(id));
+    ASSERT_TRUE(dockerWrapper.removeContainer(id));
 }
