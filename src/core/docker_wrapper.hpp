@@ -77,6 +77,9 @@ private:
     rapidjson::StringBuffer m_stringBuffer;
     rapidjson::Writer<rapidjson::StringBuffer> m_writer;
 
+    enum class DataType;
+    static bool isAnswerCorrect(JSON_DOCUMENT const & document, DataType type);
+
     detail::JsonHelperInitializer makeInitializer();
     detail::JsonHelper makeJsonHelper();
 };
