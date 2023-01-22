@@ -2,6 +2,15 @@
 
 namespace watchman {
 
+// there's no string_view because of operator[] inside rapidjson::Value
+static std::string const kId = "Id";
+static std::string const kData = "data";
+static std::string const kSuccess = "success";
+static std::string const kImage = "Image";
+static std::string const kState = "State";
+static std::string const kRunning = "Running";
+static std::string const kConfig = "Config";
+
 enum class DockerWrapper::DataType { Absent, Array, Object, String };
 
 DockerWrapper::DockerWrapper(std::string const & host)
@@ -14,18 +23,18 @@ std::vector<Container> DockerWrapper::getAllContainers() {
         return {};
     }
 
-    auto const rawContainers = response["data"].GetArray();
+    auto const rawContainers = response[kData].GetArray();
     size_t const size = rawContainers.Size();
 
     std::vector<Container> containers;
     containers.reserve(size);
     for (size_t index = 0; index < size; ++index) {
-        if (!rawContainers[index].HasMember("Id") || !rawContainers[index].HasMember("Image")) {
+        if (!rawContainers[index].HasMember(kId) || !rawContainers[index].HasMember(kImage)) {
             continue;
         }
 
         containers.push_back(
-            {rawContainers[index]["Id"].GetString(), rawContainers[index]["Image"].GetString()});
+            {rawContainers[index][kId].GetString(), rawContainers[index][kImage].GetString()});
     }
 
     return containers;
@@ -37,13 +46,14 @@ bool DockerWrapper::isRunning(std::string const & id) {
         return false;
     }
 
-    auto const & dataObject = response["data"].GetObject();
-    if (!dataObject.HasMember("State") || !dataObject["State"].IsObject()
-        || !dataObject["State"].GetObject().HasMember("Running")) {
+    auto const & dataObject = response[kData].GetObject();
+    if (!dataObject.HasMember(kState) || !dataObject[kState].IsObject()
+        || !dataObject[kState].GetObject().HasMember(kRunning)
+        || !dataObject[kState].GetObject()[kRunning].IsBool()) {
         return false;
     }
 
-    return dataObject["State"].GetObject()["Running"].GetBool();
+    return dataObject[kState].GetObject()[kRunning].GetBool();
 }
 
 std::string DockerWrapper::getImage(std::string const & id) {
@@ -52,14 +62,14 @@ std::string DockerWrapper::getImage(std::string const & id) {
         return {};
     }
 
-    auto const & dataObject = response["data"].GetObject();
-    if (!dataObject.HasMember("Config") || !dataObject["Config"].IsObject()
-        || !dataObject["Config"].HasMember("Image")
-        || !dataObject["Config"].GetObject()["Image"].IsString()) {
+    auto const & dataObject = response[kData].GetObject();
+    if (!dataObject.HasMember(kConfig) || !dataObject[kConfig].IsObject()
+        || !dataObject[kConfig].HasMember(kImage)
+        || !dataObject[kConfig].GetObject()[kImage].IsString()) {
         return {};
     }
 
-    return dataObject["Config"].GetObject()["Image"].GetString();
+    return dataObject[kConfig].GetObject()[kImage].GetString();
 }
 
 bool DockerWrapper::killContainer(std::string const & id) {
@@ -72,7 +82,7 @@ bool DockerWrapper::killContainer(std::string const & id) {
         return false;
     }
 
-    return responseKill["success"].GetBool();
+    return responseKill[kSuccess].GetBool();
 }
 
 bool DockerWrapper::removeContainer(std::string const & id) {
@@ -85,22 +95,21 @@ bool DockerWrapper::removeContainer(std::string const & id) {
         return false;
     }
 
-    return responseKill["success"].GetBool();
+    return responseKill[kSuccess].GetBool();
 }
 
 std::string DockerWrapper::run(DockerRunParams && params) {
     std::string const request = makeJsonHelper().getRunRequest(std::move(params));
     JSON_DOCUMENT document;
-    if (document.Parse(request).HasParseError()) {
-        return {};
-    }
+    auto const & parseResult = document.Parse(request);
+    assert(!parseResult.HasParseError());
 
     auto const response = m_docker.run_container(document);
     if (!isAnswerCorrect(response, DataType::Object)) {
         return {};
     }
 
-    return response["data"].GetObject()["Id"].GetString();
+    return response[kData].GetObject()[kId].GetString();
 }
 
 bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
@@ -110,7 +119,7 @@ bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
         return false;
     }
 
-    return result["success"].GetBool();
+    return result[kSuccess].GetBool();
 }
 
 DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
@@ -130,7 +139,7 @@ DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
         return {.exitCode = -1, .output = "docker exec error"};
     }
 
-    return {.exitCode = 0, .output = jsonToString(result["data"])};
+    return {.exitCode = 0, .output = jsonToString(result[kData])};
 }
 
 detail::JsonHelperInitializer DockerWrapper::makeInitializer() {
@@ -144,7 +153,7 @@ bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType typ
         return false;
     }
 
-    if (!document.HasMember("success") || !document["success"].GetBool()) {
+    if (!document.HasMember(kSuccess) || !document[kSuccess].GetBool()) {
         return false;
     }
 
@@ -153,19 +162,19 @@ bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType typ
     case DataType::Absent: break;
 
     case DataType::Array:
-        if (!document.HasMember("data") || !document["data"].IsArray()) {
+        if (!document.HasMember(kData) || !document[kData].IsArray()) {
             correct = false;
         }
         break;
 
     case DataType::Object:
-        if (!document.HasMember("data") || !document["data"].IsObject()) {
+        if (!document.HasMember(kData) || !document[kData].IsObject()) {
             correct = false;
         }
         break;
 
     case DataType::String:
-        if (!document.HasMember("data") || !document["data"].IsString()) {
+        if (!document.HasMember(kData) || !document[kData].IsString()) {
             correct = false;
         }
         break;
@@ -186,7 +195,7 @@ detail::JsonHelper::~JsonHelper() {
 }
 
 std::string detail::JsonHelper::getRunRequest(DockerRunParams && params) && {
-    m_writer.Key("Image");
+    m_writer.Key(kImage);
     m_writer.String(params.image);
 
     m_writer.Key("Tty");
