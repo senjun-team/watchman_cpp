@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "common/common.hpp"
+#include "common/logging.hpp"
 #include "core/docker_wrapper.hpp"
 
 using namespace watchman;
@@ -94,3 +95,5 @@ TEST(DockerWrapper, run_user_code) {
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
 }
+
+TEST(Logger, writeToLog) { Log::info("Hello, logger"); }

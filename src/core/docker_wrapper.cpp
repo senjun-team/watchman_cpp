@@ -1,5 +1,7 @@
 #include "docker_wrapper.hpp"
 
+#include "common/logging.hpp"
+
 namespace watchman {
 
 // there's no string_view because of operator[] inside rapidjson::Value

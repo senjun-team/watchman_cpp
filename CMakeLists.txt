@@ -12,6 +12,7 @@ add_subdirectory(third_party/restinio-0.6.17/dev/restinio)
 
 add_subdirectory(third_party/libunifex)
 add_subdirectory(third_party/DockerClient)
+add_subdirectory(third_party/spdlog)
 
 add_subdirectory(src)
 

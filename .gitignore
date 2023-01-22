@@ -6,3 +6,5 @@ cmake-build-release/*
 .idea/*
 *.so
 *.o
+tests/.*
+tests/data/.*
