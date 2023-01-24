@@ -22,19 +22,17 @@ void Log::init(std::string const & log_file, uint32_t concurrency, uint32_t sink
     auto const isMt = (concurrency & toUnderlying(ConcurrencyType::MultiThreaded)) != 0;
     if ((sink & toUnderlying(SinkType::StdOut)) != 0) {
         if (isMt) {
-            sinks[sinkCount] = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            sinks[sinkCount++] = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         } else {
-            sinks[sinkCount] = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
+            sinks[sinkCount++] = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
         }
-        ++sinkCount;
     }
     if ((sink & toUnderlying(SinkType::StdErr)) != 0) {
         if (isMt) {
-            sinks[sinkCount] = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+            sinks[sinkCount++] = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
         } else {
-            sinks[sinkCount] = std::make_shared<spdlog::sinks::stderr_color_sink_st>();
+            sinks[sinkCount++] = std::make_shared<spdlog::sinks::stderr_color_sink_st>();
         }
-        ++sinkCount;
     }
 
     if (!log_file.empty()) {

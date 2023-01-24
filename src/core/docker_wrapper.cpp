@@ -22,6 +22,7 @@ DockerWrapper::DockerWrapper(std::string const & host)
 std::vector<Container> DockerWrapper::getAllContainers() {
     auto const response = m_docker.list_containers(true);
     if (!isAnswerCorrect(response, DataType::Array)) {
+        Log::error("getAllContainers: answer error");
         return {};
     }
 
@@ -45,6 +46,7 @@ std::vector<Container> DockerWrapper::getAllContainers() {
 bool DockerWrapper::isRunning(std::string const & id) {
     auto const response = m_docker.inspect_container(id);
     if (!isAnswerCorrect(response, DataType::Object)) {
+        Log::error("isRunning: answer error for {}", id);
         return false;
     }
 
@@ -52,6 +54,7 @@ bool DockerWrapper::isRunning(std::string const & id) {
     if (!dataObject.HasMember(kState) || !dataObject[kState].IsObject()
         || !dataObject[kState].GetObject().HasMember(kRunning)
         || !dataObject[kState].GetObject()[kRunning].IsBool()) {
+        Log::error("isRunning: error while getting success result for {}", id);
         return false;
     }
 
@@ -61,6 +64,7 @@ bool DockerWrapper::isRunning(std::string const & id) {
 std::string DockerWrapper::getImage(std::string const & id) {
     auto const response = m_docker.inspect_container(id);
     if (!isAnswerCorrect(response, DataType::Object)) {
+        Log::error("getImage: answer error for {}", id);
         return {};
     }
 
@@ -68,6 +72,7 @@ std::string DockerWrapper::getImage(std::string const & id) {
     if (!dataObject.HasMember(kConfig) || !dataObject[kConfig].IsObject()
         || !dataObject[kConfig].HasMember(kImage)
         || !dataObject[kConfig].GetObject()[kImage].IsString()) {
+        Log::error("isRunning: error while getting image name for {}", id);
         return {};
     }
 
@@ -76,11 +81,13 @@ std::string DockerWrapper::getImage(std::string const & id) {
 
 bool DockerWrapper::killContainer(std::string const & id) {
     if (id.empty()) {
+        Log::error("killContainer error: id is empty");
         return false;
     }
 
     auto const responseKill = m_docker.kill_container(id);
     if (!isAnswerCorrect(responseKill, DataType::Absent)) {
+        Log::error("killContainer parse error for {}", id);
         return false;
     }
 
@@ -89,11 +96,13 @@ bool DockerWrapper::killContainer(std::string const & id) {
 
 bool DockerWrapper::removeContainer(std::string const & id) {
     if (id.empty()) {
+        Log::error("removeContainer error: id is empty");
         return false;
     }
 
     auto const responseKill = m_docker.delete_container(id);
     if (!isAnswerCorrect(responseKill, DataType::Absent)) {
+        Log::error("removeContainer parse error for {}", id);
         return false;
     }
 
@@ -108,6 +117,7 @@ std::string DockerWrapper::run(DockerRunParams && params) {
 
     auto const response = m_docker.run_container(document);
     if (!isAnswerCorrect(response, DataType::Object)) {
+        Log::error("run parse error for image {}", params.image);
         return {};
     }
 
@@ -118,6 +128,7 @@ bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
     auto const result =
         m_docker.put_archive(params.containerId, params.pathInContainer, params.pathToArchive);
     if (!isAnswerCorrect(result, DataType::Absent)) {
+        Log::error("putArchive parse error for container {}", params.containerId);
         return false;
     }
 
@@ -138,6 +149,7 @@ DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
 
     auto result = m_docker.exec(execParams, execStartParams, params.containerId);
     if (!isAnswerCorrect(result, DataType::String)) {
+        Log::error("exec parse error for container {}", params.containerId);
         return {.exitCode = -1, .output = "docker exec error"};
     }
 
@@ -152,10 +164,17 @@ detail::JsonHelper DockerWrapper::makeJsonHelper() { return {makeInitializer()};
 
 bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType type) {
     if (document.HasParseError()) {
+        Log::error("isAnswerCorrect: json parse error");
         return false;
     }
 
-    if (!document.HasMember(kSuccess) || !document[kSuccess].GetBool()) {
+    if (!document.HasMember(kSuccess)) {
+        Log::error("isAnswerCorrect: there is no \'success\' field id DockerClient answer");
+        return false;
+    }
+
+    if (!document[kSuccess].GetBool()) {
+        Log::error("isAnswerCorrect: \'success\' field is false");
         return false;
     }
 
@@ -164,21 +183,48 @@ bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType typ
     case DataType::Absent: break;
 
     case DataType::Array:
-        if (!document.HasMember(kData) || !document[kData].IsArray()) {
+        if (!document.HasMember(kData)) {
+            Log::error("isAnswerCorrect: \'data\' field is absent");
             correct = false;
+            break;
         }
+
+        if (!document[kData].IsArray()) {
+            Log::error("isAnswerCorrect: \'data\' field is not an array");
+            correct = false;
+            break;
+        }
+
         break;
 
     case DataType::Object:
-        if (!document.HasMember(kData) || !document[kData].IsObject()) {
+        if (!document.HasMember(kData)) {
+            Log::error("isAnswerCorrect: \'data\' field is absent");
             correct = false;
+            break;
         }
+
+        if (!document[kData].IsObject()) {
+            Log::error("isAnswerCorrect: \'data\' field is not an object");
+            correct = false;
+            break;
+        }
+
         break;
 
     case DataType::String:
-        if (!document.HasMember(kData) || !document[kData].IsString()) {
+        if (!document.HasMember(kData)) {
+            Log::error("isAnswerCorrect: \'data\' field is absent");
             correct = false;
+            break;
         }
+
+        if (!document[kData].IsString()) {
+            Log::error("isAnswerCorrect: \'data\' field is not a string");
+            correct = false;
+            break;
+        }
+
         break;
     }
 
