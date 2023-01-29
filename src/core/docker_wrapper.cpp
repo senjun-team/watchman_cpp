@@ -112,8 +112,7 @@ bool DockerWrapper::removeContainer(std::string const & id) {
 std::string DockerWrapper::run(DockerRunParams && params) {
     std::string const request = makeJsonHelper().getRunRequest(std::move(params));
     JSON_DOCUMENT document;
-    auto const & parseResult = document.Parse(request);
-    assert(!parseResult.HasParseError());
+    assert(!document.Parse(request).HasParseError());
 
     auto const response = m_docker.run_container(document);
     if (!isAnswerCorrect(response, DataType::Object)) {
