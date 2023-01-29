@@ -44,7 +44,7 @@ void Log::init(std::string const & log_file, uint32_t concurrency, uint32_t sink
     if ((concurrency & toUnderlying(ConcurrencyType::Async)) != 0) {
         assert(!isMt);
         constexpr size_t kQueueSize = 8192;
-        constexpr size_t kThreadCount = 8192;
+        constexpr size_t kThreadCount = 1;
         spdlog::init_thread_pool(kQueueSize, kThreadCount);
         m_log = std::make_shared<spdlog::async_logger>(
             "async_logger", sinks.begin(), sinks.begin() + sinkCount, spdlog::thread_pool(),
