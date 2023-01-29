@@ -36,12 +36,16 @@ void Log::init(std::string const & log_file, uint32_t concurrency, uint32_t sink
     }
 
     if (!log_file.empty()) {
-        sinks[sinkCount++] =
-            std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file, 1024 * 1024 * 10, 3);
+        constexpr size_t kLogFileMaxSize = 1024 * 1024 * 10;
+        constexpr size_t kRotatingLogFileCount = 3;
+        sinks[sinkCount++] = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+            log_file, kLogFileMaxSize, kRotatingLogFileCount);
     }
     if ((concurrency & toUnderlying(ConcurrencyType::Async)) != 0) {
         assert(!isMt);
-        spdlog::init_thread_pool(8192, 1);
+        constexpr size_t kQueueSize = 8192;
+        constexpr size_t kThreadCount = 8192;
+        spdlog::init_thread_pool(kQueueSize, kThreadCount);
         m_log = std::make_shared<spdlog::async_logger>(
             "async_logger", sinks.begin(), sinks.begin() + sinkCount, spdlog::thread_pool(),
             spdlog::async_overflow_policy::block);
