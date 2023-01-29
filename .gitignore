@@ -1,8 +1,9 @@
 build/*
 lib/*
 bin/*
-cmake-build-debug/*
-cmake-build-release/*
+cmake-*
 .idea/*
 *.so
 *.o
+tests/.*
+tests/data/.*

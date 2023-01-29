@@ -12,10 +12,12 @@ add_subdirectory(third_party/restinio-0.6.17/dev/restinio)
 
 add_subdirectory(third_party/libunifex)
 add_subdirectory(third_party/DockerClient)
+add_subdirectory(third_party/spdlog)
 
 add_subdirectory(src)
 
 if (BUILD_TESTING)
     enable_testing()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/")
     add_subdirectory(tests)
 endif ()
