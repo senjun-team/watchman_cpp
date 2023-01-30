@@ -4,6 +4,9 @@
 #include "common/logging.hpp"
 #include "core/docker_wrapper.hpp"
 
+#include <cstdio>
+#include <fstream>
+
 using namespace watchman;
 
 std::string const kPythonImage = "senjun_courses_python";
@@ -97,3 +100,12 @@ TEST(DockerWrapper, run_user_code) {
 }
 
 TEST(Logger, writeToLog) { Log::info("Hello, logger"); }
+
+TEST(Tar, makeTar) {
+    std::string const archiveName = "python_archive.tar";
+    std::string const sourceCode = "print(42)\n";
+    makeTar(archiveName, sourceCode);
+
+    std::remove(archiveName.c_str());
+    ASSERT_TRUE(!std::ifstream(archiveName));
+}
