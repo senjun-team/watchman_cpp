@@ -4,6 +4,8 @@ project(watchman-cpp)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(fmt REQUIRED)
+include_directories(${FMT_INCLUDEDIR}) # set path in cmake options
+
 find_package(Boost 1.66 REQUIRED)
 
 set(RESTINIO_USE_BOOST_ASIO "shared")

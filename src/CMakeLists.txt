@@ -19,12 +19,14 @@ set(SOURCES
 set(WATCHMAN_EXECUTABLE "${PROJECT_NAME}-executable")
 add_executable(${WATCHMAN_EXECUTABLE} ${SOURCES})
 target_compile_definitions(${WATCHMAN_EXECUTABLE} PRIVATE RAPIDJSON_HAS_STDSTRING)
+target_compile_definitions(${WATCHMAN_EXECUTABLE} PRIVATE SPDLOG_FMT_EXTERNAL)
 target_include_directories(${WATCHMAN_EXECUTABLE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/rapidjson/include/)
 target_include_directories(${WATCHMAN_EXECUTABLE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/rapidjson/include/)
 target_include_directories(${WATCHMAN_EXECUTABLE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/spdlog/include)
 target_include_directories(${WATCHMAN_EXECUTABLE} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
-target_link_libraries(${WATCHMAN_EXECUTABLE} DockerClient unifex restinio::restinio spdlog)
+
+target_link_libraries(${WATCHMAN_EXECUTABLE} DockerClient unifex restinio::restinio spdlog fmt::fmt)
 
 
 set(WATCHMAN_LIB "${PROJECT_NAME}")
@@ -34,4 +36,4 @@ target_include_directories(${WATCHMAN_LIB} PUBLIC ${PROJECT_SOURCE_DIR}/third_pa
 target_include_directories(${WATCHMAN_LIB} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/spdlog/include)
 target_include_directories(${WATCHMAN_LIB} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
-target_link_libraries(${WATCHMAN_LIB} PUBLIC DockerClient unifex restinio::restinio spdlog)
+target_link_libraries(${WATCHMAN_LIB} PUBLIC DockerClient unifex restinio::restinio spdlog fmt::fmt)
