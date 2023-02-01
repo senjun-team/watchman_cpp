@@ -9,11 +9,12 @@ namespace watchman {
 
 constexpr size_t kThreadCount = 4;
 constexpr size_t kPort = 8050;
+std::string const kIpAddress = "0.0.0.0";
 
 void Server::start() {
     restinio::run(restinio::on_thread_pool(kThreadCount)
                       .port(kPort)
-                      .address("0.0.0.0")
+                      .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)
                                            -> restinio::request_handling_status_t {
                           if (restinio::http_method_post() != req->header().method()) {
