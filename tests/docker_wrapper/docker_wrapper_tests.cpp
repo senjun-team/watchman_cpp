@@ -4,6 +4,9 @@
 #include "common/logging.hpp"
 #include "core/docker_wrapper.hpp"
 
+#include <cstdio>
+#include <fstream>
+
 using namespace watchman;
 
 std::string const kPythonImage = "senjun_courses_python";
@@ -97,3 +100,39 @@ TEST(DockerWrapper, run_user_code) {
 }
 
 TEST(Logger, writeToLog) { Log::info("Hello, logger"); }
+
+TEST(Tar, makeTar) {
+    std::string const archiveName = "python_archive.tar";
+    std::string const sourceCode = "print(42)\n";
+    makeTar(archiveName, sourceCode);
+
+    std::remove(archiveName.c_str());
+    ASSERT_TRUE(!std::ifstream(archiveName));
+}
+
+TEST(DockerWrapper, execute_task) {
+    DockerWrapper dockerWrapper;
+    DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
+    std::string const id = dockerWrapper.run(std::move(params));
+    std::string const pathInContainer = "/home/code_runner";
+    std::string const archiveName = "python_archive.tar";
+    std::string const sourceCode = "print(42)\n";
+    if (!makeTar(archiveName, sourceCode)) {
+        ASSERT_FALSE(true);
+    }
+
+    bool const success = dockerWrapper.putArchive({id, pathInContainer, archiveName});
+    ASSERT_TRUE(success);
+
+    std::string const reference = "42";
+    std::vector<std::string> const args{"sh", "run.sh", "python_archive"};
+
+    auto result = dockerWrapper.exec({args, id});
+    ASSERT_TRUE(result.exitCode == 0);
+    ASSERT_EQ(result.output, reference);
+    ASSERT_TRUE(dockerWrapper.killContainer(id));
+    ASSERT_TRUE(dockerWrapper.removeContainer(id));
+
+    std::remove(archiveName.c_str());
+    ASSERT_TRUE(!std::ifstream(archiveName));
+}

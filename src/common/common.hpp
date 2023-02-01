@@ -18,5 +18,6 @@ struct Response {
     std::string output;
 };
 
-void makeTar(std::string const & pathToFile);
+// archiveName must have got suffix ".tar"
+bool makeTar(std::string_view archiveName, std::string_view sourceCode);
 }  // namespace watchman

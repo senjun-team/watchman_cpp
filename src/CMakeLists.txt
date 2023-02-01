@@ -6,6 +6,7 @@ set(SOURCES
         common/common.cpp
         common/logging.hpp
         common/logging.cpp
+        common/tar_to_stream.h
         server/server.cpp
         server/server.hpp
         core/service.cpp
