@@ -1,4 +1,4 @@
-#pragma pack
+#pragma once
 // https://github.com/Armchair-Software/tar_to_stream
 
 #include <cstring>
@@ -54,7 +54,7 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     std::strncpy(header.gname, gname.c_str(), sizeof(header.gname) - 1);
 
     sprintf(header.size, "%011lo", size);
-    sprintf(header.mtime, "%011llo", mtime);
+    sprintf(header.mtime, "%011llo", static_cast<long long unsigned int>(mtime));
     sprintf(header.uid, "%07o", uid);
     sprintf(header.gid, "%07o", gid);
 

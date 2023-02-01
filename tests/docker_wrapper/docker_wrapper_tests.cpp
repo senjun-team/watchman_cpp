@@ -117,7 +117,9 @@ TEST(DockerWrapper, execute_task) {
     std::string const pathInContainer = "/home/code_runner";
     std::string const archiveName = "python_archive.tar";
     std::string const sourceCode = "print(42)\n";
-    makeTar(archiveName, sourceCode);
+    if (!makeTar(archiveName, sourceCode)) {
+        ASSERT_FALSE(true);
+    }
 
     bool const success = dockerWrapper.putArchive({id, pathInContainer, archiveName});
     ASSERT_TRUE(success);
