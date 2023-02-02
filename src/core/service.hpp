@@ -11,11 +11,22 @@ namespace watchman {
 namespace detail {
 
 struct Container {
+    Container();
+
     enum class Type { Python, Rust };
 
     std::string id;
     Type type;
     bool isReserved{false};
+    DockerWrapper m_docker;
+
+    struct DockerAnswer {
+        ErrorCode code;
+        std::string output;
+    };
+
+    DockerAnswer runCode(std::string const & code);
+    DockerAnswer clean();
 };
 
 class ContainerController {
@@ -28,8 +39,7 @@ private:
     std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
 
     std::mutex m_mutex;
-    DockerWrapper m_docker;
-
+    std::string const m_hostDocker;
     void readConfig();
 };
 }  // namespace detail
@@ -43,6 +53,9 @@ public:
     Response runTask(RunTaskParams const & runTaskParams);
 
 private:
+    static detail::Container::Type getContainerType(std::string const & type);
+    detail::Container getReadyContainer(detail::Container::Type type);
+
     detail::ContainerController m_containerController;
 };
 }  // namespace watchman

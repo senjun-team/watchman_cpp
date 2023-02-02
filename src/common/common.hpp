@@ -13,8 +13,8 @@ struct RunTaskParams {
 };
 
 struct Response {
-    ErrorCode code{0};
-    ErrorCode testErrorCode{0};
+    ErrorCode sourceCode{0};
+    ErrorCode testsCode{0};
     std::string output;
 };
 
