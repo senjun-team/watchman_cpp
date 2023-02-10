@@ -1,6 +1,5 @@
 #pragma once
 
-#include <spdlog/async.h>
 #include <spdlog/spdlog.h>
 
 namespace watchman {

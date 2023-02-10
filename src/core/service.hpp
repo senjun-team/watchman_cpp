@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/common.hpp"
+#include "common/common.hpp"
 #include "docker_wrapper.hpp"
 
 #include <mutex>

@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/service.hpp"
+#include "core/service.hpp"
 #include "parser.hpp"
 
 #include <string>

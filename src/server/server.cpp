@@ -1,22 +1,24 @@
 #include "server.hpp"
 
-#include "../common/common.hpp"
+#include "common/common.hpp"
+#include "common/logging.hpp"
 
-#include <docker.hpp>
 #include <restinio/all.hpp>
 
 namespace watchman {
 
 constexpr size_t kThreadCount = 4;
 constexpr size_t kPort = 8050;
+std::string const kIpAddress = "0.0.0.0";
 
 void Server::start() {
     restinio::run(restinio::on_thread_pool(kThreadCount)
                       .port(kPort)
-                      .address("0.0.0.0")
+                      .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)
                                            -> restinio::request_handling_status_t {
                           if (restinio::http_method_post() != req->header().method()) {
+                              Log::error("error while handling: {}", req->body());
                               return restinio::request_rejected();
                           }
 
@@ -29,6 +31,8 @@ void Server::start() {
                                              std::to_string(restinio::status_code::ok.raw_code()))
                               .set_body(result.output)
                               .done();
+
+                          Log::info("request handled successfully: {}", result.output);
                           return restinio::request_accepted();
                       }));
 }
