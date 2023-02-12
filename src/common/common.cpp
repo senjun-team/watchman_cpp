@@ -1,7 +1,7 @@
 #include "common.hpp"
-#include "logging.hpp"
 
-#include "tar_to_stream.h"
+#include "logging.hpp"
+#include "tar_to_stream.hpp"
 
 #include <fstream>
 
