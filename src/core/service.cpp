@@ -12,8 +12,8 @@ struct StringContainers {
 size_t constexpr kDockerTimeout = 124;
 size_t constexpr kDockerMemoryKill = 137;
 
-std::string_view constexpr kUserSourceFile = "/home/code_runner/solution";
-std::string_view constexpr kUserSourceFileTests = "/home/code_runner/solution_tests";
+static std::string const kUserSourceFile = "/home/code_runner/solution";
+static std::string const kUserSourceFileTests = "/home/code_runner/solution_tests";
 
 Service::Service(std::string const & host)
     : m_containerController(host) {}
@@ -51,6 +51,7 @@ detail::Container & detail::ContainerController::getReadyContainer(detail::Conta
         });
     }
 }
+
 void detail::ContainerController::containerReleased() { m_containerFree.notify_all(); }
 
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
@@ -70,10 +71,12 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .output = std::move(result.output)};
     }
 
-    if (auto result = container.runCode(runTaskParams.sourceTest); !result.isValid()) {
-        return {.sourceCode = Response::kSuccessCode,
-                .testsCode = result.code,
-                .output = std::move(result.output)};
+    if (!runTaskParams.sourceTest.empty()) {
+        if (auto result = container.runCode(runTaskParams.sourceTest); !result.isValid()) {
+            return {.sourceCode = Response::kSuccessCode,
+                    .testsCode = result.code,
+                    .output = std::move(result.output)};
+        }
     }
 
     if (auto result = container.clean(); !result.isValid()) {
@@ -103,9 +106,32 @@ detail::Container::Type Service::getContainerType(std::string const & type) {
     return detail::Container::Type::Unknown;
 }
 
-detail::Container::DockerAnswer detail::Container::runCode(std::string const & code) { return {}; }
+detail::Container::DockerAnswer detail::Container::runCode(std::string const & code) {
+    std::string const archive = "archive.tar";
+    if (!makeTar(archive, code)) {
+        Log::error("Internal error! Couldn't create an archive");
+        return {};
+    }
 
-detail::Container::DockerAnswer detail::Container::clean() { return {}; }
+    if (!dockerWrapper.putArchive({id, kUserSourceFile, archive})) {
+        Log::error("Internal error! Couldn't put an archive to container");
+        return {};
+    }
+
+    std::vector<std::string> const args{"sh", "run.sh", "archive"};
+    auto result = dockerWrapper.exec({args, id});
+    if (!static_cast<bool>(std::remove(archive.c_str()))) {
+        Log::error("Internal error! Couldn't remove an archive from host");
+        return {};
+    }
+
+    return {result.exitCode, result.output};
+}
+
+detail::Container::DockerAnswer detail::Container::clean() {
+    // TODO may be here we need to remove user code from container or in runCode
+    return {.code = Response::kSuccessCode};
+}
 
 detail::Container::Container() = default;
 
