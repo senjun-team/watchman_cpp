@@ -13,16 +13,18 @@ namespace detail {
 struct Container {
     Container();
 
-    enum class Type { Python, Rust };
+    enum class Type { Python, Rust, Unknown };
 
     std::string id;
     Type type;
     bool isReserved{false};
-    DockerWrapper m_docker;
+    DockerWrapper dockerWrapper;
 
     struct DockerAnswer {
         ErrorCode code;
         std::string output;
+
+        bool isValid() const;
     };
 
     DockerAnswer runCode(std::string const & code);
@@ -31,7 +33,7 @@ struct Container {
 
 class ContainerController {
 public:
-    explicit ContainerController(std::string const & host);
+    explicit ContainerController(std::string host);
 
 private:
     std::unordered_map<Container::Type, std::vector<Container>> m_containers;
@@ -54,6 +56,8 @@ public:
 
 private:
     static detail::Container::Type getContainerType(std::string const & type);
+
+    // TODO should be blocking or not? hell yeaaah!
     detail::Container getReadyContainer(detail::Container::Type type);
 
     detail::ContainerController m_containerController;

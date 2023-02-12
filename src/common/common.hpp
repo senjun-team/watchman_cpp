@@ -13,6 +13,9 @@ struct RunTaskParams {
 };
 
 struct Response {
+    static ErrorCode constexpr kSuccessCode = -1;
+    static ErrorCode constexpr kInvalidCode = -1;
+
     ErrorCode sourceCode{0};
     ErrorCode testsCode{0};
     std::string output;
