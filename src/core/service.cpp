@@ -27,6 +27,32 @@ void detail::ContainerController::readConfig() {
     // TODO fill hash maps from config
 }
 
+detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
+    std::unique_lock lock(m_mutex);
+    auto & containers = m_containers.at(type);
+
+    // TODO rethink this awful loop and condition
+    while (true) {
+        for (auto & container : containers) {
+            if (!container.isReserved) {
+                container.isReserved = true;
+                return container;
+            }
+        }
+
+        m_containerFree.wait(lock, [&containers]() {
+            for (auto const & container : containers) {
+                if (!container.isReserved) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+}
+void detail::ContainerController::containerReleased() { m_containerFree.notify_all(); }
+
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
     auto const containerType = getContainerType(runTaskParams.containerType);
     if (containerType == detail::Container::Type::Unknown) {
@@ -37,7 +63,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                                       runTaskParams.containerType)};
     }
 
-    auto container = getReadyContainer(containerType);
+    auto & container = getReadyContainer(containerType);  // here we have got a race
     if (auto result = container.runCode(runTaskParams.sourceRun); !result.isValid()) {
         return {.sourceCode = result.code,
                 .testsCode = Response::kInvalidCode,
@@ -56,11 +82,14 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsCode = Response::kSuccessCode,
                 .output = std::move(result.output)};
     }
+    m_containerController.containerReleased();
 
     return {Response::kSuccessCode, Response::kSuccessCode, "Success"};
 }
 
-detail::Container Service::getReadyContainer(detail::Container::Type type) { return {}; }
+detail::Container & Service::getReadyContainer(detail::Container::Type type) {
+    return m_containerController.getReadyContainer(type);
+}
 
 detail::Container::Type Service::getContainerType(std::string const & type) {
     if (type == StringContainers::python) {

@@ -3,6 +3,7 @@
 #include "common/common.hpp"
 #include "docker_wrapper.hpp"
 
+#include <condition_variable>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -35,12 +36,17 @@ class ContainerController {
 public:
     explicit ContainerController(std::string host);
 
+    Container & getReadyContainer(Container::Type type);
+    void containerReleased();
+
 private:
     std::unordered_map<Container::Type, std::vector<Container>> m_containers;
     std::unordered_map<Container::Type, std::string> m_containerTypeToImage;
     std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
 
     std::mutex m_mutex;
+    std::condition_variable m_containerFree;
+
     std::string const m_hostDocker;
     void readConfig();
 };
@@ -58,7 +64,7 @@ private:
     static detail::Container::Type getContainerType(std::string const & type);
 
     // TODO should be blocking or not? hell yeaaah!
-    detail::Container getReadyContainer(detail::Container::Type type);
+    detail::Container & getReadyContainer(detail::Container::Type type);
 
     detail::ContainerController m_containerController;
 };
