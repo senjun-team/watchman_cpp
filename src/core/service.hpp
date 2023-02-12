@@ -12,14 +12,7 @@ namespace watchman {
 namespace detail {
 
 struct Container {
-    Container();
-
     enum class Type { Python, Rust, Unknown };
-
-    std::string id;
-    Type type;
-    bool isReserved{false};
-    DockerWrapper dockerWrapper;
 
     struct DockerAnswer {
         ErrorCode code;
@@ -28,6 +21,12 @@ struct Container {
         bool isValid() const;
     };
 
+    DockerWrapper & dockerWrapper;
+    std::string id;
+    Type type;
+    bool isReserved{false};
+
+    Container(DockerWrapper & dockerWrapper, std::string id, Type type);
     DockerAnswer runCode(std::string const & code);
     DockerAnswer clean();
 };
@@ -35,19 +34,20 @@ struct Container {
 class ContainerController {
 public:
     explicit ContainerController(std::string host);
+    ~ContainerController();
 
     Container & getReadyContainer(Container::Type type);
     void containerReleased();
 
 private:
-    std::unordered_map<Container::Type, std::vector<Container>> m_containers;
-    std::unordered_map<Container::Type, std::string> m_containerTypeToImage;
+    std::unordered_map<Container::Type, std::string_view> m_containerTypeToImage;
     std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
+    std::unordered_map<Container::Type, std::vector<Container>> m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
 
-    std::string const m_hostDocker;
+    DockerWrapper m_dockerWrapper;
     void readConfig();
 };
 }  // namespace detail

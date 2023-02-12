@@ -16,3 +16,4 @@ endmacro()
 
 add_compile_options(-Wall -Wextra -pedantic)
 add_subdirectory(docker_wrapper)
+add_subdirectory(service)

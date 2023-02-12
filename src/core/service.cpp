@@ -9,22 +9,56 @@ struct StringContainers {
     static std::string_view constexpr rust = "rust";
 };
 
+struct StringImages {
+    static std::string_view constexpr python = "senjun_courses_python";
+    static std::string_view constexpr rust = "senjun_courses_rust";
+};
+
 size_t constexpr kDockerTimeout = 124;
 size_t constexpr kDockerMemoryKill = 137;
 
-static std::string const kUserSourceFile = "/home/code_runner/solution";
+static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner/solution_tests";
 
 Service::Service(std::string const & host)
     : m_containerController(host) {}
 
 detail::ContainerController::ContainerController(std::string host)
-    : m_hostDocker(std::move(host)) {
+    : m_dockerWrapper(std::move(host)) {
     readConfig();
 }
 
 void detail::ContainerController::readConfig() {
     // TODO fill hash maps from config
+    // temporarily fill them by hands
+
+    m_containerTypeToImage.insert({Container::Type::Python, StringImages::python});
+    m_containerTypeToImage.insert({Container::Type::Rust, StringImages::rust});
+
+    // TODO remove magic numbers
+    m_containerTypeToMinContainers.insert({Container::Type::Python, 1});
+    m_containerTypeToMinContainers.insert({Container::Type::Rust, 0});
+
+    for (auto const [type, amount] : m_containerTypeToMinContainers) {
+        std::vector<Container> containers;
+        for (size_t index = 0; index < amount; ++index) {
+            // TODO make humanable params filling
+            DockerRunParams params{.image = std::string{m_containerTypeToImage[type]},
+                                   .tty = true,
+                                   .memoryLimit = 7000000};
+            std::string id = m_dockerWrapper.run(std::move(params));
+            if (id.empty()) {
+                Log::warning("Internal error: can't run container of type {}",
+                             static_cast<int>(type));
+                continue;
+            }
+            containers.emplace_back(m_dockerWrapper, std::move(id), type);
+        }
+
+        if (!containers.empty()) {
+            m_containers.emplace(type, std::move(containers));
+        }
+    }
 }
 
 detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
@@ -54,6 +88,15 @@ detail::Container & detail::ContainerController::getReadyContainer(detail::Conta
 
 void detail::ContainerController::containerReleased() { m_containerFree.notify_all(); }
 
+detail::ContainerController::~ContainerController() {
+    for (auto & [_, containers] : m_containers) {
+        for (auto & container : containers) {
+            m_dockerWrapper.killContainer(container.id);
+            m_dockerWrapper.removeContainer(container.id);
+        }
+    }
+}
+
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
     auto const containerType = getContainerType(runTaskParams.containerType);
     if (containerType == detail::Container::Type::Unknown) {
@@ -65,10 +108,12 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     }
 
     auto & container = getReadyContainer(containerType);  // here we have got a race
-    if (auto result = container.runCode(runTaskParams.sourceRun); !result.isValid()) {
-        return {.sourceCode = result.code,
+
+    auto resultSourceRun = container.runCode(runTaskParams.sourceRun);
+    if (!resultSourceRun.isValid()) {
+        return {.sourceCode = resultSourceRun.code,
                 .testsCode = Response::kInvalidCode,
-                .output = std::move(result.output)};
+                .output = std::move(resultSourceRun.output)};
     }
 
     if (!runTaskParams.sourceTest.empty()) {
@@ -87,7 +132,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     }
     m_containerController.containerReleased();
 
-    return {Response::kSuccessCode, Response::kSuccessCode, "Success"};
+    return {Response::kSuccessCode, Response::kSuccessCode, resultSourceRun.output};
 }
 
 detail::Container & Service::getReadyContainer(detail::Container::Type type) {
@@ -107,7 +152,8 @@ detail::Container::Type Service::getContainerType(std::string const & type) {
 }
 
 detail::Container::DockerAnswer detail::Container::runCode(std::string const & code) {
-    std::string const archive = "archive.tar";
+    // TODO rethink naming
+    std::string const archive = "archiveWatchman.tar";
     if (!makeTar(archive, code)) {
         Log::error("Internal error! Couldn't create an archive");
         return {};
@@ -118,11 +164,11 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
         return {};
     }
 
-    std::vector<std::string> const args{"sh", "run.sh", "archive"};
+    std::vector<std::string> const args{"sh", "run.sh", "archiveWatchman"};
     auto result = dockerWrapper.exec({args, id});
-    if (!static_cast<bool>(std::remove(archive.c_str()))) {
+
+    if ((std::remove(archive.c_str())) != 0) {
         Log::error("Internal error! Couldn't remove an archive from host");
-        return {};
     }
 
     return {result.exitCode, result.output};
@@ -133,7 +179,10 @@ detail::Container::DockerAnswer detail::Container::clean() {
     return {.code = Response::kSuccessCode};
 }
 
-detail::Container::Container() = default;
+detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type type)
+    : dockerWrapper(dockerWrapper)
+    , id(id)
+    , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == Response::kSuccessCode; }
 

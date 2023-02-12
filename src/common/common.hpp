@@ -8,12 +8,12 @@ using ErrorCode = int32_t;
 
 struct RunTaskParams {
     std::string containerType;
-    std::string sourceTest;
     std::string sourceRun;
+    std::string sourceTest;
 };
 
 struct Response {
-    static ErrorCode constexpr kSuccessCode = -1;
+    static ErrorCode constexpr kSuccessCode = 0;
     static ErrorCode constexpr kInvalidCode = -1;
 
     ErrorCode sourceCode{0};
