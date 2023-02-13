@@ -42,7 +42,7 @@ struct JsonHelperInitializer {
 
 class JsonHelper {
 public:
-    JsonHelper(JsonHelperInitializer const & initializer);
+    JsonHelper(JsonHelperInitializer && initializer);
     ~JsonHelper();
 
     std::string getRunRequest(DockerRunParams && params) &&;
@@ -58,7 +58,9 @@ private:
 
 class DockerWrapper {
 public:
-    explicit DockerWrapper(std::string const & host = kDefaultHost);
+
+    DockerWrapper();
+    explicit DockerWrapper(std::string host);
 
     DockerWrapper(DockerWrapper const &) = delete;
     DockerWrapper & operator=(DockerWrapper const &) = delete;

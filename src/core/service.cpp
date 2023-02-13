@@ -20,8 +20,11 @@ size_t constexpr kDockerMemoryKill = 137;
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
 
-Service::Service(std::string const & host)
-    : m_containerController(host) {}
+Service::Service()
+    : m_containerController(kDefaultHost) {}
+
+Service::Service(std::string host)
+    : m_containerController(std::move(host)) {}
 
 detail::ContainerController::ContainerController(std::string host)
     : m_dockerWrapper(std::move(host)) {

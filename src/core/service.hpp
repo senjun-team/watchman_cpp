@@ -39,6 +39,11 @@ public:
     explicit ContainerController(std::string host);
     ~ContainerController();
 
+    ContainerController(ContainerController const & other) = delete;
+    ContainerController(ContainerController && other) = delete;
+    ContainerController & operator=(ContainerController const & other) = delete;
+    ContainerController & operator=(ContainerController && other) = delete;
+
     Container & getReadyContainer(Container::Type type);
     void containerReleased();
 
@@ -57,9 +62,15 @@ private:
 
 class Service {
 public:
-    explicit Service(std::string const & host = kDefaultHost);
+    Service();
+    explicit Service(std::string host);
+    ~Service() = default;
+
     Service(Service const &) = delete;
+    Service(Service &&) = delete;
+
     Service & operator=(Service const &) = delete;
+    Service & operator=(Service &&) = delete;
 
     Response runTask(RunTaskParams const & runTaskParams);
 
