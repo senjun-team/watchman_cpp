@@ -18,7 +18,7 @@ size_t constexpr kDockerTimeout = 124;
 size_t constexpr kDockerMemoryKill = 137;
 
 static std::string const kUserSourceFile = "/home/code_runner";
-static std::string const kUserSourceFileTests = "/home/code_runner/solution_tests";
+static std::string const kUserSourceFileTests = "/home/code_runner";
 
 Service::Service(std::string const & host)
     : m_containerController(host) {}
@@ -63,30 +63,25 @@ void detail::ContainerController::readConfig() {
 
 detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
     std::unique_lock lock(m_mutex);
-    auto & containers = m_containers.at(type);
 
-    // TODO rethink this awful loop and condition
-    while (true) {
-        for (auto & container : containers) {
-            if (!container.isReserved) {
-                container.isReserved = true;
-                return container;
+    auto & containers = m_containers.at(type);
+    size_t indexProperContainer;  // there's no need for initialization
+
+    m_containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
+        for (size_t index = 0; index < containers.size(); ++index) {
+            if (!containers[index].isReserved) {
+                indexProperContainer = index;
+                containers[index].isReserved = true;
+                return true;
             }
         }
+        return false;
+    });
 
-        m_containerFree.wait(lock, [&containers]() {
-            for (auto const & container : containers) {
-                if (!container.isReserved) {
-                    return true;
-                }
-            }
-
-            return false;
-        });
-    }
+    return containers.at(indexProperContainer);
 }
 
-void detail::ContainerController::containerReleased() { m_containerFree.notify_all(); }
+void detail::ContainerController::containerReleased() { m_containerFree.notify_one(); }
 
 detail::ContainerController::~ContainerController() {
     for (auto & [_, containers] : m_containers) {
@@ -130,6 +125,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsCode = Response::kSuccessCode,
                 .output = std::move(result.output)};
     }
+
+    container.isReserved = false;
     m_containerController.containerReleased();
 
     return {Response::kSuccessCode, Response::kSuccessCode, resultSourceRun.output};
@@ -156,18 +153,21 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
     std::string const archive = "archiveWatchman.tar";
     if (!makeTar(archive, code)) {
         Log::error("Internal error! Couldn't create an archive");
-        return {};
+        return {DockerAnswer::kInvalidCode,
+                fmt::format("Internal error! Couldn't create an archive")};
     }
 
     if (!dockerWrapper.putArchive({id, kUserSourceFile, archive})) {
         Log::error("Internal error! Couldn't put an archive to container");
-        return {};
+        return {DockerAnswer::kInvalidCode,
+                fmt::format("Internal error! Couldn't put an archive to container")};
     }
 
     std::vector<std::string> const args{"sh", "run.sh", "archiveWatchman"};
     auto result = dockerWrapper.exec({args, id});
 
     if ((std::remove(archive.c_str())) != 0) {
+        // TODO is this an error? should we write something to resul.output?
         Log::error("Internal error! Couldn't remove an archive from host");
     }
 
@@ -181,7 +181,7 @@ detail::Container::DockerAnswer detail::Container::clean() {
 
 detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type type)
     : dockerWrapper(dockerWrapper)
-    , id(id)
+    , id(std::move(id))
     , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == Response::kSuccessCode; }

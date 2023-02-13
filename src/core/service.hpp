@@ -15,6 +15,9 @@ struct Container {
     enum class Type { Python, Rust, Unknown };
 
     struct DockerAnswer {
+        static ErrorCode constexpr kSuccessCode = 0;
+        static ErrorCode constexpr kInvalidCode = -1;
+
         ErrorCode code;
         std::string output;
 
