@@ -120,8 +120,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .output = std::move(resultSourceRun.output)};
     }
 
-    if (!runTaskParams.sourceTest.empty()) {
-        if (auto result = container.runCode(runTaskParams.sourceTest); !result.isValid()) {
+    if (runTaskParams.sourceTest.has_value() && !runTaskParams.sourceTest->empty()) {
+        if (auto result = container.runCode(runTaskParams.sourceTest.value()); !result.isValid()) {
             return {.sourceCode = kSuccessCode,
                     .testsCode = result.code,
                     .output = std::move(result.output)};

@@ -38,7 +38,15 @@ void Server::start() {
 }
 
 Response Server::processRequest(std::string const & body) {
-    auto const params = m_parser.parse(body);
+    auto const params = parse(body);
+    if (params.containerType.empty()) {
+        return {};
+    }
+
+    if (params.sourceRun.empty()) {
+        return {};
+    }
+
     return m_service.runTask(params);
 }
 

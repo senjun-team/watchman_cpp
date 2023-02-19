@@ -12,6 +12,5 @@ public:
 private:
     Response processRequest(std::string const & body);
     Service m_service;
-    Parser m_parser;
 };
 }  // namespace watchman
