@@ -1,4 +1,6 @@
 #pragma once
+#include "common/common.hpp"
+
 #include <docker.hpp>
 #include <optional>
 #include <string>
@@ -13,7 +15,7 @@ struct DockerRunParams {
 };
 
 struct DockerExecResult {
-    int32_t exitCode{0};
+    int32_t exitCode{kInvalidCode};
     std::string output;
 };
 
@@ -58,7 +60,6 @@ private:
 
 class DockerWrapper {
 public:
-
     DockerWrapper();
     explicit DockerWrapper(std::string host);
 

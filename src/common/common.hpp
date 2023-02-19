@@ -5,6 +5,8 @@
 namespace watchman {
 
 using ErrorCode = int32_t;
+static ErrorCode constexpr kSuccessCode = 0;
+static ErrorCode constexpr kInvalidCode = -1;
 
 struct RunTaskParams {
     std::string containerType;
@@ -13,11 +15,8 @@ struct RunTaskParams {
 };
 
 struct Response {
-    static ErrorCode constexpr kSuccessCode = 0;
-    static ErrorCode constexpr kInvalidCode = -1;
-
-    ErrorCode sourceCode{0};
-    ErrorCode testsCode{0};
+    ErrorCode sourceCode{kInvalidCode};
+    ErrorCode testsCode{kInvalidCode};
     std::string output;
 };
 

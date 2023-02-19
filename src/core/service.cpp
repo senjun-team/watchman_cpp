@@ -84,7 +84,13 @@ detail::Container & detail::ContainerController::getReadyContainer(detail::Conta
     return containers.at(indexProperContainer);
 }
 
-void detail::ContainerController::containerReleased() { m_containerFree.notify_one(); }
+void detail::ContainerController::containerReleased(Container & container) {
+    {
+        std::scoped_lock lock(m_mutex);
+        container.isReserved = false;
+    }
+    m_containerFree.notify_one();
+}
 
 detail::ContainerController::~ContainerController() {
     for (auto & [_, containers] : m_containers) {
@@ -99,8 +105,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     auto const containerType = getContainerType(runTaskParams.containerType);
     if (containerType == detail::Container::Type::Unknown) {
         Log::warning("Unknown container type is provided");
-        return {.sourceCode = Response::kInvalidCode,
-                .testsCode = Response::kInvalidCode,
+        return {.sourceCode = kInvalidCode,
+                .testsCode = kInvalidCode,
                 .output = fmt::format("Error: unknown container type \'{}\'",
                                       runTaskParams.containerType)};
     }
@@ -110,13 +116,13 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     auto resultSourceRun = container.runCode(runTaskParams.sourceRun);
     if (!resultSourceRun.isValid()) {
         return {.sourceCode = resultSourceRun.code,
-                .testsCode = Response::kInvalidCode,
+                .testsCode = kInvalidCode,
                 .output = std::move(resultSourceRun.output)};
     }
 
     if (!runTaskParams.sourceTest.empty()) {
         if (auto result = container.runCode(runTaskParams.sourceTest); !result.isValid()) {
-            return {.sourceCode = Response::kSuccessCode,
+            return {.sourceCode = kSuccessCode,
                     .testsCode = result.code,
                     .output = std::move(result.output)};
         }
@@ -124,15 +130,13 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     if (auto result = container.clean(); !result.isValid()) {
         Log::error("Error while removing files for {}", container.id);
-        return {.sourceCode = Response::kSuccessCode,
-                .testsCode = Response::kSuccessCode,
+        return {.sourceCode = kSuccessCode,
+                .testsCode = kSuccessCode,
                 .output = std::move(result.output)};
     }
 
-    container.isReserved = false;
-    m_containerController.containerReleased();
-
-    return {Response::kSuccessCode, Response::kSuccessCode, resultSourceRun.output};
+    m_containerController.containerReleased(container);
+    return {kSuccessCode, kSuccessCode, resultSourceRun.output};
 }
 
 detail::Container & Service::getReadyContainer(detail::Container::Type type) {
@@ -156,14 +160,12 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
     std::string const archive = "archiveWatchman.tar";
     if (!makeTar(archive, code)) {
         Log::error("Internal error! Couldn't create an archive");
-        return {DockerAnswer::kInvalidCode,
-                fmt::format("Internal error! Couldn't create an archive")};
+        return {kInvalidCode, fmt::format("Internal error! Couldn't create an archive")};
     }
 
     if (!dockerWrapper.putArchive({id, kUserSourceFile, archive})) {
         Log::error("Internal error! Couldn't put an archive to container");
-        return {DockerAnswer::kInvalidCode,
-                fmt::format("Internal error! Couldn't put an archive to container")};
+        return {kInvalidCode, fmt::format("Internal error! Couldn't put an archive to container")};
     }
 
     std::vector<std::string> const args{"sh", "run.sh", "archiveWatchman"};
@@ -179,7 +181,7 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
 
 detail::Container::DockerAnswer detail::Container::clean() {
     // TODO may be here we need to remove user code from container or in runCode
-    return {.code = Response::kSuccessCode};
+    return {.code = kSuccessCode};
 }
 
 detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type type)
@@ -187,6 +189,6 @@ detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type
     , id(std::move(id))
     , type(type) {}
 
-bool detail::Container::DockerAnswer::isValid() const { return code == Response::kSuccessCode; }
+bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
 
 }  // namespace watchman

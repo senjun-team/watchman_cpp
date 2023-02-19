@@ -15,10 +15,7 @@ struct Container {
     enum class Type { Python, Rust, Unknown };
 
     struct DockerAnswer {
-        static ErrorCode constexpr kSuccessCode = 0;
-        static ErrorCode constexpr kInvalidCode = -1;
-
-        ErrorCode code;
+        ErrorCode code{kInvalidCode};
         std::string output;
 
         bool isValid() const;
@@ -26,7 +23,7 @@ struct Container {
 
     DockerWrapper & dockerWrapper;
     std::string id;
-    Type type;
+    Type type{Type::Unknown};
     bool isReserved{false};
 
     Container(DockerWrapper & dockerWrapper, std::string id, Type type);
@@ -45,7 +42,7 @@ public:
     ContainerController & operator=(ContainerController && other) = delete;
 
     Container & getReadyContainer(Container::Type type);
-    void containerReleased();
+    void containerReleased(Container & container);
 
 private:
     std::unordered_map<Container::Type, std::string_view> m_containerTypeToImage;
@@ -76,8 +73,6 @@ public:
 
 private:
     static detail::Container::Type getContainerType(std::string const & type);
-
-    // TODO should be blocking or not? hell yeaaah!
     detail::Container & getReadyContainer(detail::Container::Type type);
 
     detail::ContainerController m_containerController;

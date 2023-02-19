@@ -25,7 +25,7 @@ TEST(Service, UnknownContainerType) {
     watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
                                          std::move(testingCode)};
     auto response = service.runTask(params);
-    ASSERT_TRUE(response.sourceCode == watchman::Response::kInvalidCode);
+    ASSERT_TRUE(response.sourceCode == watchman::kInvalidCode);
     ASSERT_TRUE(!response.output.empty());
 }
 
@@ -37,7 +37,7 @@ TEST(Service, Sleep) {
     watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
                                          std::move(testingCode)};
     auto response = service.runTask(params);
-    ASSERT_TRUE(response.sourceCode == watchman::Response::kSuccessCode);
+    ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
     ASSERT_TRUE(!response.output.empty());
 }
 
@@ -51,7 +51,7 @@ TEST(Service, RaceCondition) {
         watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
                                              std::move(testingCode)};
         auto response = service.runTask(params);
-        ASSERT_TRUE(response.sourceCode == watchman::Response::kSuccessCode);
+        ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "42");
     });
 
@@ -62,7 +62,7 @@ TEST(Service, RaceCondition) {
         watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
                                              std::move(testingCode)};
         auto response = service.runTask(params);
-        ASSERT_TRUE(response.sourceCode == watchman::Response::kSuccessCode);
+        ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "69");
     });
 
