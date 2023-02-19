@@ -6,8 +6,5 @@
 
 namespace watchman {
 
-class Parser {
-public:
-    RunTaskParams parse(std::string const & body);
-};
+RunTaskParams parse(std::string const & body);
 }  // namespace watchman

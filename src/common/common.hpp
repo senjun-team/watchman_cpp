@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 namespace watchman {
@@ -11,7 +12,7 @@ static ErrorCode constexpr kInvalidCode = -1;
 struct RunTaskParams {
     std::string containerType;
     std::string sourceRun;
-    std::string sourceTest;
+    std::optional<std::string> sourceTest;
 };
 
 struct Response {
