@@ -5,7 +5,7 @@ set(CORE_SOURCES
         core/docker_wrapper.cpp
         common/common.cpp
         common/logging.cpp
-        common/tar_to_stream.h
+        common/tar_to_stream.hpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})

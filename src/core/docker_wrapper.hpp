@@ -1,4 +1,6 @@
 #pragma once
+#include "common/common.hpp"
+
 #include <docker.hpp>
 #include <optional>
 #include <string>
@@ -13,7 +15,7 @@ struct DockerRunParams {
 };
 
 struct DockerExecResult {
-    int32_t exitCode{0};
+    int32_t exitCode{kInvalidCode};
     std::string output;
 };
 
@@ -42,7 +44,7 @@ struct JsonHelperInitializer {
 
 class JsonHelper {
 public:
-    JsonHelper(JsonHelperInitializer const & initializer);
+    JsonHelper(JsonHelperInitializer && initializer);
     ~JsonHelper();
 
     std::string getRunRequest(DockerRunParams && params) &&;
@@ -58,7 +60,8 @@ private:
 
 class DockerWrapper {
 public:
-    explicit DockerWrapper(std::string const & host = kDefaultHost);
+    DockerWrapper();
+    explicit DockerWrapper(std::string host);
 
     DockerWrapper(DockerWrapper const &) = delete;
     DockerWrapper & operator=(DockerWrapper const &) = delete;

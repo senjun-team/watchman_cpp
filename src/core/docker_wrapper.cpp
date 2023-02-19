@@ -15,8 +15,12 @@ static std::string const kConfig = "Config";
 
 enum class DockerWrapper::DataType { Absent, Array, Object, String };
 
-DockerWrapper::DockerWrapper(std::string const & host)
-    : m_docker(host)
+DockerWrapper::DockerWrapper()
+    : m_docker(kDefaultHost)
+    , m_writer(m_stringBuffer) {}
+
+DockerWrapper::DockerWrapper(std::string host)
+    : m_docker(std::move(host))
     , m_writer(m_stringBuffer) {}
 
 std::vector<Container> DockerWrapper::getAllContainers() {
@@ -112,11 +116,11 @@ bool DockerWrapper::removeContainer(std::string const & id) {
 std::string DockerWrapper::run(DockerRunParams && params) {
     std::string const request = makeJsonHelper().getRunRequest(std::move(params));
     JSON_DOCUMENT document;
-    assert(!document.Parse(request).HasParseError());
+    document.Parse(request).HasParseError();
 
     auto const response = m_docker.run_container(document);
     if (!isAnswerCorrect(response, DataType::Object)) {
-        Log::error("run parse error for image {}", params.image);
+        Log::error("run parse error for image");
         return {};
     }
 
@@ -159,7 +163,7 @@ detail::JsonHelperInitializer DockerWrapper::makeInitializer() {
     return {m_stringBuffer, m_writer};
 }
 
-detail::JsonHelper DockerWrapper::makeJsonHelper() { return {makeInitializer()}; }
+detail::JsonHelper DockerWrapper::makeJsonHelper() { return makeInitializer(); }
 
 bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType type) {
     if (document.HasParseError()) {
@@ -230,7 +234,7 @@ bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType typ
     return correct;
 }
 
-detail::JsonHelper::JsonHelper(detail::JsonHelperInitializer const & initializer)
+detail::JsonHelper::JsonHelper(detail::JsonHelperInitializer && initializer)
     : m_stringBuffer(initializer.stringBuffer)
     , m_writer(initializer.writer) {
     m_writer.StartObject();
