@@ -96,12 +96,13 @@ size_t detail::ContainerController::readConfig(std::string const & configPath) {
     return loadPtreeRoot.get_child("max-containers-amount").get_value<size_t>();
 }
 
-void detail::ContainerController::killOldContainers(boost::property_tree::ptree const & languages) {
+template<typename Ptree>
+void detail::ContainerController::killOldContainers(Ptree const & languages) {
     auto const workingContainers = m_dockerWrapper.getAllContainers();
     for (auto const & language : languages) {
         for (auto const & container : workingContainers) {
             if (container.image.find(
-                    language.second.get_child("image-name").get_value<std::string>())
+                    language.second.get_child("image-name").template get_value<std::string>())
                 != std::string::npos) {
                 if (m_dockerWrapper.isRunning(container.id)) {
                     m_dockerWrapper.killContainer(container.id);
@@ -113,12 +114,14 @@ void detail::ContainerController::killOldContainers(boost::property_tree::ptree 
     }
 }
 
-void detail::ContainerController::launchNewContainers(
-    boost::property_tree::ptree const & languages) {
+template<typename Ptree>
+void detail::ContainerController::launchNewContainers(Ptree const & languages) {
     for (auto const & language : languages) {
         auto const containerType = getContainerType(language.first);
-        auto const imageName = language.second.get_child("image-name").get_value<std::string>();
-        auto const alwaysLaunched = language.second.get_child("launched").get_value<size_t>();
+        auto const imageName =
+            language.second.get_child("image-name").template get_value<std::string>();
+        auto const alwaysLaunched =
+            language.second.get_child("launched").template get_value<size_t>();
 
         std::vector<Container> containers;
         containers.reserve(alwaysLaunched);

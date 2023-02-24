@@ -3,8 +3,6 @@
 #include "common/common.hpp"
 #include "docker_wrapper.hpp"
 
-#include <boost/property_tree/ptree.hpp>
-
 #include <condition_variable>
 #include <mutex>
 #include <unordered_map>
@@ -55,8 +53,12 @@ private:
     DockerWrapper m_dockerWrapper;
     size_t const m_maxContainersAmount;
     size_t readConfig(std::string const & configPath);
-    void killOldContainers(boost::property_tree::ptree const & languages);
-    void launchNewContainers(boost::property_tree::ptree const & languages);
+
+    template<typename Ptree>
+    void killOldContainers(Ptree const & languages);
+
+    template<typename Ptree>
+    void launchNewContainers(Ptree const & languages);
 };
 }  // namespace detail
 
