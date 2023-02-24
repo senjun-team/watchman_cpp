@@ -11,6 +11,9 @@ constexpr size_t kThreadCount = 4;
 constexpr size_t kPort = 8050;
 std::string const kIpAddress = "0.0.0.0";
 
+Server::Server(std::string const & dockerHost, std::string const & configPath)
+    : m_service(dockerHost, configPath) {}
+
 void Server::start() {
     restinio::run(restinio::on_thread_pool(kThreadCount)
                       .port(kPort)
@@ -49,8 +52,5 @@ Response Server::processRequest(std::string const & body) {
 
     return m_service.runTask(params);
 }
-
-Server::Server(const std::string & dockerHost, const std::string & configPath)
-    : m_service(dockerHost, configPath) {}
 
 }  // namespace watchman

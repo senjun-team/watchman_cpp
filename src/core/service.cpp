@@ -3,7 +3,6 @@
 #include "common/logging.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 namespace watchman {
 
@@ -85,11 +84,37 @@ size_t detail::ContainerController::readConfig(std::string const & configPath) {
 
     try {
         pt::read_json(configPath, loadPtreeRoot);
-    } catch (std::exception & error) {
+    } catch (std::exception const & error) {
         Log::error("Error while reading config file: {}", error.what());
         std::terminate();
     }
-    auto const languages = loadPtreeRoot.get_child("languages");
+
+    auto const & languages = loadPtreeRoot.get_child("languages");
+    killOldContainers(languages);
+    launchNewContainers(languages);
+
+    return loadPtreeRoot.get_child("max-containers-amount").get_value<size_t>();
+}
+
+void detail::ContainerController::killOldContainers(boost::property_tree::ptree const & languages) {
+    auto const workingContainers = m_dockerWrapper.getAllContainers();
+    for (auto const & language : languages) {
+        for (auto const & container : workingContainers) {
+            if (container.image.find(
+                    language.second.get_child("image-name").get_value<std::string>())
+                != std::string::npos) {
+                if (m_dockerWrapper.isRunning(container.id)) {
+                    m_dockerWrapper.killContainer(container.id);
+                }
+
+                m_dockerWrapper.removeContainer(container.id);
+            }
+        }
+    }
+}
+
+void detail::ContainerController::launchNewContainers(
+    boost::property_tree::ptree const & languages) {
     for (auto const & language : languages) {
         auto const containerType = getContainerType(language.first);
         auto const imageName = language.second.get_child("image-name").get_value<std::string>();
@@ -112,8 +137,6 @@ size_t detail::ContainerController::readConfig(std::string const & configPath) {
             m_containers.emplace(containerType, std::move(containers));
         }
     }
-
-    return loadPtreeRoot.get_child("max-containers-amount").get_value<size_t>();
 }
 
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
