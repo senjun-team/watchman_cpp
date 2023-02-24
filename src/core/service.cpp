@@ -7,18 +7,6 @@
 
 namespace watchman {
 
-detail::Container::Type getContainerType(std::string const & type) {
-    if (type == "python") {
-        return detail::Container::Type::Python;
-    }
-
-    if (type == "rust") {
-        return detail::Container::Type::Rust;
-    }
-
-    return detail::Container::Type::Unknown;
-}
-
 struct StringContainers {
     static std::string_view constexpr python = "python";
     static std::string_view constexpr rust = "rust";
@@ -34,6 +22,18 @@ size_t constexpr kDockerMemoryKill = 137;
 
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
+
+detail::Container::Type getContainerType(std::string const & type) {
+    if (type == StringContainers::python) {
+        return detail::Container::Type::Python;
+    }
+
+    if (type == StringContainers::rust) {
+        return detail::Container::Type::Rust;
+    }
+
+    return detail::Container::Type::Unknown;
+}
 
 Service::Service(std::string const & host, std::string const & configPath)
     : m_containerController(host, configPath) {}
@@ -85,8 +85,9 @@ size_t detail::ContainerController::readConfig(std::string const & configPath) {
 
     try {
         pt::read_json(configPath, loadPtreeRoot);
-    } catch(std::exception & e) {
-        bool stop = true;
+    } catch (std::exception & error) {
+        Log::error("Error while reading config file: {}", error.what());
+        std::terminate();
     }
     auto const languages = loadPtreeRoot.get_child("languages");
     for (auto const & language : languages) {

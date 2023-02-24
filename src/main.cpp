@@ -1,8 +1,9 @@
 #include "server/server.hpp"
 
-static std::string const kConfig = std::string{CONFIG_DIR} + "config.json";
+#include <string>
 
-int main() {
+int main() noexcept {
+    std::string const kConfig = "config.json";
     watchman::Server server(kDefaultHost, kConfig);
     server.start();
     return 0;

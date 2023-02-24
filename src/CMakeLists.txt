@@ -29,6 +29,5 @@ set(SERVER_SOURCES
 set(SERVER "${PROJECT_NAME}-executable")
 add_executable(${SERVER} ${SERVER_SOURCES})
 target_compile_definitions(${SERVER} PRIVATE RAPIDJSON_HAS_STDSTRING)
-target_compile_definitions(${SERVER} PUBLIC CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/")
-
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.json" "${CMAKE_CURRENT_BINARY_DIR}/config.json" COPYONLY)
 target_link_libraries(${SERVER} spdlog restinio::restinio fmt::fmt ${WATCHMAN_CORE})
