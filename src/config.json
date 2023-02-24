@@ -1,0 +1,13 @@
+{
+  "max-containers-amount": 8,
+  "languages": {
+    "python": {
+      "image-name": "senjun_courses_python",
+      "launched": 3
+    },
+    "rust": {
+      "image-name": "senjun_courses_rust",
+      "launched": 1
+    }
+  }
+}
