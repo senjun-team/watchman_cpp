@@ -13,6 +13,7 @@ target_compile_definitions(${WATCHMAN_CORE} PRIVATE RAPIDJSON_HAS_STDSTRING)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/rapidjson/include/)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/spdlog/include)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/fmt/include/)
+target_include_directories(${WATCHMAN_CORE} PUBLIC ${Boost_INCLUDE_DIR})
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
 target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient unifex spdlog fmt::fmt)
@@ -28,4 +29,6 @@ set(SERVER_SOURCES
 set(SERVER "${PROJECT_NAME}-executable")
 add_executable(${SERVER} ${SERVER_SOURCES})
 target_compile_definitions(${SERVER} PRIVATE RAPIDJSON_HAS_STDSTRING)
+target_compile_definitions(${SERVER} PUBLIC CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/")
+
 target_link_libraries(${SERVER} spdlog restinio::restinio fmt::fmt ${WATCHMAN_CORE})

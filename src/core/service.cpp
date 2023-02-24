@@ -2,7 +2,22 @@
 
 #include "common/logging.hpp"
 
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 namespace watchman {
+
+detail::Container::Type getContainerType(std::string const & type) {
+    if (type == "python") {
+        return detail::Container::Type::Python;
+    }
+
+    if (type == "rust") {
+        return detail::Container::Type::Rust;
+    }
+
+    return detail::Container::Type::Unknown;
+}
 
 struct StringContainers {
     static std::string_view constexpr python = "python";
@@ -20,49 +35,12 @@ size_t constexpr kDockerMemoryKill = 137;
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
 
-Service::Service()
-    : m_containerController(kDefaultHost) {}
+Service::Service(std::string const & host, std::string const & configPath)
+    : m_containerController(host, configPath) {}
 
-Service::Service(std::string host)
-    : m_containerController(std::move(host)) {}
-
-detail::ContainerController::ContainerController(std::string host)
-    : m_dockerWrapper(std::move(host)) {
-    readConfig();
-}
-
-void detail::ContainerController::readConfig() {
-    // TODO fill hash maps from config
-    // temporarily fill them by hands
-
-    m_containerTypeToImage.insert({Container::Type::Python, StringImages::python});
-    m_containerTypeToImage.insert({Container::Type::Rust, StringImages::rust});
-
-    // TODO remove magic numbers
-    m_containerTypeToMinContainers.insert({Container::Type::Python, 1});
-    m_containerTypeToMinContainers.insert({Container::Type::Rust, 0});
-
-    for (auto const [type, amount] : m_containerTypeToMinContainers) {
-        std::vector<Container> containers;
-        for (size_t index = 0; index < amount; ++index) {
-            // TODO make humanable params filling
-            DockerRunParams params{.image = std::string{m_containerTypeToImage[type]},
-                                   .tty = true,
-                                   .memoryLimit = 7000000};
-            std::string id = m_dockerWrapper.run(std::move(params));
-            if (id.empty()) {
-                Log::warning("Internal error: can't run container of type {}",
-                             static_cast<int>(type));
-                continue;
-            }
-            containers.emplace_back(m_dockerWrapper, std::move(id), type);
-        }
-
-        if (!containers.empty()) {
-            m_containers.emplace(type, std::move(containers));
-        }
-    }
-}
+detail::ContainerController::ContainerController(std::string host, std::string const & configPath)
+    : m_dockerWrapper(std::move(host))
+    , m_maxContainersAmount(readConfig(configPath)) {}
 
 detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
     std::unique_lock lock(m_mutex);
@@ -99,6 +77,42 @@ detail::ContainerController::~ContainerController() {
             m_dockerWrapper.removeContainer(container.id);
         }
     }
+}
+
+size_t detail::ContainerController::readConfig(std::string const & configPath) {
+    namespace pt = boost::property_tree;
+    pt::ptree loadPtreeRoot;
+
+    try {
+        pt::read_json(configPath, loadPtreeRoot);
+    } catch(std::exception & e) {
+        bool stop = true;
+    }
+    auto const languages = loadPtreeRoot.get_child("languages");
+    for (auto const & language : languages) {
+        auto const containerType = getContainerType(language.first);
+        auto const imageName = language.second.get_child("image-name").get_value<std::string>();
+        auto const alwaysLaunched = language.second.get_child("launched").get_value<size_t>();
+
+        std::vector<Container> containers;
+        containers.reserve(alwaysLaunched);
+        for (size_t index = 0; index < alwaysLaunched; ++index) {
+            DockerRunParams params{.image = imageName, .tty = true, .memoryLimit = 7000000};
+            std::string id = m_dockerWrapper.run(std::move(params));
+            if (id.empty()) {
+                Log::warning("Internal error: can't run container of type {}",
+                             static_cast<int>(containerType));
+                continue;
+            }
+            containers.emplace_back(m_dockerWrapper, std::move(id), containerType);
+        }
+
+        if (!containers.empty()) {
+            m_containers.emplace(containerType, std::move(containers));
+        }
+    }
+
+    return loadPtreeRoot.get_child("max-containers-amount").get_value<size_t>();
 }
 
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {

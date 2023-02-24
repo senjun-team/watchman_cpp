@@ -33,7 +33,7 @@ struct Container {
 
 class ContainerController {
 public:
-    explicit ContainerController(std::string host);
+    ContainerController(std::string host, std::string const & configPath);
     ~ContainerController();
 
     ContainerController(ContainerController const & other) = delete;
@@ -45,22 +45,20 @@ public:
     void containerReleased(Container & container);
 
 private:
-    std::unordered_map<Container::Type, std::string_view> m_containerTypeToImage;
-    std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
     std::unordered_map<Container::Type, std::vector<Container>> m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
 
     DockerWrapper m_dockerWrapper;
-    void readConfig();
+    size_t const m_maxContainersAmount;
+    size_t readConfig(std::string const & configPath);
 };
 }  // namespace detail
 
 class Service {
 public:
-    Service();
-    explicit Service(std::string host);
+    Service(std::string const & host, std::string const & configPath);
     ~Service() = default;
 
     Service(Service const &) = delete;

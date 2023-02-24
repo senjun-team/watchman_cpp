@@ -50,4 +50,7 @@ Response Server::processRequest(std::string const & body) {
     return m_service.runTask(params);
 }
 
+Server::Server(const std::string & dockerHost, const std::string & configPath)
+    : m_service(dockerHost, configPath) {}
+
 }  // namespace watchman
