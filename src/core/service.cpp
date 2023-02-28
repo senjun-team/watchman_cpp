@@ -39,7 +39,10 @@ Service::Service(std::string const & host, std::string const & configPath)
 
 detail::ContainerController::ContainerController(std::string host, std::string const & configPath)
     : m_dockerWrapper(std::move(host))
-    , m_maxContainersAmount(readConfig(configPath)) {}
+    , m_config(configPath) {
+    killOldContainers(m_config.getLanguages());
+    launchNewContainers(m_config.getLanguages());
+}
 
 detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
     std::unique_lock lock(m_mutex);
@@ -78,32 +81,12 @@ detail::ContainerController::~ContainerController() {
     }
 }
 
-size_t detail::ContainerController::readConfig(std::string const & configPath) {
-    namespace pt = boost::property_tree;
-    pt::ptree loadPtreeRoot;
-
-    try {
-        pt::read_json(configPath, loadPtreeRoot);
-    } catch (std::exception const & error) {
-        Log::error("Error while reading config file: {}", error.what());
-        std::terminate();
-    }
-
-    auto const & languages = loadPtreeRoot.get_child("languages");
-    killOldContainers(languages);
-    launchNewContainers(languages);
-
-    return loadPtreeRoot.get_child("max-containers-amount").get_value<size_t>();
-}
-
-template<typename Ptree>
-void detail::ContainerController::killOldContainers(Ptree const & languages) {
+void detail::ContainerController::killOldContainers(
+    std::unordered_map<Container::Type, Language> const & languages) {
     auto const workingContainers = m_dockerWrapper.getAllContainers();
-    for (auto const & language : languages) {
+    for (auto const & [_, language] : languages) {
         for (auto const & container : workingContainers) {
-            if (container.image.find(
-                    language.second.get_child("image-name").template get_value<std::string>())
-                != std::string::npos) {
+            if (container.image.find(language.imageName) != std::string::npos) {
                 if (m_dockerWrapper.isRunning(container.id)) {
                     m_dockerWrapper.killContainer(container.id);
                 }
@@ -114,30 +97,25 @@ void detail::ContainerController::killOldContainers(Ptree const & languages) {
     }
 }
 
-template<typename Ptree>
-void detail::ContainerController::launchNewContainers(Ptree const & languages) {
-    for (auto const & language : languages) {
-        auto const containerType = getContainerType(language.first);
-        auto const imageName =
-            language.second.get_child("image-name").template get_value<std::string>();
-        auto const alwaysLaunched =
-            language.second.get_child("launched").template get_value<size_t>();
-
+void detail::ContainerController::launchNewContainers(
+    std::unordered_map<Container::Type, Language> const & languages) {
+    for (auto const & [type, language] : languages) {
         std::vector<Container> containers;
-        containers.reserve(alwaysLaunched);
-        for (size_t index = 0; index < alwaysLaunched; ++index) {
-            DockerRunParams params{.image = imageName, .tty = true, .memoryLimit = 7000000};
+        containers.reserve(language.launched);
+        for (size_t index = 0; index < language.launched; ++index) {
+            DockerRunParams params{
+                .image = language.imageName, .tty = true, .memoryLimit = 7000000};
             std::string id = m_dockerWrapper.run(std::move(params));
             if (id.empty()) {
                 Log::warning("Internal error: can't run container of type {}",
-                             static_cast<int>(containerType));
+                             static_cast<int>(type));
                 continue;
             }
-            containers.emplace_back(m_dockerWrapper, std::move(id), containerType);
+            containers.emplace_back(m_dockerWrapper, std::move(id), type);
         }
 
         if (!containers.empty()) {
-            m_containers.emplace(containerType, std::move(containers));
+            m_containers.emplace(type, std::move(containers));
         }
     }
 }
@@ -231,5 +209,64 @@ detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type
     , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
+
+detail::ConfigParser::ConfigParser(std::string const & configPath) {
+    namespace pt = boost::property_tree;
+    pt::ptree loadPtreeRoot;
+
+    try {
+        pt::read_json(configPath, loadPtreeRoot);
+    } catch (std::exception const & error) {
+        Log::error("Error while reading config file: {}", error.what());
+        std::terminate();
+    }
+
+    fillConfig(loadPtreeRoot);
+}
+
+std::unordered_map<detail::Container::Type, detail::Language>
+detail::ConfigParser::getLanguages() const {
+    return m_config.languages;
+}
+
+template<typename Ptree>
+void detail::ConfigParser::fillConfig(Ptree const & root) {
+    auto const & maxContainersAmount = root.get_child_optional("max-containers-amount");
+    if (!maxContainersAmount.has_value() && maxContainersAmount) {
+        Log::error("Required field \'max-containers-amount\' is absent");
+        std::terminate();
+    }
+    m_config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
+
+    auto const & languages = root.get_child_optional("languages");
+    if (!languages.has_value()) {
+        Log::error("Required field \'languages\' is absent");
+        std::terminate();
+    }
+
+    for (auto const & language : languages.value()) {
+        auto imageName = language.second.get_child_optional("image-name");
+        if (!imageName.has_value()) {
+            Log::error("Required field \'image-name\' is absent in {}", language.first);
+            std::terminate();
+        }
+
+        auto const launched = language.second.get_child_optional("launched");
+        if (!launched.has_value()) {
+            Log::error("Required field \'launched\' is absent in {}", language.first);
+            std::terminate();
+        }
+
+        auto const containerType = getContainerType(language.first);
+        if (containerType == Container::Type::Unknown) {
+            Log::error("Container type: \'{}\' is unknown", language.first);
+            std::terminate();
+        }
+
+        m_config.languages.insert({containerType,
+                                   {imageName.value().template get_value<std::string>(),
+                                    launched.value().template get_value<uint32_t>()}});
+    }
+}
 
 }  // namespace watchman
