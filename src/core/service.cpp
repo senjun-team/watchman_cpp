@@ -232,7 +232,7 @@ detail::ConfigParser::getLanguages() const {
 template<typename Ptree>
 void detail::ConfigParser::fillConfig(Ptree const & root) {
     auto const & maxContainersAmount = root.get_child_optional("max-containers-amount");
-    if (!maxContainersAmount.has_value() && maxContainersAmount) {
+    if (!maxContainersAmount.has_value()) {
         Log::error("Required field \'max-containers-amount\' is absent");
         std::terminate();
     }
