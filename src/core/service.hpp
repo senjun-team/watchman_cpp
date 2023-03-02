@@ -31,9 +31,31 @@ struct Container {
     DockerAnswer clean();
 };
 
+struct Language {
+    std::string imageName;
+    uint32_t launched{0};
+};
+
+struct Config {
+    uint32_t maxContainersAmount{0};
+    std::unordered_map<Container::Type, Language> languages;
+};
+
+class ConfigParser {
+public:
+    explicit ConfigParser(std::string const & configPath);
+    std::unordered_map<Container::Type, Language> getLanguages() const;
+
+private:
+    template<typename Ptree>
+    void fillConfig(Ptree const & root);
+
+    Config m_config;
+};
+
 class ContainerController {
 public:
-    explicit ContainerController(std::string host);
+    ContainerController(std::string host, std::string const & configPath);
     ~ContainerController();
 
     ContainerController(ContainerController const & other) = delete;
@@ -45,22 +67,22 @@ public:
     void containerReleased(Container & container);
 
 private:
-    std::unordered_map<Container::Type, std::string_view> m_containerTypeToImage;
-    std::unordered_map<Container::Type, size_t> m_containerTypeToMinContainers;
     std::unordered_map<Container::Type, std::vector<Container>> m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
 
     DockerWrapper m_dockerWrapper;
-    void readConfig();
+    detail::ConfigParser m_config;
+
+    void killOldContainers(std::unordered_map<Container::Type, Language> const & languages);
+    void launchNewContainers(std::unordered_map<Container::Type, Language> const & languages);
 };
 }  // namespace detail
 
 class Service {
 public:
-    Service();
-    explicit Service(std::string host);
+    Service(std::string const & host, std::string const & configPath);
     ~Service() = default;
 
     Service(Service const &) = delete;

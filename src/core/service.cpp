@@ -2,6 +2,8 @@
 
 #include "common/logging.hpp"
 
+#include <boost/property_tree/json_parser.hpp>
+
 namespace watchman {
 
 struct StringContainers {
@@ -20,48 +22,26 @@ size_t constexpr kDockerMemoryKill = 137;
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
 
-Service::Service()
-    : m_containerController(kDefaultHost) {}
+detail::Container::Type getContainerType(std::string const & type) {
+    if (type == StringContainers::python) {
+        return detail::Container::Type::Python;
+    }
 
-Service::Service(std::string host)
-    : m_containerController(std::move(host)) {}
+    if (type == StringContainers::rust) {
+        return detail::Container::Type::Rust;
+    }
 
-detail::ContainerController::ContainerController(std::string host)
-    : m_dockerWrapper(std::move(host)) {
-    readConfig();
+    return detail::Container::Type::Unknown;
 }
 
-void detail::ContainerController::readConfig() {
-    // TODO fill hash maps from config
-    // temporarily fill them by hands
+Service::Service(std::string const & host, std::string const & configPath)
+    : m_containerController(host, configPath) {}
 
-    m_containerTypeToImage.insert({Container::Type::Python, StringImages::python});
-    m_containerTypeToImage.insert({Container::Type::Rust, StringImages::rust});
-
-    // TODO remove magic numbers
-    m_containerTypeToMinContainers.insert({Container::Type::Python, 1});
-    m_containerTypeToMinContainers.insert({Container::Type::Rust, 0});
-
-    for (auto const [type, amount] : m_containerTypeToMinContainers) {
-        std::vector<Container> containers;
-        for (size_t index = 0; index < amount; ++index) {
-            // TODO make humanable params filling
-            DockerRunParams params{.image = std::string{m_containerTypeToImage[type]},
-                                   .tty = true,
-                                   .memoryLimit = 7000000};
-            std::string id = m_dockerWrapper.run(std::move(params));
-            if (id.empty()) {
-                Log::warning("Internal error: can't run container of type {}",
-                             static_cast<int>(type));
-                continue;
-            }
-            containers.emplace_back(m_dockerWrapper, std::move(id), type);
-        }
-
-        if (!containers.empty()) {
-            m_containers.emplace(type, std::move(containers));
-        }
-    }
+detail::ContainerController::ContainerController(std::string host, std::string const & configPath)
+    : m_dockerWrapper(std::move(host))
+    , m_config(configPath) {
+    killOldContainers(m_config.getLanguages());
+    launchNewContainers(m_config.getLanguages());
 }
 
 detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
@@ -97,6 +77,45 @@ detail::ContainerController::~ContainerController() {
         for (auto & container : containers) {
             m_dockerWrapper.killContainer(container.id);
             m_dockerWrapper.removeContainer(container.id);
+        }
+    }
+}
+
+void detail::ContainerController::killOldContainers(
+    std::unordered_map<Container::Type, Language> const & languages) {
+    auto const workingContainers = m_dockerWrapper.getAllContainers();
+    for (auto const & [_, language] : languages) {
+        for (auto const & container : workingContainers) {
+            if (container.image.find(language.imageName) != std::string::npos) {
+                if (m_dockerWrapper.isRunning(container.id)) {
+                    m_dockerWrapper.killContainer(container.id);
+                }
+
+                m_dockerWrapper.removeContainer(container.id);
+            }
+        }
+    }
+}
+
+void detail::ContainerController::launchNewContainers(
+    std::unordered_map<Container::Type, Language> const & languages) {
+    for (auto const & [type, language] : languages) {
+        std::vector<Container> containers;
+        containers.reserve(language.launched);
+        for (size_t index = 0; index < language.launched; ++index) {
+            DockerRunParams params{
+                .image = language.imageName, .tty = true, .memoryLimit = 7000000};
+            std::string id = m_dockerWrapper.run(std::move(params));
+            if (id.empty()) {
+                Log::warning("Internal error: can't run container of type {}",
+                             static_cast<int>(type));
+                continue;
+            }
+            containers.emplace_back(m_dockerWrapper, std::move(id), type);
+        }
+
+        if (!containers.empty()) {
+            m_containers.emplace(type, std::move(containers));
         }
     }
 }
@@ -190,5 +209,64 @@ detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type
     , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
+
+detail::ConfigParser::ConfigParser(std::string const & configPath) {
+    namespace pt = boost::property_tree;
+    pt::ptree loadPtreeRoot;
+
+    try {
+        pt::read_json(configPath, loadPtreeRoot);
+    } catch (std::exception const & error) {
+        Log::error("Error while reading config file: {}", error.what());
+        std::terminate();
+    }
+
+    fillConfig(loadPtreeRoot);
+}
+
+std::unordered_map<detail::Container::Type, detail::Language>
+detail::ConfigParser::getLanguages() const {
+    return m_config.languages;
+}
+
+template<typename Ptree>
+void detail::ConfigParser::fillConfig(Ptree const & root) {
+    auto const & maxContainersAmount = root.get_child_optional("max-containers-amount");
+    if (!maxContainersAmount.has_value()) {
+        Log::error("Required field \'max-containers-amount\' is absent");
+        std::terminate();
+    }
+    m_config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
+
+    auto const & languages = root.get_child_optional("languages");
+    if (!languages.has_value()) {
+        Log::error("Required field \'languages\' is absent");
+        std::terminate();
+    }
+
+    for (auto const & language : languages.value()) {
+        auto imageName = language.second.get_child_optional("image-name");
+        if (!imageName.has_value()) {
+            Log::error("Required field \'image-name\' is absent in {}", language.first);
+            std::terminate();
+        }
+
+        auto const launched = language.second.get_child_optional("launched");
+        if (!launched.has_value()) {
+            Log::error("Required field \'launched\' is absent in {}", language.first);
+            std::terminate();
+        }
+
+        auto const containerType = getContainerType(language.first);
+        if (containerType == Container::Type::Unknown) {
+            Log::error("Container type: \'{}\' is unknown", language.first);
+            std::terminate();
+        }
+
+        m_config.languages.insert({containerType,
+                                   {imageName.value().template get_value<std::string>(),
+                                    launched.value().template get_value<uint32_t>()}});
+    }
+}
 
 }  // namespace watchman
