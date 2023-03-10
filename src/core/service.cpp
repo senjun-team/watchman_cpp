@@ -40,6 +40,7 @@ Service::Service(std::string const & host, std::string const & configPath)
 detail::ContainerController::ContainerController(std::string host, std::string const & configPath)
     : m_dockerWrapper(std::move(host))
     , m_config(configPath) {
+    Log::info("Service launched");
     killOldContainers(m_config.getLanguages());
     launchNewContainers(m_config.getLanguages());
 }
@@ -91,6 +92,7 @@ void detail::ContainerController::killOldContainers(
                     m_dockerWrapper.killContainer(container.id);
                 }
 
+                Log::info("Remove container type: {}, id: {}", language.imageName, container.id);
                 m_dockerWrapper.removeContainer(container.id);
             }
         }
@@ -111,6 +113,8 @@ void detail::ContainerController::launchNewContainers(
                              static_cast<int>(type));
                 continue;
             }
+
+            Log::info("Launch container: {}, id: {}", language.imageName, id);
             containers.emplace_back(m_dockerWrapper, std::move(id), type);
         }
 

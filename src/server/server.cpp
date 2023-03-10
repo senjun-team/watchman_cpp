@@ -15,6 +15,7 @@ Server::Server(std::string const & dockerHost, std::string const & configPath)
     : m_service(dockerHost, configPath) {}
 
 void Server::start() {
+    Log::info("Watchman working on {} port", kPort);
     restinio::run(restinio::on_thread_pool(kThreadCount)
                       .port(kPort)
                       .address(kIpAddress)
@@ -41,6 +42,7 @@ void Server::start() {
 }
 
 Response Server::processRequest(std::string const & body) {
+    Log::info("Processing body:\n {}", body);
     auto const params = parse(body);
     if (params.containerType.empty()) {
         return {};
