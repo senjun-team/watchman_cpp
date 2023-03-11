@@ -21,12 +21,12 @@ struct Container {
         bool isValid() const;
     };
 
-    DockerWrapper & dockerWrapper;
+    DockerWrapper dockerWrapper;
     std::string id;
     Type type{Type::Unknown};
     bool isReserved{false};
 
-    Container(DockerWrapper & dockerWrapper, std::string id, Type type);
+    Container(std::string host, std::string id, Type type);
     DockerAnswer runCode(std::string const & code);
     DockerAnswer clean();
 };
@@ -67,16 +67,18 @@ public:
     void containerReleased(Container & container);
 
 private:
-    std::unordered_map<Container::Type, std::vector<Container>> m_containers;
+    std::unordered_map<Container::Type, std::vector<std::shared_ptr<Container>>> m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
 
-    DockerWrapper m_dockerWrapper;
     detail::ConfigParser m_config;
+    std::string m_dockerHost;
 
-    void killOldContainers(std::unordered_map<Container::Type, Language> const & languages);
-    void launchNewContainers(std::unordered_map<Container::Type, Language> const & languages);
+    void killOldContainers(DockerWrapper & dockerWrapper,
+                           std::unordered_map<Container::Type, Language> const & languages);
+    void launchNewContainers(DockerWrapper & dockerWrapper,
+                             std::unordered_map<Container::Type, Language> const & languages);
 };
 }  // namespace detail
 

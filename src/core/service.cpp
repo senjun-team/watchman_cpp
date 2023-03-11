@@ -38,11 +38,13 @@ Service::Service(std::string const & host, std::string const & configPath)
     : m_containerController(host, configPath) {}
 
 detail::ContainerController::ContainerController(std::string host, std::string const & configPath)
-    : m_dockerWrapper(std::move(host))
+    : m_dockerHost(std::move(host))
     , m_config(configPath) {
     Log::info("Service launched");
-    killOldContainers(m_config.getLanguages());
-    launchNewContainers(m_config.getLanguages());
+
+    DockerWrapper dockerWrapper(m_dockerHost);
+    killOldContainers(dockerWrapper, m_config.getLanguages());
+    launchNewContainers(dockerWrapper, m_config.getLanguages());
 }
 
 detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
@@ -53,16 +55,16 @@ detail::Container & detail::ContainerController::getReadyContainer(detail::Conta
 
     m_containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
         for (size_t index = 0; index < containers.size(); ++index) {
-            if (!containers[index].isReserved) {
+            if (!containers[index]->isReserved) {
                 indexProperContainer = index;
-                containers[index].isReserved = true;
+                containers[index]->isReserved = true;
                 return true;
             }
         }
         return false;
     });
 
-    return containers.at(indexProperContainer);
+    return *containers.at(indexProperContainer);
 }
 
 void detail::ContainerController::containerReleased(Container & container) {
@@ -73,41 +75,35 @@ void detail::ContainerController::containerReleased(Container & container) {
     m_containerFree.notify_one();
 }
 
-detail::ContainerController::~ContainerController() {
-    for (auto & [_, containers] : m_containers) {
-        for (auto & container : containers) {
-            m_dockerWrapper.killContainer(container.id);
-            m_dockerWrapper.removeContainer(container.id);
-        }
-    }
-}
+detail::ContainerController::~ContainerController() {}
 
 void detail::ContainerController::killOldContainers(
+    DockerWrapper & dockerWrapper,
     std::unordered_map<Container::Type, Language> const & languages) {
-    auto const workingContainers = m_dockerWrapper.getAllContainers();
+    auto const workingContainers = dockerWrapper.getAllContainers();
     for (auto const & [_, language] : languages) {
         for (auto const & container : workingContainers) {
             if (container.image.find(language.imageName) != std::string::npos) {
-                if (m_dockerWrapper.isRunning(container.id)) {
-                    m_dockerWrapper.killContainer(container.id);
+                if (dockerWrapper.isRunning(container.id)) {
+                    dockerWrapper.killContainer(container.id);
                 }
 
                 Log::info("Remove container type: {}, id: {}", language.imageName, container.id);
-                m_dockerWrapper.removeContainer(container.id);
+                dockerWrapper.removeContainer(container.id);
             }
         }
     }
 }
 
 void detail::ContainerController::launchNewContainers(
+    DockerWrapper & dockerWrapper,
     std::unordered_map<Container::Type, Language> const & languages) {
     for (auto const & [type, language] : languages) {
-        std::vector<Container> containers;
-        containers.reserve(language.launched);
+        std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
             DockerRunParams params{
                 .image = language.imageName, .tty = true, .memoryLimit = 7000000};
-            std::string id = m_dockerWrapper.run(std::move(params));
+            std::string id = dockerWrapper.run(std::move(params));
             if (id.empty()) {
                 Log::warning("Internal error: can't run container of type {}",
                              static_cast<int>(type));
@@ -115,7 +111,8 @@ void detail::ContainerController::launchNewContainers(
             }
 
             Log::info("Launch container: {}, id: {}", language.imageName, id);
-            containers.emplace_back(m_dockerWrapper, std::move(id), type);
+            auto container = std::make_shared<Container>(m_dockerHost, std::move(id), type);
+            containers.emplace_back(std::move(container));
         }
 
         if (!containers.empty()) {
@@ -180,7 +177,7 @@ detail::Container::Type Service::getContainerType(std::string const & type) {
 
 detail::Container::DockerAnswer detail::Container::runCode(std::string const & code) {
     // TODO rethink naming
-    std::string const archive = "archiveWatchman.tar";
+    std::string const archive = id + "archiveWatchman.tar";
     if (!makeTar(archive, code)) {
         Log::error("Internal error! Couldn't create an archive");
         return {kInvalidCode, fmt::format("Internal error! Couldn't create an archive")};
@@ -191,7 +188,7 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
         return {kInvalidCode, fmt::format("Internal error! Couldn't put an archive to container")};
     }
 
-    std::vector<std::string> const args{"sh", "run.sh", "archiveWatchman"};
+    std::vector<std::string> const args{"sh", "run.sh", id + "archiveWatchman"};
     auto result = dockerWrapper.exec({args, id});
 
     if ((std::remove(archive.c_str())) != 0) {
@@ -207,8 +204,8 @@ detail::Container::DockerAnswer detail::Container::clean() {
     return {.code = kSuccessCode};
 }
 
-detail::Container::Container(DockerWrapper & dockerWrapper, std::string id, Type type)
-    : dockerWrapper(dockerWrapper)
+detail::Container::Container(std::string host, std::string id, Type type)
+    : dockerWrapper(std::move(host))
     , id(std::move(id))
     , type(type) {}
 
