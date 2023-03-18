@@ -102,7 +102,7 @@ void detail::ContainerController::launchNewContainers(
         std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
             DockerRunParams params{
-                .image = language.imageName, .tty = true, .memoryLimit = 7000000};
+                .image = language.imageName, .tty = true, .memoryLimit = 300'000'000};
             std::string id = dockerWrapper.run(std::move(params));
             if (id.empty()) {
                 Log::warning("Internal error: can't run container of type {}",
