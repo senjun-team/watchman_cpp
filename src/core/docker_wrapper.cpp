@@ -290,6 +290,6 @@ std::string detail::JsonHelper::getExecParams(std::vector<std::string> && comman
 }
 std::string detail::JsonHelper::getExecStartParams() && {
     // TODO may be should improve
-    return R"({"Detach": false, "Tty": false})";
+    return R"({"Detach": false, "Tty": true})";
 }
 }  // namespace watchman
