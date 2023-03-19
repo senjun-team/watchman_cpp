@@ -32,7 +32,7 @@ TEST(DockerWrapper, exec) {
 
     auto result = dockerWrapper.exec({args, id});
     ASSERT_TRUE(result.exitCode == 0);
-    ASSERT_EQ(result.output, reference);
+    ASSERT_EQ(result.output, "42\r\n");
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
 }
@@ -89,7 +89,7 @@ TEST(DockerWrapper, run_user_code) {
     bool const success = dockerWrapper.putArchive({id, pathInContainer, pythonTar});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42";
+    std::string const reference = "42\r\n";
     std::vector<std::string> const args{"sh", "run.sh", "example.py"};
 
     auto result = dockerWrapper.exec({args, id});
@@ -124,7 +124,7 @@ TEST(DockerWrapper, execute_task) {
     bool const success = dockerWrapper.putArchive({id, pathInContainer, archiveName});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42";
+    std::string const reference = "42\r\n";
     std::vector<std::string> const args{"sh", "run.sh", "python_archive"};
 
     auto result = dockerWrapper.exec({args, id});
