@@ -21,6 +21,7 @@ void Server::start() {
                       .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)
                                            -> restinio::request_handling_status_t {
+                          LogDuration duration("Request handling");
                           if (restinio::http_method_post() != req->header().method()) {
                               Log::error("error while handling: {}", req->body());
                               return restinio::request_rejected();
