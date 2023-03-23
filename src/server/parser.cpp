@@ -8,7 +8,7 @@ namespace watchman {
 
 // request sample
 // curl -X 'POST' \
-//    'http://127.0.0.1:8050/check' \
+//    'http://127.0.0.1:8000/check' \
 //    -H 'accept: application/json' \
 //    -H 'Content-Type: application/json' \
 //    -d '{

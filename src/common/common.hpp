@@ -20,6 +20,7 @@ struct Response {
     ErrorCode sourceCode{kInvalidCode};
     ErrorCode testsCode{kInvalidCode};
     std::string output;
+    std::string testsOutput;
 };
 
 // archiveName must have got suffix ".tar"
@@ -33,7 +34,5 @@ public:
 private:
     std::string const m_operation;
     std::chrono::system_clock::time_point m_start;
-
-
 };
 }  // namespace watchman
