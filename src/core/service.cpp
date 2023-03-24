@@ -208,15 +208,16 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
         return {result.exitCode, result.output};
     }
 
-    auto const exitStatus = result.output[result.output.size() - 3] - '0';
-    result.output.resize(result.output.size() - 5);  // \r\n'byte'\r\n
+    // TODO linux and mac differences with \r\n in answer
+    auto const exitStatus = result.output[result.output.size() - 1] - '0';  // get status as integer
+    result.output.resize(result.output.size() - 1);  // for linux there's no \r\n, only exitStatus
 
     if ((std::remove(archive.c_str())) != 0) {
         // TODO is this an error? should we write something to resul.output?
         Log::error("Internal error! Couldn't remove an archive from host");
     }
 
-        return {exitStatus, result.output};
+    return {exitStatus, result.output};
 }
 
 detail::Container::DockerAnswer detail::Container::clean() {
