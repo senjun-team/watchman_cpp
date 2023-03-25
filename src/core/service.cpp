@@ -209,8 +209,8 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
     }
 
     // TODO linux and mac differences with \r\n in answer
-    auto const exitStatus = result.output[result.output.size() - 1] - '0';  // get status as integer
-    result.output.resize(result.output.size() - 1);  // for linux there's no \r\n, only exitStatus
+    auto const exitStatus = result.output[result.output.size() - 3] - '0';  // get status as integer
+    result.output.resize(result.output.size() - 3);  // for linux there's no \r\n, only exitStatus
 
     if ((std::remove(archive.c_str())) != 0) {
         // TODO is this an error? should we write something to resul.output?

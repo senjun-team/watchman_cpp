@@ -13,9 +13,9 @@ namespace watchman {
 //    -H 'Content-Type: application/json' \
 //    -d '{
 //    "container_type": "python",
-//    "source_run": "print(42)",
-//    "source_test": "print(69)"
-//}'
+//    "source_run": "err_service_unavaliable = 503",
+//    "source_test": "try:\n    err_service_unavaliable = 503\n\n    if err_service_unavailable != 503:\n        print(\"Variable value is not 503\")\n        exit(1)\n\n    if type(err_service_unavailable) is not int:\n        print(\"Variable is not an integer\")\n        exit(1)\n\nexcept Exception:\n    print(\"There is no err_service_unavailable variable\")\n    exit(1)"
+// }'
 
 RunTaskParams parse(std::string const & body) {
     RunTaskParams const fields{
