@@ -20,4 +20,14 @@ bool makeTar(std::string_view archiveName, std::string_view sourceCode) {
     return true;
 }
 
+LogDuration::LogDuration(std::string operation)
+    : m_operation(std::move(operation))
+    , m_start(std::chrono::system_clock::now()) {}
+
+LogDuration::~LogDuration() {
+    Log::info("Duration for {} is {} milliseconds", m_operation,
+              std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                                                                    - m_start)
+                  .count());
+}
 };  // namespace watchman

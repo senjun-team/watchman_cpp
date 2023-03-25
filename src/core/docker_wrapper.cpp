@@ -139,6 +139,7 @@ bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
 }
 
 DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
+    LogDuration duration("Exec time");
     std::string const execRequest = makeJsonHelper().getExecParams(std::move(params.command));
     std::string const execStartRequest = makeJsonHelper().getExecStartParams();
 
@@ -273,7 +274,7 @@ std::string detail::JsonHelper::getExecParams(std::vector<std::string> && comman
     m_writer.Bool(true);
 
     m_writer.Key("Detach");
-    m_writer.Bool(false);
+    m_writer.Bool(true);
 
     m_writer.Key("Tty");
     m_writer.Bool(true);

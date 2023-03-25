@@ -21,6 +21,7 @@ void Server::start() {
                       .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)
                                            -> restinio::request_handling_status_t {
+                          LogDuration duration("Request handling");
                           if (restinio::http_method_post() != req->header().method()) {
                               Log::error("error while handling: {}", req->body());
                               return restinio::request_rejected();
@@ -33,15 +34,15 @@ void Server::start() {
                               .append_header(restinio::http_field::content_type, "application/json")
                               .append_header(restinio::http_field::status_uri,
                                              std::to_string(restinio::status_code::ok.raw_code()))
-                              .set_body(result.output)
+                              .set_body(result)
                               .done();
 
-                          Log::info("request handled successfully: {}", result.output);
+                          Log::info("request handled successfully: {}", result);
                           return restinio::request_accepted();
                       }));
 }
 
-Response Server::processRequest(std::string const & body) {
+std::string Server::processRequest(std::string const & body) {
     Log::info("Processing body:\n {}", body);
     auto const params = parse(body);
     if (params.containerType.empty()) {
@@ -52,7 +53,44 @@ Response Server::processRequest(std::string const & body) {
         return {};
     }
 
-    return m_service.runTask(params);
+    auto const makeJson = [this](Response && response) -> std::string {
+        rapidjson::StringBuffer stringBuffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
+
+        writer.StartObject();
+        writer.Key("error_code");
+        writer.Uint64(response.sourceCode);
+
+        if (response.sourceCode == kDockerTimeoutCode) {
+            writer.Key("output");
+            writer.String("Timeout");
+            writer.EndObject();
+            return stringBuffer.GetString();
+        }
+
+        if (response.sourceCode == kDockerMemoryKill) {
+            writer.Key("output");
+            writer.String("Out of memory");
+            writer.EndObject();
+            return stringBuffer.GetString();
+        }
+
+        writer.Key("output");
+        writer.String(response.output);
+
+        if (response.sourceCode == 0) {
+            writer.Key("tests_error_code");
+            writer.Uint64(response.testsCode);
+            writer.Key("tests_error");
+            writer.String(response.testsOutput);
+            writer.EndObject();
+            return stringBuffer.GetString();
+        }
+
+        writer.EndObject();
+        return stringBuffer.GetString();
+    };
+    return makeJson(m_service.runTask(params));
 }
 
 }  // namespace watchman

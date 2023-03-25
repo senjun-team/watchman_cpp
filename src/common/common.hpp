@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 #include <string>
 
@@ -19,8 +20,19 @@ struct Response {
     ErrorCode sourceCode{kInvalidCode};
     ErrorCode testsCode{kInvalidCode};
     std::string output;
+    std::string testsOutput;
 };
 
 // archiveName must have got suffix ".tar"
 bool makeTar(std::string_view archiveName, std::string_view sourceCode);
+
+class LogDuration {
+public:
+    LogDuration(std::string operation);
+    ~LogDuration();
+
+private:
+    std::string const m_operation;
+    std::chrono::system_clock::time_point m_start;
+};
 }  // namespace watchman

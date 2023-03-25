@@ -128,35 +128,49 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
         return {.sourceCode = kInvalidCode,
                 .testsCode = kInvalidCode,
                 .output = fmt::format("Error: unknown container type \'{}\'",
-                                      runTaskParams.containerType)};
+                                      runTaskParams.containerType),
+                .testsOutput = ""};
     }
 
     auto & container = getReadyContainer(containerType);  // here we have got a race
 
     auto resultSourceRun = container.runCode(runTaskParams.sourceRun);
     if (!resultSourceRun.isValid()) {
+        m_containerController.containerReleased(container);
+
         return {.sourceCode = resultSourceRun.code,
                 .testsCode = kInvalidCode,
-                .output = std::move(resultSourceRun.output)};
+                .output = std::move(resultSourceRun.output),
+                .testsOutput = ""};
     }
 
+    std::string testResult;
     if (runTaskParams.sourceTest.has_value() && !runTaskParams.sourceTest->empty()) {
-        if (auto result = container.runCode(runTaskParams.sourceTest.value()); !result.isValid()) {
+        auto result = container.runCode(runTaskParams.sourceTest.value());
+        testResult = std::move(result.output);
+
+        if (!result.isValid()) {
+            m_containerController.containerReleased(container);
+
             return {.sourceCode = kSuccessCode,
                     .testsCode = result.code,
-                    .output = std::move(result.output)};
+                    .output = std::move(resultSourceRun.output),
+                    .testsOutput = std::move(testResult)};
         }
     }
 
     if (auto result = container.clean(); !result.isValid()) {
+        m_containerController.containerReleased(container);
+
         Log::error("Error while removing files for {}", container.id);
         return {.sourceCode = kSuccessCode,
                 .testsCode = kSuccessCode,
-                .output = std::move(result.output)};
+                .output = std::move(resultSourceRun.output),
+                .testsOutput = std::move(result.output)};
     }
 
     m_containerController.containerReleased(container);
-    return {kSuccessCode, kSuccessCode, resultSourceRun.output};
+    return {kSuccessCode, kSuccessCode, resultSourceRun.output, testResult};
 }
 
 detail::Container & Service::getReadyContainer(detail::Container::Type type) {
@@ -190,13 +204,20 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
 
     std::vector<std::string> const args{"sh", "run.sh", id + "archiveWatchman"};
     auto result = dockerWrapper.exec({args, id});
+    if (result.exitCode < 0) {
+        return {result.exitCode, result.output};
+    }
+
+    // TODO linux and mac differences with \r\n in answer
+    auto const exitStatus = result.output[result.output.size() - 1] - '0';  // get status as integer
+    result.output.resize(result.output.size() - 1);  // for linux there's no \r\n, only exitStatus
 
     if ((std::remove(archive.c_str())) != 0) {
         // TODO is this an error? should we write something to resul.output?
         Log::error("Internal error! Couldn't remove an archive from host");
     }
 
-    return {result.exitCode, result.output};
+    return {exitStatus, result.output};
 }
 
 detail::Container::DockerAnswer detail::Container::clean() {
