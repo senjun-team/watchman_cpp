@@ -64,7 +64,7 @@ public:
     explicit DockerWrapper(std::string host);
 
     DockerWrapper(DockerWrapper &&) = default;
-    DockerWrapper & operator=(DockerWrapper &&) = default;
+    DockerWrapper & operator=(DockerWrapper &&) = delete;
 
     DockerWrapper(DockerWrapper const &) = delete;
     DockerWrapper & operator=(DockerWrapper const &) = delete;
