@@ -69,13 +69,13 @@ detail::Container & detail::ContainerController::getReadyContainer(detail::Conta
 
 void detail::ContainerController::containerReleased(Container & container) {
     {
-        std::scoped_lock lock(m_mutex);
+        std::scoped_lock const lock(m_mutex);
         container.isReserved = false;
     }
     m_containerFree.notify_one();
 }
 
-detail::ContainerController::~ContainerController() {}
+detail::ContainerController::~ContainerController() = default;
 
 void detail::ContainerController::killOldContainers(
     DockerWrapper & dockerWrapper,
@@ -208,9 +208,36 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
         return {result.exitCode, result.output};
     }
 
-    // TODO linux and mac differences with \r\n in answer
-    auto const exitStatus = result.output[result.output.size() - 1] - '0';  // get status as integer
-    result.output.resize(result.output.size() - 1);  // for linux there's no \r\n, only exitStatus
+    auto const findEscapeSequences = [](std::string const & output) -> bool {
+        constexpr size_t kMinStringSizeWithEscapeSequences = 3;
+        if (output.size() < kMinStringSizeWithEscapeSequences) {
+            // code\r\n — 3 bytes
+            return false;
+        }
+
+        return output[output.size() - 1] == '\n' && output[output.size() - 2] == '\r';
+    };
+
+    auto const getExitCode = [](bool hasEscapeSequences, std::string & output) -> int32_t {
+        int32_t exitStatus = -1;
+        if (hasEscapeSequences) {
+            exitStatus = output[output.size() - 3] - '0';
+            output.resize(output.size() - 3);
+            return exitStatus;
+        }
+
+        exitStatus = output[output.size() - 1] - '0';
+        output.resize(output.size() - 1);
+        return exitStatus;
+    };
+
+    bool hasEscapeSequences = findEscapeSequences(result.output);
+    int32_t const exitStatus = getExitCode(hasEscapeSequences, result.output);
+
+    hasEscapeSequences = findEscapeSequences(result.output);
+    if (hasEscapeSequences) {
+        result.output.resize(result.output.size() - 2);
+    }
 
     if ((std::remove(archive.c_str())) != 0) {
         // TODO is this an error? should we write something to resul.output?
