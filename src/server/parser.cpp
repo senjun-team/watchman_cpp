@@ -6,7 +6,7 @@
 
 namespace watchman {
 
-// request sample
+// python request sample
 // curl -X 'POST' \
 //    'http://127.0.0.1:8000/check' \
 //    -H 'accept: application/json' \
@@ -17,6 +17,16 @@ namespace watchman {
 //    "source_test": "try:\n    err_service_unavaliable = 503\n\n    if err_service_unavailable != 503:\n        print(\"Variable value is not 503\")\n        exit(1)\n\n    if type(err_service_unavailable) is not int:\n        print(\"Variable is not an integer\")\n        exit(1)\n\nexcept Exception:\n    print(\"There is no err_service_unavailable variable\")\n    exit(1)"
 // }'
 
+// rust request sample
+// curl -X 'POST' \
+//    'http://127.0.0.1:8000/check' \
+//    -H 'accept: application/json' \
+//    -H 'Content-Type: application/json' \
+//    -d '{
+//    "container_type": "rust",
+//    "source_run": "fn main() {println!(\"Hello, world!\");}",
+//    "source_test": ""
+// }'
 RunTaskParams parse(std::string const & body) {
     RunTaskParams const fields{
         .containerType = "container_type", .sourceRun = "source_run", .sourceTest = "source_test"};
