@@ -59,7 +59,7 @@ std::string Server::processRequest(std::string const & body) {
 
         writer.StartObject();
         writer.Key("error_code");
-        writer.Uint64(response.sourceCode);
+        writer.Int64(response.sourceCode);
 
         if (response.sourceCode == kDockerTimeoutCode) {
             writer.Key("output");
@@ -80,7 +80,7 @@ std::string Server::processRequest(std::string const & body) {
 
         if (response.sourceCode == 0) {
             writer.Key("tests_error_code");
-            writer.Uint64(response.testsCode);
+            writer.Int64(response.testsCode);
             writer.Key("tests_error");
             writer.String(response.testsOutput);
             writer.EndObject();
