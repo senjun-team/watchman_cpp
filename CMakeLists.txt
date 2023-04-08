@@ -3,6 +3,10 @@ project(watchman-cpp)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
 option(SPDLOG_FMT_EXTERNAL "Use external fmt library instead of bundled" ON)
 
 find_package(Boost 1.66 REQUIRED)
@@ -20,6 +24,6 @@ add_subdirectory(src)
 
 if (BUILD_TESTING)
     enable_testing()
-    target_compile_definitions(${PROJECT_NAME} PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC TEST_DATA_DIR= "${CMAKE_CURRENT_SOURCE_DIR}/tests/data/")
     add_subdirectory(tests)
 endif ()
