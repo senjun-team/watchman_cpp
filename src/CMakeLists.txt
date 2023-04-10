@@ -13,7 +13,7 @@ set(CORE_SOURCES
         common/common.cpp
         common/logging.cpp
         )
-set(WATCHMAN_CORE "${PROJECT_NAME}")
+set(WATCHMAN_CORE "${PROJECT_NAME}-core")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})
 target_compile_definitions(${WATCHMAN_CORE} PRIVATE RAPIDJSON_HAS_STDSTRING)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/rapidjson/include/)
@@ -41,7 +41,7 @@ set(SERVER_SOURCES
         server/parser.cpp
         )
 
-set(SERVER "${PROJECT_NAME}-executable")
+set(SERVER "${PROJECT_NAME}")
 add_executable(${SERVER} ${SERVER_SOURCES})
 target_compile_definitions(${SERVER} PRIVATE RAPIDJSON_HAS_STDSTRING)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.json" "${CMAKE_BINARY_DIR}/bin/config.json" COPYONLY)
