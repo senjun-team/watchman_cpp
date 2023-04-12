@@ -34,10 +34,10 @@ detail::Container::Type getContainerType(std::string const & type) {
     return detail::Container::Type::Unknown;
 }
 
-Service::Service(std::string const & host, std::string const & configPath)
+Service::Service(std::string const & host, std::string_view configPath)
     : m_containerController(host, configPath) {}
 
-detail::ContainerController::ContainerController(std::string host, std::string const & configPath)
+detail::ContainerController::ContainerController(std::string host, std::string_view configPath)
     : m_dockerHost(std::move(host))
     , m_config(configPath) {
     Log::info("Service launched");
@@ -259,12 +259,12 @@ detail::Container::Container(std::string host, std::string id, Type type)
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
 
-detail::ConfigParser::ConfigParser(std::string const & configPath) {
+detail::ConfigParser::ConfigParser(std::string_view configPath) {
     namespace pt = boost::property_tree;
     pt::ptree loadPtreeRoot;
 
     try {
-        pt::read_json(configPath, loadPtreeRoot);
+        pt::read_json(configPath.data(), loadPtreeRoot);
     } catch (std::exception const & error) {
         Log::error("Error while reading config file: {}", error.what());
         std::terminate();

@@ -6,19 +6,19 @@
 
 namespace {
 
-std::string const kConfig = "watchman_config.json";
+std::string_view constexpr kConfig = "watchman_config.json";
+std::string_view constexpr kEtcConfig = "/etc/watchman_config.json";
 
 // we will find config at /etc and near the binary
-std::string findConfig() {
+std::string_view findConfig() {
     bool const existsNearBinary = std::filesystem::exists(kConfig);
     if (existsNearBinary) {
         return kConfig;
     }
 
-    std::string etcConfig = fmt::format("/etc/{}", kConfig);
-    bool existsAtEtc = std::filesystem::exists(etcConfig);
+    bool existsAtEtc = std::filesystem::exists(kEtcConfig);
     if (existsAtEtc) {
-        return etcConfig;
+        return kEtcConfig;
     }
 
     return {};
