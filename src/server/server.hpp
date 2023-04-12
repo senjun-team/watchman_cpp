@@ -7,7 +7,7 @@
 namespace watchman {
 class Server {
 public:
-    Server(std::string const & dockerHost, std::string const & configPath);
+    Server(std::string const & dockerHost, std::string_view configPath);
     void start();
 
 private:

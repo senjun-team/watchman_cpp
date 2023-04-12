@@ -11,7 +11,7 @@ constexpr size_t kThreadCount = 4;
 constexpr size_t kPort = 8000;
 std::string const kIpAddress = "0.0.0.0";
 
-Server::Server(std::string const & dockerHost, std::string const & configPath)
+Server::Server(std::string const & dockerHost, std::string_view configPath)
     : m_service(dockerHost, configPath) {}
 
 void Server::start() {

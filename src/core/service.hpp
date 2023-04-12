@@ -43,7 +43,7 @@ struct Config {
 
 class ConfigParser {
 public:
-    explicit ConfigParser(std::string const & configPath);
+    explicit ConfigParser(std::string_view configPath);
     std::unordered_map<Container::Type, Language> getLanguages() const;
 
 private:
@@ -55,7 +55,7 @@ private:
 
 class ContainerController {
 public:
-    ContainerController(std::string host, std::string const & configPath);
+    ContainerController(std::string host, std::string_view configPath);
     ~ContainerController();
 
     ContainerController(ContainerController const & other) = delete;
@@ -84,7 +84,7 @@ private:
 
 class Service {
 public:
-    Service(std::string const & host, std::string const & configPath);
+    Service(std::string const & host, std::string_view configPath);
     ~Service() = default;
 
     Service(Service const &) = delete;

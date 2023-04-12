@@ -22,7 +22,10 @@ set(RESTINIO_USE_BOOST_ASIO "shared")
 add_subdirectory(third_party/restinio-0.6.17/dev/nodejs/http_parser)
 add_subdirectory(third_party/restinio-0.6.17/dev/restinio)
 
+# TODO make it compile
+#add_compile_options(-Werror -Wpedantic)
 add_subdirectory(src)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/accomodation/etc/watchman_config.json" "${CMAKE_BINARY_DIR}/bin/watchman_config.json" COPYONLY)
 
 if (BUILD_TESTING)
     enable_testing()
