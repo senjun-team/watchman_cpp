@@ -13,11 +13,13 @@ std::string_view constexpr kEtcConfig = "/etc/watchman_config.json";
 std::string_view findConfig() {
     bool const existsNearBinary = std::filesystem::exists(kConfig);
     if (existsNearBinary) {
+        watchman::Log::info("Config {} found near the binary", kConfig);
         return kConfig;
     }
 
     bool existsAtEtc = std::filesystem::exists(kEtcConfig);
     if (existsAtEtc) {
+        watchman::Log::info("Config {} found at {}", kConfig, kEtcConfig);
         return kEtcConfig;
     }
 
