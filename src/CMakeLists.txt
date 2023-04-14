@@ -13,7 +13,7 @@ set(CORE_SOURCES
         common/common.cpp
         common/logging.cpp
         )
-set(WATCHMAN_CORE "${PROJECT_NAME}-core")
+set(WATCHMAN_CORE "${PROJECT_NAME}_core")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})
 target_compile_definitions(${WATCHMAN_CORE} PRIVATE RAPIDJSON_HAS_STDSTRING)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/rapidjson/include/)
@@ -32,7 +32,6 @@ install(FILES ${CORE_HEADERS} DESTINATION include)
 set(SERVER_HEADERS
         server/parser.hpp
         server/server.hpp
-        config.json
         )
 
 set(SERVER_SOURCES
