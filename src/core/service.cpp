@@ -145,8 +145,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     }
 
     std::string testResult;
-    if (runTaskParams.sourceTest.has_value() && !runTaskParams.sourceTest->empty()) {
-        auto result = container.runCode(runTaskParams.sourceTest.value());
+    if (!runTaskParams.sourceTest.empty()) {
+        auto result = container.runCode(runTaskParams.sourceTest);
         testResult = std::move(result.output);
 
         if (!result.isValid()) {

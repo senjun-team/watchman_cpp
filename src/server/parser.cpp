@@ -61,9 +61,7 @@ RunTaskParams parse(std::string const & body) {
 
     return {.containerType = getField(fields.containerType),
             .sourceRun = getField(fields.sourceRun),
-            .sourceTest = hasField(fields.sourceTest.value())
-                            ? std::make_optional(getField(fields.sourceTest.value()))
-                            : std::nullopt};
+            .sourceTest = hasField(fields.sourceTest) ? getField(fields.sourceTest) : ""};
 }
 
 }  // namespace watchman
