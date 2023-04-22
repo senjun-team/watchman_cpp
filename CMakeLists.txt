@@ -15,7 +15,6 @@ find_package(Boost 1.66 REQUIRED)
 
 add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/spdlog)
-add_subdirectory(third_party/libunifex)
 add_subdirectory(third_party/DockerClient)
 
 set(RESTINIO_USE_BOOST_ASIO "shared")
