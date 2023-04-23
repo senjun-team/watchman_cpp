@@ -3,9 +3,11 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <sstream>
 
 namespace watchman {
-
+std::string const kFilenameTask = "task";
+std::string const kFilenameTaskTests = "task_tests";
 using ErrorCode = int32_t;
 static ErrorCode constexpr kSuccessCode = 0;
 static ErrorCode constexpr kInvalidCode = -1;
@@ -23,8 +25,8 @@ struct Response {
     std::string testsOutput;
 };
 
-// archiveName must have got suffix ".tar"
-bool makeTar(std::string_view archiveName, std::string_view sourceCode);
+std::ostringstream makeTar(std::string const & sourceCode, std::string const & sourceTests);
+
 
 class LogDuration {
 public:

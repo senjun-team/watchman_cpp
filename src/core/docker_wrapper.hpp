@@ -27,7 +27,7 @@ struct DockerExecParams {
 struct DockerPutArchiveParams {
     std::string containerId;
     std::string pathInContainer;
-    std::string pathToArchive;
+    std::ostringstream archive;
 };
 
 struct Container {
