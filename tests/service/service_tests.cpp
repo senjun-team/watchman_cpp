@@ -59,7 +59,7 @@ TEST(Service, RaceCondition) {
                                              std::move(testingCode)};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
-        ASSERT_EQ(response.output, "42\r\n");
+        ASSERT_EQ(response.output, "42");
     });
 
     std::thread t2([&service]() {
@@ -70,7 +70,7 @@ TEST(Service, RaceCondition) {
                                              std::move(testingCode)};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
-        ASSERT_EQ(response.output, "69\r\n");
+        ASSERT_EQ(response.output, "69");
     });
 
     t1.join();

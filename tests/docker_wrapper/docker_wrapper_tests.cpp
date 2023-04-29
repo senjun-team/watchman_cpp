@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <fstream>
+#include <sstream>
 
 using namespace watchman;
 
@@ -71,9 +72,9 @@ TEST(DockerWrapper, put_archive) {
     DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
     std::string const pathInContainer = "/home/code_runner";
-    std::string pythonTar = std::string{TEST_DATA_DIR} + "example.tgz";
 
-    bool const success = dockerWrapper.putArchive({id, pathInContainer, pythonTar});
+    bool const success =
+        dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)")});
     ASSERT_TRUE(success);
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
@@ -84,13 +85,13 @@ TEST(DockerWrapper, run_user_code) {
     DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
     std::string const pathInContainer = "/home/code_runner";
-    std::string pythonTar = std::string{TEST_DATA_DIR} + "example.tgz";
 
-    bool const success = dockerWrapper.putArchive({id, pathInContainer, pythonTar});
+    bool const success =
+        dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)")});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42\r\n";
-    std::vector<std::string> const args{"sh", "run.sh", "example.py"};
+    std::string const reference = "42\r\n0\r\n";
+    std::vector<std::string> const args{"sh", "run.sh", kFilenameTask};
 
     auto result = dockerWrapper.exec({args, id});
     ASSERT_TRUE(result.exitCode == 0);
@@ -115,24 +116,18 @@ TEST(DockerWrapper, execute_task) {
     DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
     std::string const pathInContainer = "/home/code_runner";
-    std::string const archiveName = "python_archive.tar";
     std::string const sourceCode = "print(42)\n";
-    if (!makeTar(archiveName, sourceCode)) {
-        ASSERT_FALSE(true);
-    }
 
-    bool const success = dockerWrapper.putArchive({id, pathInContainer, archiveName});
+    bool const success =
+        dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)")});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42\r\n";
-    std::vector<std::string> const args{"sh", "run.sh", "python_archive"};
+    std::string const reference = "42\r\n0\r\n";
+    std::vector<std::string> const args{"sh", "run.sh", kFilenameTask};
 
     auto result = dockerWrapper.exec({args, id});
     ASSERT_TRUE(result.exitCode == 0);
     ASSERT_EQ(result.output, reference);
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
-
-    std::remove(archiveName.c_str());
-    ASSERT_TRUE(!std::ifstream(archiveName));
 }
