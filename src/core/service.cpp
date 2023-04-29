@@ -133,8 +133,16 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     }
 
     auto & container = getReadyContainer(containerType);  // here we have got a race
+    if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
+        Log::warning("Couldn't pass tar to container");
+        return {.sourceCode = kInvalidCode,
+                .testsCode = kInvalidCode,
+                .output = fmt::format("Couldn't pass tar to container"),
+                .testsOutput = ""};
 
-    auto resultSourceRun = container.runCode(runTaskParams.sourceRun);
+    }
+
+    auto resultSourceRun = container.runCode(kFilenameTask);
     if (!resultSourceRun.isValid()) {
         m_containerController.containerReleased(container);
 
@@ -145,8 +153,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     }
 
     std::string testResult;
-    if (runTaskParams.sourceTest.has_value() && !runTaskParams.sourceTest->empty()) {
-        auto result = container.runCode(runTaskParams.sourceTest.value());
+    if (!runTaskParams.sourceTest.empty()) {
+        auto result = container.runCode(kFilenameTaskTests);
         testResult = std::move(result.output);
 
         if (!result.isValid()) {
@@ -189,20 +197,18 @@ detail::Container::Type Service::getContainerType(std::string const & type) {
     return detail::Container::Type::Unknown;
 }
 
-detail::Container::DockerAnswer detail::Container::runCode(std::string const & code) {
-    // TODO rethink naming
-    std::string const archive = id + "archiveWatchman.tar";
-    if (!makeTar(archive, code)) {
-        Log::error("Internal error! Couldn't create an archive");
-        return {kInvalidCode, fmt::format("Internal error! Couldn't create an archive")};
+bool detail::Container::prepareCode(std::string const & code, std::string const & codeTests) {
+    std::ostringstream stream = makeTar(code, codeTests);
+    if (!dockerWrapper.putArchive({id, kUserSourceFile, std::move(stream)})) {
+        Log::error("Couldn't put an archive to container");
+        return false;
     }
 
-    if (!dockerWrapper.putArchive({id, kUserSourceFile, archive})) {
-        Log::error("Internal error! Couldn't put an archive to container");
-        return {kInvalidCode, fmt::format("Internal error! Couldn't put an archive to container")};
-    }
+    return true;
+}
 
-    std::vector<std::string> const args{"sh", "run.sh", id + "archiveWatchman"};
+detail::Container::DockerAnswer detail::Container::runCode(std::string const & filename) {
+    std::vector<std::string> const args{"sh", "run.sh", filename};
     auto result = dockerWrapper.exec({args, id});
     if (result.exitCode < 0) {
         return {result.exitCode, result.output};
@@ -237,11 +243,6 @@ detail::Container::DockerAnswer detail::Container::runCode(std::string const & c
     hasEscapeSequences = findEscapeSequences(result.output);
     if (hasEscapeSequences) {
         result.output.resize(result.output.size() - 2);
-    }
-
-    if ((std::remove(archive.c_str())) != 0) {
-        // TODO is this an error? should we write something to resul.output?
-        Log::error("Internal error! Couldn't remove an archive from host");
     }
 
     return {exitStatus, result.output};

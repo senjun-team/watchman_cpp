@@ -22,7 +22,7 @@ target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_p
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${Boost_INCLUDE_DIR})
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
-target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient unifex spdlog fmt::fmt)
+target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient spdlog fmt::fmt)
 
 install(TARGETS ${WATCHMAN_CORE} DESTINATION lib)
 install(FILES ${CORE_HEADERS} DESTINATION include)

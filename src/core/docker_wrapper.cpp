@@ -129,7 +129,7 @@ std::string DockerWrapper::run(DockerRunParams && params) {
 
 bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
     auto const result =
-        m_docker.put_archive(params.containerId, params.pathInContainer, params.pathToArchive);
+        m_docker.put_archive(params.containerId, params.pathInContainer, params.archive);
     if (!isAnswerCorrect(result, DataType::Absent)) {
         Log::error("putArchive parse error for container {}", params.containerId);
         return false;

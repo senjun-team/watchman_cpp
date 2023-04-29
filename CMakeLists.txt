@@ -15,7 +15,6 @@ find_package(Boost 1.66 REQUIRED)
 
 add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/spdlog)
-add_subdirectory(third_party/libunifex)
 add_subdirectory(third_party/DockerClient)
 
 set(RESTINIO_USE_BOOST_ASIO "shared")
@@ -29,6 +28,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/accomodation/etc/watchman_config.jso
 
 if (BUILD_TESTING)
     enable_testing()
-    target_compile_definitions(${PROJECT_NAME} PUBLIC TEST_DATA_DIR= "${CMAKE_CURRENT_SOURCE_DIR}/tests/data/")
+    target_compile_definitions(${PROJECT_NAME}_core PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/")
     add_subdirectory(tests)
 endif ()

@@ -9,7 +9,7 @@ macro(add_tests PREFIX TESTS)
         target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src)
         target_link_libraries("${PREFIX}_${TEST}"
                 ${GTEST_BOTH_LIBRARIES}
-                ${PROJECT_NAME}
+                ${PROJECT_NAME}_core
                 DockerClient)
     endforeach ()
 endmacro()
