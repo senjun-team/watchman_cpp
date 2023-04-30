@@ -6,8 +6,8 @@
 
 namespace {
 
-std::string_view constexpr kConfig = "watchman_config.json";
-std::string_view constexpr kEtcConfig = "/etc/watchman_config.json";
+std::string_view constexpr kConfig = "watchman_cpp_config.json";
+std::string_view constexpr kEtcConfig = "/etc/watchman_cpp_config.json";
 
 // we will find config at /etc and near the binary
 std::string_view findConfig() {

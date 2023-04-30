@@ -53,7 +53,7 @@ cp -Rp %{_builddir}/%{name}-%{version}/accomodation/etc %{buildroot}/
 
 %files
 %{_bindir}/%{name}
-%{_sysconfdir}
+%{_sysconfdir}/%{name}_config.json
 
 %changelog
 * Tue Apr 04 2023 root
