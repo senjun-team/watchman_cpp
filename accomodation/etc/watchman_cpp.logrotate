@@ -10,3 +10,13 @@
 	/bin/kill -HUP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
     endscript
 }
+
+/logs/watchman_cpp/watchman_cpp-*.log {
+    daily
+    rotate 10
+    compress
+    su root watchman
+    dateext
+    dateformat .%Y%m%d-%s
+    missingok
+}
