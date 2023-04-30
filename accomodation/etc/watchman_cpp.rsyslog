@@ -1,0 +1,2 @@
+if $programname == 'watchman_cpp' then /logs/watchman_cpp/watchman_cpp_service.log
+if $programname == 'watchman_cpp' then ~
