@@ -1,4 +1,4 @@
-/logs/watchman/watchman_service.log {
+/logs/watchman_cpp/watchman_cpp_service.log {
     daily
     rotate 10
     compress

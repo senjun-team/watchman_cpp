@@ -7,6 +7,7 @@ User=watchman
 Type=simple
 ExecStart=/usr/bin/watchman_cpp
 Restart=on-failure
+RestartSec=3s
 MemoryMax=2G
 
 [Install]
