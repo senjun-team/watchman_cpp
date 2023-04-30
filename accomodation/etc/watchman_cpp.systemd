@@ -1,5 +1,6 @@
 [Unit]
 Description=Watchman_cpp: Service for launching user code in docker containers
+After=network.target
 
 [Service]
 Type=simple
@@ -7,3 +8,5 @@ ExecStart=/usr/bin/watchman_cpp
 Restart=on-failure
 MemoryMax=2G
 
+[Install]
+WantedBy=multi-user.target
