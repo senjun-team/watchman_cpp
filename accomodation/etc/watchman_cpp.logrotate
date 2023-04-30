@@ -1,0 +1,12 @@
+/logs/watchman/watchman_service.log {
+    daily
+    rotate 10
+    compress
+    create 0644 root watchman
+    dateext
+    dateformat .%Y%m%d-%s
+    missingok
+    postrotate
+	/bin/kill -HUP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}

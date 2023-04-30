@@ -4,7 +4,7 @@
 %define _build_id_links none
 
 Name:           watchman_cpp
-Version:        0.0.8
+Version:        0.0.9
 Release:        1%{?dist}
 Summary:        Hello
 
