@@ -3,10 +3,12 @@
 %define prefix %{name}
 %define _build_id_links none
 
+%define version %(echo $VERSION)
+
 Name:           watchman_cpp
-Version:        0.0.9
+Version:        %{version}
 Release:        1%{?dist}
-Summary:        Hello
+Summary:        watchman_cpp
 
 License:        license
 URL: https://gitlab.com/senjun/watchman_cpp
@@ -17,7 +19,7 @@ BuildRequires: cmake
 BuildRequires: make
 
 %description
-Watchman cpp projec
+Watchman cpp project
 
 %package devel
 Summary:        Develompent files for %{name}
@@ -30,13 +32,6 @@ Devel
 %prep
 
 %autosetup
-git clone git@gitlab.com:senjun/watchman_cpp.git
-cd %{name}
-git checkout %{version}
-git submodule update --init --recursive
-cd ..
-mv -f %{name}/%{docker_client} third_party
-rm -rf %{name}
 
 %build
 %cmake
@@ -46,14 +41,8 @@ rm -rf %{name}
 %cmake_install
 cp -Rp %{_builddir}/%{name}-%{version}/accomodation/etc %{buildroot}/
 
-%{__install} -p -D -m 0644 accomodation/etc/%{name}.systemd %{buildroot}/%{_unitdir}/%{name}.service
-
-%{__install} -p -D -m 0644 accomodation/etc/%{name}.logrotate %{buildroot}/%{_sysconfdir}/logrotate.d/%{name}
-%{__install} -p -D -m 0644 accomodation/etc/%{name}.rsyslog %{buildroot}/%{_sysconfdir}/rsyslog.d/%{name}.conf
+%{__install} -p -D -m 0644 accomodation/etc/%{name}.systemd %{buildroot}/%{_unitdir}/%{name}-%{version}.service
 
 %files
 %{_bindir}/%{name}
 %{_sysconfdir}/%{name}_config.json
-
-%changelog
-* Tue Apr 04 2023 root
