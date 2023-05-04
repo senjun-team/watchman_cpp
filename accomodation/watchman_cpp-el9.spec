@@ -1,7 +1,6 @@
 %define _unpackaged_files_terminate_build 0
 %define docker_client third_party/DockerClient
 %define prefix %{name}
-%define _build_id_links none
 
 %define version %(echo $VERSION)
 
@@ -39,10 +38,12 @@ Devel
 
 %install
 %cmake_install
-cp -Rp %{_builddir}/%{name}-%{version}/accomodation/etc %{buildroot}/
+mkdir -p %{buildroot}%{_sysconfdir}/systemd/system
 
-%{__install} -p -D -m 0644 accomodation/etc/%{name}.systemd %{buildroot}/%{_unitdir}/%{name}-%{version}.service
+cp -Rp %{_builddir}/%{name}-%{version}/accomodation/etc/%{name}_config.json %{buildroot}%{_sysconfdir}/
+cp -Rp %{_builddir}/%{name}-%{version}/accomodation/etc/%{name}.systemd %{buildroot}%{_sysconfdir}/systemd/system/%{name}.service
 
 %files
 %{_bindir}/%{name}
 %{_sysconfdir}/%{name}_config.json
+%{_sysconfdir}/systemd/system/*
