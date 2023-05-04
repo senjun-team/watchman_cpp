@@ -6,6 +6,7 @@
 Этот номер будет в результирующей rpm. Например, watchman_cpp-**0.0.13**-1.el9.x86_64.rpm.
 После этого можно билдить образ контейнера:
 ```bash
+cd accomodation/build_rpm
 sh accomodation/build_rpm/docker_build_image.sh
 ```
 
