@@ -12,7 +12,7 @@ struct ServiceParams {
 static ServiceParams const kParams;
 
 TEST(Service, Run) {
-    watchman::Service service(kParams.host, kParams.config);
+    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
     std::string containerType = "python";
     std::string sourceCode = "print(42)";
     std::string testingCode = "print(42)";
@@ -25,7 +25,7 @@ TEST(Service, Run) {
 }
 
 TEST(Service, UnknownContainerType) {
-    watchman::Service service(kParams.host, kParams.config);
+    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
     std::string containerType = "pythn";
     std::string sourceCode = "prnt(42)";
     std::string testingCode = "print(42)";
@@ -37,7 +37,7 @@ TEST(Service, UnknownContainerType) {
 }
 
 TEST(Service, Sleep) {
-    watchman::Service service(kParams.host, kParams.config);
+    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
     std::string containerType = "python";
     std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
     std::string testingCode = "print(42)";
@@ -50,7 +50,7 @@ TEST(Service, Sleep) {
 
 TEST(Service, RaceCondition) {
     // it is assumed, that python containers less than threads
-    watchman::Service service(kParams.host, kParams.config);
+    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
     std::thread t1([&service]() {
         std::string containerType = "python";
         std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";

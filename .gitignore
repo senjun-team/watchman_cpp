@@ -7,3 +7,6 @@ cmake-*
 *.o
 tests/.*
 tests/data/.*
+.vs/*
+CMakeSettings.json
+out/*
