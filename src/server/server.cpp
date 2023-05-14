@@ -13,9 +13,9 @@ std::string const kIpAddress = "0.0.0.0";
 Server::Server(std::string const & dockerHost, Config && config)
     : m_service(dockerHost, std::move(config)) {}
 
-void Server::start(size_t threaPoolSize) {
-    Log::info("Watchman working on {} port with the {} threads", kPort, threaPoolSize);
-    restinio::run(restinio::on_thread_pool(threaPoolSize)
+void Server::start(size_t threadPoolSize) {
+    Log::info("Watchman working on {} port with the {} threads", kPort, threadPoolSize);
+    restinio::run(restinio::on_thread_pool(threadPoolSize)
                       .port(kPort)
                       .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)

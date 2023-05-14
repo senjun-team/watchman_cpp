@@ -10,7 +10,7 @@ namespace watchman {
 class Server {
 public:
     Server(std::string const & dockerHost, Config && config);
-    void start(size_t threaPoolSize);
+    void start(size_t threadPoolSize);
 
 private:
     std::string processRequest(std::string const & body);
