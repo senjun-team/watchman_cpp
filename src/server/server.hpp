@@ -1,4 +1,6 @@
 #pragma once
+
+#include "common/common.hpp"
 #include "core/service.hpp"
 #include "parser.hpp"
 
@@ -7,8 +9,8 @@
 namespace watchman {
 class Server {
 public:
-    Server(std::string const & dockerHost, std::string_view configPath);
-    void start();
+    Server(std::string const & dockerHost, Config && config);
+    void start(size_t threadPoolSize);
 
 private:
     std::string processRequest(std::string const & body);

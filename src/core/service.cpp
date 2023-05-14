@@ -6,11 +6,6 @@
 
 namespace watchman {
 
-struct StringContainers {
-    static std::string_view constexpr python = "python";
-    static std::string_view constexpr rust = "rust";
-};
-
 struct StringImages {
     static std::string_view constexpr python = "senjun_courses_python";
     static std::string_view constexpr rust = "senjun_courses_rust";
@@ -22,32 +17,20 @@ size_t constexpr kDockerMemoryKill = 137;
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
 
-detail::Container::Type getContainerType(std::string const & type) {
-    if (type == StringContainers::python) {
-        return detail::Container::Type::Python;
-    }
+Service::Service(std::string const & host, Config && config)
+    : m_containerController(host, std::move(config)) {}
 
-    if (type == StringContainers::rust) {
-        return detail::Container::Type::Rust;
-    }
-
-    return detail::Container::Type::Unknown;
-}
-
-Service::Service(std::string const & host, std::string_view configPath)
-    : m_containerController(host, configPath) {}
-
-detail::ContainerController::ContainerController(std::string host, std::string_view configPath)
+detail::ContainerController::ContainerController(std::string host, Config && config)
     : m_dockerHost(std::move(host))
-    , m_config(configPath) {
+    , m_config(std::move(config)) {
     Log::info("Service launched");
 
     DockerWrapper dockerWrapper(m_dockerHost);
-    killOldContainers(dockerWrapper, m_config.getLanguages());
-    launchNewContainers(dockerWrapper, m_config.getLanguages());
+    killOldContainers(dockerWrapper, m_config.languages);
+    launchNewContainers(dockerWrapper, m_config.languages);
 }
 
-detail::Container & detail::ContainerController::getReadyContainer(detail::Container::Type type) {
+detail::Container & detail::ContainerController::getReadyContainer(ContainerType type) {
     std::unique_lock lock(m_mutex);
 
     auto & containers = m_containers.at(type);
@@ -78,8 +61,7 @@ void detail::ContainerController::containerReleased(Container & container) {
 detail::ContainerController::~ContainerController() = default;
 
 void detail::ContainerController::killOldContainers(
-    DockerWrapper & dockerWrapper,
-    std::unordered_map<Container::Type, Language> const & languages) {
+    DockerWrapper & dockerWrapper, std::unordered_map<ContainerType, Language> const & languages) {
     auto const workingContainers = dockerWrapper.getAllContainers();
     for (auto const & [_, language] : languages) {
         for (auto const & container : workingContainers) {
@@ -96,8 +78,7 @@ void detail::ContainerController::killOldContainers(
 }
 
 void detail::ContainerController::launchNewContainers(
-    DockerWrapper & dockerWrapper,
-    std::unordered_map<Container::Type, Language> const & languages) {
+    DockerWrapper & dockerWrapper, std::unordered_map<ContainerType, Language> const & languages) {
     for (auto const & [type, language] : languages) {
         std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
@@ -123,7 +104,7 @@ void detail::ContainerController::launchNewContainers(
 
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
     auto const containerType = getContainerType(runTaskParams.containerType);
-    if (containerType == detail::Container::Type::Unknown) {
+    if (containerType == ContainerType::Unknown) {
         Log::warning("Unknown container type is provided");
         return {.sourceCode = kInvalidCode,
                 .testsCode = kInvalidCode,
@@ -139,7 +120,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsCode = kInvalidCode,
                 .output = fmt::format("Couldn't pass tar to container"),
                 .testsOutput = ""};
-
     }
 
     auto resultSourceRun = container.runCode(kFilenameTask);
@@ -181,20 +161,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     return {kSuccessCode, kSuccessCode, resultSourceRun.output, testResult};
 }
 
-detail::Container & Service::getReadyContainer(detail::Container::Type type) {
+detail::Container & Service::getReadyContainer(ContainerType type) {
     return m_containerController.getReadyContainer(type);
-}
-
-detail::Container::Type Service::getContainerType(std::string const & type) {
-    if (type == StringContainers::python) {
-        return detail::Container::Type::Python;
-    }
-
-    if (type == StringContainers::rust) {
-        return detail::Container::Type::Rust;
-    }
-
-    return detail::Container::Type::Unknown;
 }
 
 bool detail::Container::prepareCode(std::string const & code, std::string const & codeTests) {
@@ -253,70 +221,11 @@ detail::Container::DockerAnswer detail::Container::clean() {
     return {.code = kSuccessCode};
 }
 
-detail::Container::Container(std::string host, std::string id, Type type)
+detail::Container::Container(std::string host, std::string id, ContainerType type)
     : dockerWrapper(std::move(host))
     , id(std::move(id))
     , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
-
-detail::ConfigParser::ConfigParser(std::string_view configPath) {
-    namespace pt = boost::property_tree;
-    pt::ptree loadPtreeRoot;
-
-    try {
-        pt::read_json(configPath.data(), loadPtreeRoot);
-    } catch (std::exception const & error) {
-        Log::error("Error while reading config file: {}", error.what());
-        std::terminate();
-    }
-
-    fillConfig(loadPtreeRoot);
-}
-
-std::unordered_map<detail::Container::Type, detail::Language>
-detail::ConfigParser::getLanguages() const {
-    return m_config.languages;
-}
-
-template<typename Ptree>
-void detail::ConfigParser::fillConfig(Ptree const & root) {
-    auto const & maxContainersAmount = root.get_child_optional("max-containers-amount");
-    if (!maxContainersAmount.has_value()) {
-        Log::error("Required field \'max-containers-amount\' is absent");
-        std::terminate();
-    }
-    m_config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
-
-    auto const & languages = root.get_child_optional("languages");
-    if (!languages.has_value()) {
-        Log::error("Required field \'languages\' is absent");
-        std::terminate();
-    }
-
-    for (auto const & language : languages.value()) {
-        auto imageName = language.second.get_child_optional("image-name");
-        if (!imageName.has_value()) {
-            Log::error("Required field \'image-name\' is absent in {}", language.first);
-            std::terminate();
-        }
-
-        auto const launched = language.second.get_child_optional("launched");
-        if (!launched.has_value()) {
-            Log::error("Required field \'launched\' is absent in {}", language.first);
-            std::terminate();
-        }
-
-        auto const containerType = getContainerType(language.first);
-        if (containerType == Container::Type::Unknown) {
-            Log::error("Container type: \'{}\' is unknown", language.first);
-            std::terminate();
-        }
-
-        m_config.languages.insert({containerType,
-                                   {imageName.value().template get_value<std::string>(),
-                                    launched.value().template get_value<uint32_t>()}});
-    }
-}
 
 }  // namespace watchman

@@ -7,16 +7,15 @@
 
 namespace watchman {
 
-constexpr size_t kThreadCount = 4;
 constexpr size_t kPort = 8000;
 std::string const kIpAddress = "0.0.0.0";
 
-Server::Server(std::string const & dockerHost, std::string_view configPath)
-    : m_service(dockerHost, configPath) {}
+Server::Server(std::string const & dockerHost, Config && config)
+    : m_service(dockerHost, std::move(config)) {}
 
-void Server::start() {
-    Log::info("Watchman working on {} port", kPort);
-    restinio::run(restinio::on_thread_pool(kThreadCount)
+void Server::start(size_t threadPoolSize) {
+    Log::info("Watchman working on {} port with the {} threads", kPort, threadPoolSize);
+    restinio::run(restinio::on_thread_pool(threadPoolSize)
                       .port(kPort)
                       .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)
