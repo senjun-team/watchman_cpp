@@ -61,8 +61,7 @@ void detail::ContainerController::containerReleased(Container & container) {
 detail::ContainerController::~ContainerController() = default;
 
 void detail::ContainerController::killOldContainers(
-    DockerWrapper & dockerWrapper,
-    std::unordered_map<ContainerType, Language> const & languages) {
+    DockerWrapper & dockerWrapper, std::unordered_map<ContainerType, Language> const & languages) {
     auto const workingContainers = dockerWrapper.getAllContainers();
     for (auto const & [_, language] : languages) {
         for (auto const & container : workingContainers) {
@@ -79,8 +78,7 @@ void detail::ContainerController::killOldContainers(
 }
 
 void detail::ContainerController::launchNewContainers(
-    DockerWrapper & dockerWrapper,
-    std::unordered_map<ContainerType, Language> const & languages) {
+    DockerWrapper & dockerWrapper, std::unordered_map<ContainerType, Language> const & languages) {
     for (auto const & [type, language] : languages) {
         std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
@@ -122,7 +120,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsCode = kInvalidCode,
                 .output = fmt::format("Couldn't pass tar to container"),
                 .testsOutput = ""};
-
     }
 
     auto resultSourceRun = container.runCode(kFilenameTask);

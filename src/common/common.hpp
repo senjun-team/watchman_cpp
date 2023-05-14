@@ -2,9 +2,9 @@
 
 #include <chrono>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
-#include <sstream>
 #include <unordered_map>
 
 namespace watchman {

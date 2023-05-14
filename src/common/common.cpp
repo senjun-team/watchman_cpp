@@ -7,7 +7,6 @@
 
 #include <thread>
 
-
 namespace watchman {
 
 struct StringContainers {
@@ -75,8 +74,8 @@ Config fillConfig(Ptree const & root) {
         }
 
         config.languages.insert({containerType,
-                                {imageName.value().template get_value<std::string>(),
-                                launched.value().template get_value<uint32_t>()}});
+                                 {imageName.value().template get_value<std::string>(),
+                                  launched.value().template get_value<uint32_t>()}});
     }
 
     return config;

@@ -13,7 +13,6 @@ namespace watchman {
 namespace detail {
 
 struct Container {
-
     struct DockerAnswer {
         ErrorCode code{kInvalidCode};
         std::string output;
