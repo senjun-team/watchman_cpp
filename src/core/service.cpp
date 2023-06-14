@@ -4,15 +4,30 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
+#include <string_view>
+#include <map>
+
 namespace watchman {
+// 3 bytes: code\r\n
+constexpr size_t kEscapeSequenceLen = 3;
+
+// For all exit statuses of 'timeout' util see "man timeout"
+static const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
+    {"124\r\n", 124}, // if COMMAND times out, and --preserve-status is not specified
+    {"125\r\n", 125}, // if the timeout command itself fails
+    {"137\r\n", 137}  // if COMMAND (or timeout itself) is sent the KILL (9)
+};
+
+// Also exit statuses of timeout util inside container:
+size_t constexpr kDockerTimeout = 124;
+size_t constexpr kDockerMemoryKill = 137;
 
 struct StringImages {
     static std::string_view constexpr python = "senjun_courses_python";
     static std::string_view constexpr rust = "senjun_courses_rust";
 };
 
-size_t constexpr kDockerTimeout = 124;
-size_t constexpr kDockerMemoryKill = 137;
+
 
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
@@ -175,35 +190,42 @@ bool detail::Container::prepareCode(std::string const & code, std::string const 
     return true;
 }
 
+bool findEscapeSequences(std::string const & output) {
+    if (output.size() < kEscapeSequenceLen) {
+        return false;
+    }
+
+    return output[output.size() - 1] == '\n' && output[output.size() - 2] == '\r';
+}
+
+int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
+    // Case when timeout util returns its status code
+    for (auto const & [codeStr, code]: kTimeoutUtilCodes) {
+        if (output.ends_with(codeStr)) {
+            output.resize(output.size() - codeStr.size());
+            return code;
+        }
+    }
+
+    int32_t exitStatus = -1;
+
+    if (hasEscapeSequences) {
+        exitStatus = output[output.size() - kEscapeSequenceLen] - '0';
+        output.resize(output.size() - kEscapeSequenceLen);
+        return exitStatus;
+    }
+
+    exitStatus = output[output.size() - 1] - '0';
+    output.resize(output.size() - 1);
+    return exitStatus;
+}
+
 detail::Container::DockerAnswer detail::Container::runCode(std::string const & filename) {
     std::vector<std::string> const args{"sh", "run.sh", filename};
     auto result = dockerWrapper.exec({args, id});
     if (result.exitCode < 0) {
         return {result.exitCode, result.output};
     }
-
-    auto const findEscapeSequences = [](std::string const & output) -> bool {
-        constexpr size_t kMinStringSizeWithEscapeSequences = 3;
-        if (output.size() < kMinStringSizeWithEscapeSequences) {
-            // code\r\n — 3 bytes
-            return false;
-        }
-
-        return output[output.size() - 1] == '\n' && output[output.size() - 2] == '\r';
-    };
-
-    auto const getExitCode = [](bool hasEscapeSequences, std::string & output) -> int32_t {
-        int32_t exitStatus = -1;
-        if (hasEscapeSequences) {
-            exitStatus = output[output.size() - 3] - '0';
-            output.resize(output.size() - 3);
-            return exitStatus;
-        }
-
-        exitStatus = output[output.size() - 1] - '0';
-        output.resize(output.size() - 1);
-        return exitStatus;
-    };
 
     bool hasEscapeSequences = findEscapeSequences(result.output);
     int32_t const exitStatus = getExitCode(hasEscapeSequences, result.output);
