@@ -4,8 +4,8 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
-#include <string_view>
 #include <map>
+#include <string_view>
 
 namespace watchman {
 // 3 bytes: code\r\n
@@ -13,9 +13,9 @@ constexpr size_t kEscapeSequenceLen = 3;
 
 // For all exit statuses of 'timeout' util see "man timeout"
 static const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
-    {"124\r\n", 124}, // if COMMAND times out, and --preserve-status is not specified
-    {"125\r\n", 125}, // if the timeout command itself fails
-    {"137\r\n", 137}  // if COMMAND (or timeout itself) is sent the KILL (9)
+    {"124\r\n", 124},  // if COMMAND times out, and --preserve-status is not specified
+    {"125\r\n", 125},  // if the timeout command itself fails
+    {"137\r\n", 137}   // if COMMAND (or timeout itself) is sent the KILL (9)
 };
 
 // Also exit statuses of timeout util inside container:
@@ -27,20 +27,17 @@ struct StringImages {
     static std::string_view constexpr rust = "senjun_courses_rust";
 };
 
-
-
 static std::string const kUserSourceFile = "/home/code_runner";
 static std::string const kUserSourceFileTests = "/home/code_runner";
 
-Service::Service(std::string const & host, Config && config)
-    : m_containerController(host, std::move(config)) {}
+Service::Service(Config && config)
+    : m_containerController(std::move(config)) {}
 
-detail::ContainerController::ContainerController(std::string host, Config && config)
-    : m_dockerHost(std::move(host))
-    , m_config(std::move(config)) {
+detail::ContainerController::ContainerController(Config && config)
+    : m_config(std::move(config)) {
     Log::info("Service launched");
 
-    DockerWrapper dockerWrapper(m_dockerHost);
+    DockerWrapper dockerWrapper;
     killOldContainers(dockerWrapper, m_config.languages);
     launchNewContainers(dockerWrapper, m_config.languages);
 }
@@ -97,8 +94,11 @@ void detail::ContainerController::launchNewContainers(
     for (auto const & [type, language] : languages) {
         std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
-            DockerRunParams params{
-                .image = language.imageName, .tty = true, .memoryLimit = 300'000'000};
+            docker::request_params::RunContainer params;
+            params.image = language.imageName;
+            params.tty = true;
+            params.memory = 300'000'000;
+
             std::string id = dockerWrapper.run(std::move(params));
             if (id.empty()) {
                 Log::warning("Internal error: can't run container of type {}",
@@ -107,7 +107,7 @@ void detail::ContainerController::launchNewContainers(
             }
 
             Log::info("Launch container: {}, id: {}", language.imageName, id);
-            auto container = std::make_shared<Container>(m_dockerHost, std::move(id), type);
+            auto container = std::make_shared<Container>(std::move(id), type);
             containers.emplace_back(std::move(container));
         }
 
@@ -181,8 +181,16 @@ detail::Container & Service::getReadyContainer(ContainerType type) {
 }
 
 bool detail::Container::prepareCode(std::string const & code, std::string const & codeTests) {
-    std::ostringstream stream = makeTar(code, codeTests);
-    if (!dockerWrapper.putArchive({id, kUserSourceFile, std::move(stream)})) {
+    std::ostringstream stream(std::ios::binary);
+
+    stream = makeTar(code, codeTests);
+
+    docker::request_params::PutArchive params;
+    params.containerId = id;
+    params.path = kUserSourceFile;
+    params.archive = std::move(stream.str());
+
+    if (!dockerWrapper.putArchive(std::move(params))) {
         Log::error("Couldn't put an archive to container");
         return false;
     }
@@ -200,7 +208,7 @@ bool findEscapeSequences(std::string const & output) {
 
 int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
     // Case when timeout util returns its status code
-    for (auto const & [codeStr, code]: kTimeoutUtilCodes) {
+    for (auto const & [codeStr, code] : kTimeoutUtilCodes) {
         if (output.ends_with(codeStr)) {
             output.resize(output.size() - codeStr.size());
             return code;
@@ -221,21 +229,26 @@ int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
 }
 
 detail::Container::DockerAnswer detail::Container::runCode(std::string const & filename) {
-    std::vector<std::string> const args{"sh", "run.sh", filename};
-    auto result = dockerWrapper.exec({args, id});
-    if (result.exitCode < 0) {
-        return {result.exitCode, result.output};
+    std::vector<std::string> args{"sh", "run.sh", filename};
+
+    docker::request_params::ExecCreate params;
+    params.cmd = std::move(args);
+    params.containerId = id;
+
+    auto result = dockerWrapper.exec(std::move(params));
+    if (!result.success) {
+        return {result.success, result.message};
     }
 
-    bool hasEscapeSequences = findEscapeSequences(result.output);
-    int32_t const exitStatus = getExitCode(hasEscapeSequences, result.output);
+    bool hasEscapeSequences = findEscapeSequences(result.message);
+    int32_t const exitStatus = getExitCode(hasEscapeSequences, result.message);
 
-    hasEscapeSequences = findEscapeSequences(result.output);
+    hasEscapeSequences = findEscapeSequences(result.message);
     if (hasEscapeSequences) {
-        result.output.resize(result.output.size() - 2);
+        result.message.resize(result.message.size() - 2);
     }
 
-    return {exitStatus, result.output};
+    return {exitStatus, result.message};
 }
 
 detail::Container::DockerAnswer detail::Container::clean() {
@@ -243,9 +256,8 @@ detail::Container::DockerAnswer detail::Container::clean() {
     return {.code = kSuccessCode};
 }
 
-detail::Container::Container(std::string host, std::string id, ContainerType type)
-    : dockerWrapper(std::move(host))
-    , id(std::move(id))
+detail::Container::Container(std::string id, ContainerType type)
+    : id(std::move(id))
     , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }

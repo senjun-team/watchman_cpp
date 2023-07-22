@@ -37,7 +37,7 @@ int main() noexcept {
     watchman::Config config = watchman::readConfig(configPath);
     const size_t threadPoolSize = config.threadPoolSize.value_or(watchman::getCpuCount());
 
-    watchman::Server server(kDefaultHost, std::move(config));
+    watchman::Server server(std::move(config));
     server.start(threadPoolSize);
     return 0;
 }

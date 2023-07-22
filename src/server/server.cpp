@@ -3,6 +3,9 @@
 #include "common/common.hpp"
 #include "common/logging.hpp"
 
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+
 #include <restinio/all.hpp>
 
 namespace watchman {
@@ -10,8 +13,8 @@ namespace watchman {
 constexpr size_t kPort = 8000;
 std::string const kIpAddress = "0.0.0.0";
 
-Server::Server(std::string const & dockerHost, Config && config)
-    : m_service(dockerHost, std::move(config)) {}
+Server::Server(Config && config)
+    : m_service(std::move(config)) {}
 
 void Server::start(size_t threadPoolSize) {
     Log::info("Watchman working on {} port with the {} threads", kPort, threadPoolSize);
