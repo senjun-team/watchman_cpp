@@ -12,6 +12,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 option(SPDLOG_FMT_EXTERNAL "Use external fmt library instead of bundled" ON)
 
 find_package(Boost 1.66 REQUIRED)
+include(GoogleTest)
 
 add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/spdlog)

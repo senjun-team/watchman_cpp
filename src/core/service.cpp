@@ -94,7 +94,8 @@ void detail::ContainerController::launchNewContainers(
     for (auto const & [type, language] : languages) {
         std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
-            docker::request_params::RunContainer params;
+            RunContainer params;
+
             params.image = language.imageName;
             params.tty = true;
             params.memory = 300'000'000;
@@ -185,7 +186,7 @@ bool detail::Container::prepareCode(std::string const & code, std::string const 
 
     stream = makeTar(code, codeTests);
 
-    docker::request_params::PutArchive params;
+    PutArchive params;
     params.containerId = id;
     params.path = kUserSourceFile;
     params.archive = std::move(stream.str());
@@ -231,7 +232,7 @@ int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
 detail::Container::DockerAnswer detail::Container::runCode(std::string const & filename) {
     std::vector<std::string> args{"sh", "run.sh", filename};
 
-    docker::request_params::ExecCreate params;
+    Exec params;
     params.cmd = std::move(args);
     params.containerId = id;
 
