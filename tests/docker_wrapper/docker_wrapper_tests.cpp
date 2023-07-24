@@ -12,6 +12,8 @@ using namespace watchman;
 
 std::string const kPythonImage = "senjun_courses_python";
 
+// TODO make containers delete after tests
+
 TEST(DockerWrapper, run_kill_delete) {
     for (size_t index = 0; index < 10; ++index) {
         // DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};

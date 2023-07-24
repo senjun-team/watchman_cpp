@@ -10,6 +10,8 @@ struct ServiceParams {
 
 static ServiceParams const kParams;
 
+// TODO make containers delete after tests
+
 TEST(Service, ReadConfig) {
     const watchman::Config cfg = watchman::readConfig(kParams.config);
 
