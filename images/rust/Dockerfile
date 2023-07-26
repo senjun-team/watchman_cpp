@@ -1,11 +1,12 @@
 FROM rust:1.64.0-slim-buster
 LABEL ru.senjun.image.authors="Shipilov Dmitry"
 
-RUN useradd -ms /bin/bash code_runner
-WORKDIR /home/code_runner
+RUN useradd -ms /bin/bash code_runner \
+    && chown root:code_runner /home/code_runner\
+    && chmod 1775 /home/code_runner 
 
+WORKDIR /home/code_runner
 COPY run.sh .
-RUN chmod +x run.sh
 
 USER code_runner
 RUN cargo new user-code && rm user-code/src/main.rs
