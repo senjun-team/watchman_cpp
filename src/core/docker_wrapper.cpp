@@ -2,295 +2,163 @@
 
 #include "common/logging.hpp"
 
+#include <docker/answer.hpp>
+#include <docker/client.hpp>
+#include <docker/request_params.hpp>
+
 namespace watchman {
 
-// there's no string_view because of operator[] inside rapidjson::Value
-static std::string const kId = "Id";
-static std::string const kData = "data";
-static std::string const kSuccess = "success";
-static std::string const kImage = "Image";
-static std::string const kState = "State";
-static std::string const kRunning = "Running";
-static std::string const kConfig = "Config";
+class DockerWrapper::Impl {
+public:
+    std::string run(RunContainer && params);
+    ExecResult exec(Exec && params);
+    std::vector<Container> getAllContainers();
+    bool isRunning(std::string const & id);
+    std::string getImage(std::string const & id);
+    bool killContainer(std::string const & id);
+    bool removeContainer(std::string const & id);
+    bool putArchive(PutArchive && params);
 
-enum class DockerWrapper::DataType { Absent, Array, Object, String };
+private:
+    docker::Client m_docker;
+};
 
-DockerWrapper::DockerWrapper()
-    : m_docker(kDefaultHost)
-    , m_writer(m_stringBuffer) {}
-
-DockerWrapper::DockerWrapper(std::string host)
-    : m_docker(std::move(host))
-    , m_writer(m_stringBuffer) {}
-
-std::vector<Container> DockerWrapper::getAllContainers() {
-    auto const response = m_docker.list_containers(true);
-    if (!isAnswerCorrect(response, DataType::Array)) {
+std::vector<Container> DockerWrapper::Impl::getAllContainers() {
+    docker::request_params::ListContainers params;
+    params.all = true;
+    auto response = m_docker.listContainers(params);
+    if (!response.success) {
         Log::error("getAllContainers: answer error");
         return {};
     }
 
-    auto const rawContainers = response[kData].GetArray();
-    size_t const size = rawContainers.Size();
+    if (response.containers.empty()) {
+        return {};
+    }
 
     std::vector<Container> containers;
-    containers.reserve(size);
-    for (size_t index = 0; index < size; ++index) {
-        if (!rawContainers[index].HasMember(kId) || !rawContainers[index].HasMember(kImage)) {
-            continue;
-        }
+    containers.reserve(response.containers.size());
 
-        containers.push_back(
-            {rawContainers[index][kId].GetString(), rawContainers[index][kImage].GetString()});
+    for (auto && responseContainer : response.containers) {
+        Container container;
+        container.id = std::move(responseContainer.id);
+        container.image = std::move(responseContainer.image);
     }
 
     return containers;
 }
 
-bool DockerWrapper::isRunning(std::string const & id) {
-    auto const response = m_docker.inspect_container(id);
-    if (!isAnswerCorrect(response, DataType::Object)) {
+bool DockerWrapper::Impl::isRunning(std::string const & id) {
+    auto const response = m_docker.inspectContainer(id);
+    if (!response.success) {
         Log::error("isRunning: answer error for {}", id);
         return false;
     }
 
-    auto const & dataObject = response[kData].GetObject();
-    if (!dataObject.HasMember(kState) || !dataObject[kState].IsObject()
-        || !dataObject[kState].GetObject().HasMember(kRunning)
-        || !dataObject[kState].GetObject()[kRunning].IsBool()) {
-        Log::error("isRunning: error while getting success result for {}", id);
-        return false;
-    }
-
-    return dataObject[kState].GetObject()[kRunning].GetBool();
+    return response.info.isRunning;
 }
 
-std::string DockerWrapper::getImage(std::string const & id) {
-    auto const response = m_docker.inspect_container(id);
-    if (!isAnswerCorrect(response, DataType::Object)) {
+std::string DockerWrapper::Impl::getImage(std::string const & id) {
+    auto const response = m_docker.inspectContainer(id);
+    if (!response.success) {
         Log::error("getImage: answer error for {}", id);
         return {};
     }
 
-    auto const & dataObject = response[kData].GetObject();
-    if (!dataObject.HasMember(kConfig) || !dataObject[kConfig].IsObject()
-        || !dataObject[kConfig].HasMember(kImage)
-        || !dataObject[kConfig].GetObject()[kImage].IsString()) {
-        Log::error("isRunning: error while getting image name for {}", id);
-        return {};
-    }
-
-    return dataObject[kConfig].GetObject()[kImage].GetString();
+    return response.info.image;
 }
 
-bool DockerWrapper::killContainer(std::string const & id) {
+bool DockerWrapper::Impl::killContainer(std::string const & id) {
     if (id.empty()) {
         Log::error("killContainer error: id is empty");
         return false;
     }
 
-    auto const responseKill = m_docker.kill_container(id);
-    if (!isAnswerCorrect(responseKill, DataType::Absent)) {
+    auto const responseKill = m_docker.killContainer({id, {}});
+    if (!responseKill.success) {
         Log::error("killContainer parse error for {}", id);
         return false;
     }
 
-    return responseKill[kSuccess].GetBool();
+    return true;
 }
 
-bool DockerWrapper::removeContainer(std::string const & id) {
+bool DockerWrapper::Impl::removeContainer(std::string const & id) {
     if (id.empty()) {
         Log::error("removeContainer error: id is empty");
         return false;
     }
 
-    auto const responseKill = m_docker.delete_container(id);
-    if (!isAnswerCorrect(responseKill, DataType::Absent)) {
+    auto const responseKill = m_docker.deleteContainer({id, {}, {}});
+    if (!responseKill.success) {
         Log::error("removeContainer parse error for {}", id);
         return false;
     }
 
-    return responseKill[kSuccess].GetBool();
+    return true;
 }
 
-std::string DockerWrapper::run(DockerRunParams && params) {
-    std::string const request = makeJsonHelper().getRunRequest(std::move(params));
-    JSON_DOCUMENT document;
-    document.Parse(request).HasParseError();
+std::string DockerWrapper::Impl::run(RunContainer && params) {
+    docker::request_params::RunContainer dockerParams;
+    dockerParams.image = std::move(params.image);
+    dockerParams.tty = params.tty;
+    dockerParams.memory = params.memory;
 
-    auto const response = m_docker.run_container(document);
-    if (!isAnswerCorrect(response, DataType::Object)) {
-        Log::error("run parse error for image");
+    auto response = m_docker.runContainer(std::move(dockerParams));
+    if (!response.success) {
+        Log::error("run container error for {} image", dockerParams.image);
         return {};
     }
 
-    return response[kData].GetObject()[kId].GetString();
+    return response.containerId;
 }
 
-bool DockerWrapper::putArchive(DockerPutArchiveParams && params) {
-    auto const result =
-        m_docker.put_archive(params.containerId, params.pathInContainer, params.archive);
-    if (!isAnswerCorrect(result, DataType::Absent)) {
-        Log::error("putArchive parse error for container {}", params.containerId);
+bool DockerWrapper::Impl::putArchive(PutArchive && params) {
+    docker::request_params::PutArchive dockerParams;
+    dockerParams.containerId = std::move(params.containerId);
+    dockerParams.path = std::move(params.path);
+    dockerParams.archive = std::move(params.archive);
+
+    auto result = m_docker.putArchive(dockerParams);
+    if (!result.success) {
+        Log::error("putArchive parse error: {}", result.message);
         return false;
     }
 
-    return result[kSuccess].GetBool();
+    return true;
 }
 
-DockerExecResult DockerWrapper::exec(DockerExecParams && params) {
+ExecResult DockerWrapper::Impl::exec(Exec && params) {
+    docker::request_params::ExecCreate dockerParams;
+    dockerParams.containerId = std::move(params.containerId);
+    dockerParams.cmd = std::move(params.cmd);
+
     LogDuration duration("Exec time");
-    std::string const execRequest = makeJsonHelper().getExecParams(std::move(params.command));
-    std::string const execStartRequest = makeJsonHelper().getExecStartParams();
-
-    JSON_DOCUMENT execParams;
-    auto const & execParamsDocument = execParams.Parse(execRequest);
-    assert(!execParamsDocument.HasParseError());
-
-    JSON_DOCUMENT execStartParams;
-    auto const & execStartParamsDocument = execStartParams.Parse(execStartRequest);
-    assert(!execStartParamsDocument.HasParseError());
-
-    auto result = m_docker.exec(execParams, execStartParams, params.containerId);
-    if (!isAnswerCorrect(result, DataType::String)) {
-        Log::error("exec parse error for container {}", params.containerId);
-        return {.exitCode = -1, .output = "docker exec error"};
-    }
-
-    return {.exitCode = 0, .output = jsonToString(result[kData])};
+    auto result = m_docker.exec(std::move(dockerParams));
+    return {result.success, result.message};
 }
 
-detail::JsonHelperInitializer DockerWrapper::makeInitializer() {
-    return {m_stringBuffer, m_writer};
+DockerWrapper::DockerWrapper()
+    : m_impl(std::make_unique<DockerWrapper::Impl>()) {}
+
+DockerWrapper::~DockerWrapper() {}
+
+std::string DockerWrapper::run(RunContainer && params) { return m_impl->run(std::move(params)); }
+
+ExecResult DockerWrapper::exec(Exec && params) { return m_impl->exec(std::move(params)); }
+
+std::vector<Container> DockerWrapper::getAllContainers() { return m_impl->getAllContainers(); }
+
+bool DockerWrapper::isRunning(std::string const & id) { return m_impl->isRunning(id); }
+
+std::string DockerWrapper::getImage(std::string const & id) { return m_impl->getImage(id); }
+
+bool DockerWrapper::killContainer(std::string const & id) { return m_impl->killContainer(id); }
+
+bool DockerWrapper::removeContainer(std::string const & id) { return m_impl->removeContainer(id); }
+
+bool DockerWrapper::putArchive(PutArchive && params) {
+    return m_impl->putArchive(std::move(params));
 }
 
-detail::JsonHelper DockerWrapper::makeJsonHelper() { return makeInitializer(); }
-
-bool DockerWrapper::isAnswerCorrect(JSON_DOCUMENT const & document, DataType type) {
-    if (document.HasParseError()) {
-        Log::error("isAnswerCorrect: json parse error");
-        return false;
-    }
-
-    if (!document.HasMember(kSuccess)) {
-        Log::error("isAnswerCorrect: there is no \'success\' field id DockerClient answer");
-        return false;
-    }
-
-    if (!document[kSuccess].GetBool()) {
-        Log::error("isAnswerCorrect: \'success\' field is false");
-        return false;
-    }
-
-    bool correct = true;
-    switch (type) {
-    case DataType::Absent: break;
-
-    case DataType::Array:
-        if (!document.HasMember(kData)) {
-            Log::error("isAnswerCorrect: \'data\' field is absent");
-            correct = false;
-            break;
-        }
-
-        if (!document[kData].IsArray()) {
-            Log::error("isAnswerCorrect: \'data\' field is not an array");
-            correct = false;
-            break;
-        }
-
-        break;
-
-    case DataType::Object:
-        if (!document.HasMember(kData)) {
-            Log::error("isAnswerCorrect: \'data\' field is absent");
-            correct = false;
-            break;
-        }
-
-        if (!document[kData].IsObject()) {
-            Log::error("isAnswerCorrect: \'data\' field is not an object");
-            correct = false;
-            break;
-        }
-
-        break;
-
-    case DataType::String:
-        if (!document.HasMember(kData)) {
-            Log::error("isAnswerCorrect: \'data\' field is absent");
-            correct = false;
-            break;
-        }
-
-        if (!document[kData].IsString()) {
-            Log::error("isAnswerCorrect: \'data\' field is not a string");
-            correct = false;
-            break;
-        }
-
-        break;
-    }
-
-    return correct;
-}
-
-detail::JsonHelper::JsonHelper(detail::JsonHelperInitializer && initializer)
-    : m_stringBuffer(initializer.stringBuffer)
-    , m_writer(initializer.writer) {
-    m_writer.StartObject();
-}
-
-detail::JsonHelper::~JsonHelper() {
-    m_stringBuffer.Clear();
-    m_writer.Reset(m_stringBuffer);
-}
-
-std::string detail::JsonHelper::getRunRequest(DockerRunParams && params) && {
-    m_writer.Key(kImage);
-    m_writer.String(params.image);
-
-    m_writer.Key("Tty");
-    m_writer.Bool(true);
-
-    if (params.memoryLimit) {
-        m_writer.Key("HostConfig");
-        m_writer.StartObject();
-        m_writer.Key("Memory");
-        m_writer.Uint64(params.memoryLimit.value());
-        m_writer.EndObject();
-    }
-
-    m_writer.EndObject();
-
-    return m_stringBuffer.GetString();
-}
-
-std::string detail::JsonHelper::getExecParams(std::vector<std::string> && command) && {
-    m_writer.Key("AttachStderr");
-    m_writer.Bool(true);
-
-    m_writer.Key("AttachStdout");
-    m_writer.Bool(true);
-
-    m_writer.Key("Detach");
-    m_writer.Bool(true);
-
-    m_writer.Key("Tty");
-    m_writer.Bool(true);
-
-    m_writer.Key("Cmd");
-    m_writer.StartArray();
-    for (size_t index = 0; index < command.size(); ++index) {
-        m_writer.String(std::move(command[index]));
-    }
-    m_writer.EndArray();
-    m_writer.EndObject();
-
-    return m_stringBuffer.GetString();
-}
-std::string detail::JsonHelper::getExecStartParams() && {
-    // TODO may be should improve
-    return R"({"Detach": false, "Tty": true})";
-}
 }  // namespace watchman

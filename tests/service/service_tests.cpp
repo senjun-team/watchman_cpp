@@ -5,11 +5,12 @@
 #include <thread>
 
 struct ServiceParams {
-    std::string const host = kDefaultHost;
     std::string const config = std::string{TEST_DATA_DIR} + "config.json";
 };
 
 static ServiceParams const kParams;
+
+// TODO make containers delete after tests
 
 TEST(Service, ReadConfig) {
     const watchman::Config cfg = watchman::readConfig(kParams.config);
@@ -25,7 +26,7 @@ TEST(Service, ReadConfig) {
 }
 
 TEST(Service, Run) {
-    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
+    watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "python";
     std::string sourceCode = "print(42)";
     std::string testingCode = "print(42)";
@@ -38,7 +39,7 @@ TEST(Service, Run) {
 }
 
 TEST(Service, UnknownContainerType) {
-    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
+    watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "pythn";
     std::string sourceCode = "prnt(42)";
     std::string testingCode = "print(42)";
@@ -50,7 +51,7 @@ TEST(Service, UnknownContainerType) {
 }
 
 TEST(Service, Sleep) {
-    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
+    watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "python";
     std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
     std::string testingCode = "print(42)";
@@ -63,7 +64,7 @@ TEST(Service, Sleep) {
 
 TEST(Service, RaceCondition) {
     // it is assumed, that python containers less than threads
-    watchman::Service service(kParams.host, watchman::readConfig(kParams.config));
+    watchman::Service service(watchman::readConfig(kParams.config));
     std::thread t1([&service]() {
         std::string containerType = "python";
         std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";

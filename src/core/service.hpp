@@ -25,7 +25,7 @@ struct Container {
     ContainerType type{ContainerType::Unknown};
     bool isReserved{false};
 
-    Container(std::string host, std::string id, ContainerType type);
+    Container(std::string id, ContainerType type);
     DockerAnswer runCode(std::string const & filename);
 
     // Creates in-memory tar and passes it to docker
@@ -35,7 +35,7 @@ struct Container {
 
 class ContainerController {
 public:
-    ContainerController(std::string host, Config && config);
+    ContainerController(Config && config);
     ~ContainerController();
 
     ContainerController(ContainerController const & other) = delete;
@@ -53,7 +53,6 @@ private:
     std::condition_variable m_containerFree;
 
     Config m_config;
-    std::string m_dockerHost;
 
     void killOldContainers(DockerWrapper & dockerWrapper,
                            std::unordered_map<ContainerType, Language> const & languages);
@@ -64,7 +63,7 @@ private:
 
 class Service {
 public:
-    Service(std::string const & host, Config && config);
+    Service(Config && config);
     ~Service() = default;
 
     Service(Service const &) = delete;

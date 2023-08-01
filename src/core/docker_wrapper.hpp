@@ -1,33 +1,27 @@
 #pragma once
 #include "common/common.hpp"
 
-#include <docker.hpp>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace watchman {
 
-struct DockerRunParams {
+struct RunContainer {
     std::string image;
-    std::optional<bool> tty;
-    std::optional<size_t> memoryLimit;  // in bytes
+    bool tty{true};
+    uint64_t memory{0};  // bytes
 };
 
-struct DockerExecResult {
-    int32_t exitCode{kInvalidCode};
-    std::string output;
+struct ExecResult {
+    bool success{false};
+    std::string message;
 };
 
-struct DockerExecParams {
-    std::vector<std::string> command;
+struct Exec {
     std::string containerId;
-};
-
-struct DockerPutArchiveParams {
-    std::string containerId;
-    std::string pathInContainer;
-    std::ostringstream archive;
+    std::vector<std::string> cmd;
 };
 
 struct Container {
@@ -35,58 +29,28 @@ struct Container {
     std::string image;
 };
 
-namespace detail {
-
-struct JsonHelperInitializer {
-    rapidjson::StringBuffer & stringBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> & writer;
+struct PutArchive {
+    std::string containerId;
+    std::string path;
+    std::string archive;  // in memory tar archive
 };
-
-class JsonHelper {
-public:
-    JsonHelper(JsonHelperInitializer && initializer);
-    ~JsonHelper();
-
-    std::string getRunRequest(DockerRunParams && params) &&;
-    std::string getExecParams(std::vector<std::string> && command) &&;
-    std::string getExecStartParams() &&;
-
-private:
-    rapidjson::StringBuffer & m_stringBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> & m_writer;
-};
-
-}  // namespace detail
 
 class DockerWrapper {
 public:
     DockerWrapper();
-    explicit DockerWrapper(std::string host);
+    ~DockerWrapper();
 
-    DockerWrapper(DockerWrapper &&) = default;
-    DockerWrapper & operator=(DockerWrapper &&) = delete;
-
-    DockerWrapper(DockerWrapper const &) = delete;
-    DockerWrapper & operator=(DockerWrapper const &) = delete;
-
-    std::string run(DockerRunParams && params);
-    DockerExecResult exec(DockerExecParams && params);
+    std::string run(RunContainer && params);
+    ExecResult exec(Exec && params);
     std::vector<Container> getAllContainers();
     bool isRunning(std::string const & id);
     std::string getImage(std::string const & id);
     bool killContainer(std::string const & id);
     bool removeContainer(std::string const & id);
-    bool putArchive(DockerPutArchiveParams && params);
+    bool putArchive(PutArchive && params);
 
 private:
-    Docker m_docker;
-    rapidjson::StringBuffer m_stringBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> m_writer;
-
-    enum class DataType;
-    static bool isAnswerCorrect(JSON_DOCUMENT const & document, DataType type);
-
-    detail::JsonHelperInitializer makeInitializer();
-    detail::JsonHelper makeJsonHelper();
+    class Impl;
+    std::unique_ptr<Impl> m_impl;
 };
 }  // namespace watchman
