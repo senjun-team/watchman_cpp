@@ -20,8 +20,10 @@ USER root
 # forbid remove system cargo
 RUN chown root:code_runner /home/code_runner/user-code \ 
     && chmod 1775 /home/code_runner/user-code \
+    && chown root:code_runner /home/code_runner/user-code/src \
+    && chmod 1775 /home/code_runner/user-code/src \
     && chown root /home/code_runner/user-code/Cargo.toml \
-    && chmod -R o-w /usr/local/cargo
+    && chmod -R o-w /usr/local
 USER code_runner
 
 ENTRYPOINT ["bash"]
