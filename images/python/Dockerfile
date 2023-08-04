@@ -5,6 +5,10 @@ RUN useradd -ms /bin/bash code_runner \
     && chown root:code_runner /home/code_runner\
     && chmod 1775 /home/code_runner 
 
+# protect from reading tests
+RUN rm /bin/cat \
+    && rm /bin/ls
+
 WORKDIR /home/code_runner
 COPY run.sh .
 
