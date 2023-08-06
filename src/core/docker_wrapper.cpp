@@ -43,6 +43,7 @@ std::vector<Container> DockerWrapper::Impl::getAllContainers() {
         Container container;
         container.id = std::move(responseContainer.id);
         container.image = std::move(responseContainer.image);
+        containers.push_back(std::move(container));
     }
 
     return containers;
