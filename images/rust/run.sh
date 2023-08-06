@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# clear previous container use
+rm -rf /home/code_runner > /dev/null 2>&1
+
 set -e
 
 # TODO think about cp, should be mv!
