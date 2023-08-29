@@ -2,11 +2,12 @@
 
 # parse flags - single letters prefixed fith hyphen before each argument
 # example: sh run.sh -c never -j 4
-while getopts c:j: flag
+while getopts c:j:f: flag
 do
     case "${flag}" in
         c) color=${OPTARG};;
         j) jobs=${OPTARG};;
+        f) file=${OPTARG};;
     esac
 done
 
@@ -32,9 +33,9 @@ rm -rf /home/code_runner > /dev/null 2>&1
 set -e
 
 # TODO think about cp, should be mv!
-cp $1 /home/code_runner/user-code/src
+cp $file /home/code_runner/user-code/src
 cd /home/code_runner/user-code
-f="$(basename -- $1)"
+f="$(basename -- $file)"
 
 # TODO think about cp, should be mv!
 cp -f src/"$f" "src/main.rs"

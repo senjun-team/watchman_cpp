@@ -20,6 +20,9 @@ struct RunTaskParams {
     std::string containerType;
     std::string sourceRun;
     std::string sourceTest;
+
+    // Command-line arguments for interpreter
+    std::vector<std::string> cmdLineArgs;
 };
 
 struct Response {

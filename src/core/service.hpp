@@ -26,7 +26,7 @@ struct Container {
     bool isReserved{false};
 
     Container(std::string id, ContainerType type);
-    DockerAnswer runCode(std::string const & filename);
+    DockerAnswer runCode(std::vector<std::string> && cmdLineArgs);
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string const & code, std::string const & codeTests);
