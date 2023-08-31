@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace watchman {
 std::string const kFilenameTask = "task";
@@ -20,6 +21,9 @@ struct RunTaskParams {
     std::string containerType;
     std::string sourceRun;
     std::string sourceTest;
+
+    // Command-line arguments for interpreter
+    std::vector<std::string> cmdLineArgs;
 };
 
 struct Response {

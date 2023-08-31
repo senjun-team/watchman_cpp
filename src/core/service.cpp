@@ -118,6 +118,24 @@ void detail::ContainerController::launchNewContainers(
     }
 }
 
+// Returns vector containing sequence: cmd, script, filename, args
+std::vector<std::string> getArgs(std::string const & filename,
+                                 std::vector<std::string> const & cmdLineArgs) {
+    std::string const cmd = "sh";
+    std::string const script = "run.sh";
+
+    std::vector<std::string> runArgs;
+
+    runArgs.reserve(3 + cmdLineArgs.size());
+
+    runArgs.emplace_back(cmd);
+    runArgs.emplace_back(script);
+    runArgs.emplace_back(fmt::format("-f {}", filename));
+
+    runArgs.insert(runArgs.end(), cmdLineArgs.begin(), cmdLineArgs.end());
+    return runArgs;
+}
+
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
     auto const containerType = getContainerType(runTaskParams.containerType);
     if (containerType == ContainerType::Unknown) {
@@ -138,7 +156,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsOutput = ""};
     }
 
-    auto resultSourceRun = container.runCode(kFilenameTask);
+    auto resultSourceRun = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (!resultSourceRun.isValid()) {
         m_containerController.containerReleased(container);
 
@@ -150,7 +168,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     std::string testResult;
     if (!runTaskParams.sourceTest.empty()) {
-        auto result = container.runCode(kFilenameTaskTests);
+        auto result = container.runCode(getArgs(kFilenameTaskTests, runTaskParams.cmdLineArgs));
         testResult = std::move(result.output);
 
         if (!result.isValid()) {
@@ -229,14 +247,9 @@ int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
     return exitStatus;
 }
 
-detail::Container::DockerAnswer detail::Container::runCode(std::string const & filename) {
-    std::vector<std::string> args{"sh", "run.sh", filename};
-
-    Exec params;
-    params.cmd = std::move(args);
-    params.containerId = id;
-
-    auto result = dockerWrapper.exec(std::move(params));
+detail::Container::DockerAnswer
+detail::Container::runCode(std::vector<std::string> && cmdLineArgs) {
+    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
     }
