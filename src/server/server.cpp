@@ -51,10 +51,6 @@ std::string Server::processRequest(std::string const & body) {
         return {};
     }
 
-    if (params.sourceRun.empty()) {
-        return {};
-    }
-
     auto const makeJson = [this](Response && response) -> std::string {
         rapidjson::StringBuffer stringBuffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);

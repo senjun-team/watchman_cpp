@@ -96,7 +96,9 @@ Config readConfig(std::string_view configPath) {
 
 std::ostringstream makeTar(std::string const & sourceCode, std::string const & sourceTests) {
     std::ostringstream stream(std::ios::binary | std::ios::trunc);
-    tar::tar_to_stream(stream, kFilenameTask, sourceCode.data(), sourceCode.size());
+    if (!sourceCode.empty()) {
+        tar::tar_to_stream(stream, kFilenameTask, sourceCode.data(), sourceCode.size());
+    }
     tar::tar_to_stream(stream, kFilenameTaskTests, sourceTests.data(), sourceTests.size());
     tar::tar_to_stream_tail(stream);
     return stream;

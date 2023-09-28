@@ -156,14 +156,20 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsOutput = ""};
     }
 
-    auto resultSourceRun = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
-    if (!resultSourceRun.isValid()) {
-        m_containerController.containerReleased(container);
 
-        return {.sourceCode = resultSourceRun.code,
-                .testsCode = kInvalidCode,
-                .output = std::move(resultSourceRun.output),
-                .testsOutput = ""};
+    detail::Container::DockerAnswer resultSourceRun;
+    resultSourceRun.code = kSuccessCode;
+
+    if (!runTaskParams.sourceRun.empty()) {
+        resultSourceRun = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+        if (!resultSourceRun.isValid()) {
+            m_containerController.containerReleased(container);
+
+            return {.sourceCode = resultSourceRun.code,
+                    .testsCode = kInvalidCode,
+                    .output = std::move(resultSourceRun.output),
+                    .testsOutput = ""};
+        }
     }
 
     std::string testResult;
