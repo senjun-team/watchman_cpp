@@ -174,7 +174,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     std::string testResult;
     if (!runTaskParams.sourceTest.empty()) {
-        auto result = container.runCode(getArgs(kFilenameTaskTests, runTaskParams.cmdLineArgs));
+        auto result = container.runCode(getArgs(kFilenameTaskTests, {}));
         testResult = std::move(result.output);
 
         if (!result.isValid()) {
