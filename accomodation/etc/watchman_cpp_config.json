@@ -4,11 +4,11 @@
   "languages": {
     "python": {
       "image-name": "senjun_courses_python",
-      "launched": 3
+      "launched": 6
     },
     "rust": {
       "image-name": "senjun_courses_rust",
-      "launched": 3
+      "launched": 6
     }
   }
 }
