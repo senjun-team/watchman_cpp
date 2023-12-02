@@ -4,6 +4,7 @@
 #include "docker_wrapper.hpp"
 
 #include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
@@ -59,6 +60,23 @@ private:
     void launchNewContainers(DockerWrapper & dockerWrapper,
                              std::unordered_map<ContainerType, Language> const & languages);
 };
+
+class ReleasingContainer {
+public:
+    ReleasingContainer(Container & container, std::function<void()> deleter);
+    ~ReleasingContainer();
+
+    ReleasingContainer(ReleasingContainer const &) = delete;
+    ReleasingContainer(ReleasingContainer &&) = delete;
+    ReleasingContainer & operator=(ReleasingContainer const &) = delete;
+    ReleasingContainer & operator=(ReleasingContainer &&) = delete;
+
+    Container & container;
+
+private:
+    std::function<void()> m_releaser;
+};
+
 }  // namespace detail
 
 class Service {
@@ -75,7 +93,7 @@ public:
     Response runTask(RunTaskParams const & runTaskParams);
 
 private:
-    detail::Container & getReadyContainer(ContainerType type);
+    detail::ReleasingContainer getReadyContainer(ContainerType type);
 
     detail::ContainerController m_containerController;
 };
