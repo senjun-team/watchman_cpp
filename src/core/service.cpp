@@ -149,6 +149,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     auto & container = getReadyContainer(containerType);  // here we have got a race
     if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
+        m_containerController.containerReleased(container);
         Log::warning("Couldn't pass tar to container");
         return {.sourceCode = kInvalidCode,
                 .testsCode = kInvalidCode,
