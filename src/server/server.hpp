@@ -9,7 +9,7 @@
 namespace watchman {
 class Server {
 public:
-    Server(Config && config);
+    explicit Server(Config && config);
     void start(size_t threadPoolSize);
 
 private:

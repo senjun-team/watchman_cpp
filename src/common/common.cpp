@@ -16,7 +16,7 @@ struct StringContainers {
 
 size_t getCpuCount() {
     constexpr size_t kDefCpuCount = 4;
-    const size_t cpuCount = static_cast<size_t>(std::thread::hardware_concurrency());
+    const auto cpuCount = static_cast<size_t>(std::thread::hardware_concurrency());
     return cpuCount > 0 ? cpuCount : kDefCpuCount;
 }
 

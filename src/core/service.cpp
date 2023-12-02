@@ -49,7 +49,7 @@ detail::Container & detail::ContainerController::getReadyContainer(ContainerType
     size_t indexProperContainer;  // there's no need for initialization
 
     m_containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
-        for (size_t index = 0; index < containers.size(); ++index) {
+        for (size_t index = 0, size = containers.size(); index < size; ++index) {
             if (!containers[index]->isReserved) {
                 indexProperContainer = index;
                 containers[index]->isReserved = true;
@@ -155,7 +155,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .output = fmt::format("Couldn't pass tar to container"),
                 .testsOutput = ""};
     }
-
 
     detail::Container::DockerAnswer resultSourceRun;
     resultSourceRun.code = kSuccessCode;

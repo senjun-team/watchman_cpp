@@ -11,3 +11,4 @@ tests/data/.*
 CMakeSettings.json
 out/*
 .vscode/*
+.cache/*
