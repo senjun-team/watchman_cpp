@@ -97,7 +97,7 @@ TEST(DockerWrapper, run_user_code) {
     ASSERT_TRUE(success);
 
     std::string const reference = "42\r\n0\r\n";
-    std::vector<std::string> const commands{"sh", "run.sh", kFilenameTask};
+    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
 
     auto result = dockerWrapper.exec({id, commands});
     ASSERT_TRUE(result.success);
@@ -129,7 +129,7 @@ TEST(DockerWrapper, execute_task) {
     ASSERT_TRUE(success);
 
     std::string const reference = "42\r\n0\r\n";
-    std::vector<std::string> const commands{"sh", "run.sh", kFilenameTask};
+    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
 
     auto result = dockerWrapper.exec({id, commands});
     ASSERT_TRUE(result.success);
