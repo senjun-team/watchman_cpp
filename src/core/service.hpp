@@ -35,7 +35,7 @@ struct Container {
 
 class ContainerController {
 public:
-    ContainerController(Config && config);
+    explicit ContainerController(Config && config);
     ~ContainerController();
 
     ContainerController(ContainerController const & other) = delete;
@@ -63,7 +63,7 @@ private:
 
 class Service {
 public:
-    Service(Config && config);
+    explicit Service(Config && config);
     ~Service() = default;
 
     Service(Service const &) = delete;
