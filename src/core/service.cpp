@@ -1,6 +1,7 @@
 #include "service.hpp"
 
 #include "common/logging.hpp"
+#include "core/docker_wrapper.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 
@@ -147,7 +148,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsOutput = ""};
     }
 
-    auto & container = getReadyContainer(containerType);  // here we have got a race
+    auto raiiContainer = getReadyContainer(containerType);  // here we have got a race
+    auto & container = raiiContainer.container;
     if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
         Log::warning("Couldn't pass tar to container");
         return {.sourceCode = kInvalidCode,
@@ -162,8 +164,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     if (!runTaskParams.sourceRun.empty()) {
         resultSourceRun = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
         if (!resultSourceRun.isValid()) {
-            m_containerController.containerReleased(container);
-
             return {.sourceCode = resultSourceRun.code,
                     .testsCode = kInvalidCode,
                     .output = std::move(resultSourceRun.output),
@@ -177,8 +177,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
         testResult = std::move(result.output);
 
         if (!result.isValid()) {
-            m_containerController.containerReleased(container);
-
             return {.sourceCode = kSuccessCode,
                     .testsCode = result.code,
                     .output = std::move(resultSourceRun.output),
@@ -187,8 +185,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     }
 
     if (auto result = container.clean(); !result.isValid()) {
-        m_containerController.containerReleased(container);
-
         Log::error("Error while removing files for {}", container.id);
         return {.sourceCode = kSuccessCode,
                 .testsCode = kSuccessCode,
@@ -196,12 +192,14 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsOutput = std::move(result.output)};
     }
 
-    m_containerController.containerReleased(container);
     return {kSuccessCode, kSuccessCode, resultSourceRun.output, testResult};
 }
 
-detail::Container & Service::getReadyContainer(ContainerType type) {
-    return m_containerController.getReadyContainer(type);
+detail::ReleasingContainer Service::getReadyContainer(ContainerType type) {
+    auto & container = m_containerController.getReadyContainer(type);
+
+    return {container,
+            [this, &container]() { m_containerController.containerReleased(container); }};
 }
 
 bool detail::Container::prepareCode(std::string const & code, std::string const & codeTests) {
@@ -280,5 +278,12 @@ detail::Container::Container(std::string id, ContainerType type)
     , type(type) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
+
+detail::ReleasingContainer::ReleasingContainer(detail::Container & container,
+                                               std::function<void()> deleter)
+    : container(container)
+    , m_releaser(std::move(deleter)) {}
+
+detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
 }  // namespace watchman
