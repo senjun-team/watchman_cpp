@@ -17,10 +17,6 @@ include(GoogleTest)
 add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/spdlog)
 add_subdirectory(third_party/DockerClient)
-
-set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
-set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
-
 add_subdirectory(third_party/llhttp-release-v9.1.3)
 add_subdirectory(third_party/expected-lite-0.6.3)
 
