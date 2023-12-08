@@ -18,9 +18,27 @@ add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/spdlog)
 add_subdirectory(third_party/DockerClient)
 
-set(RESTINIO_USE_BOOST_ASIO "shared")
-add_subdirectory(third_party/restinio-0.6.17/dev/nodejs/http_parser)
-add_subdirectory(third_party/restinio-0.6.17/dev/restinio)
+include(FetchContent)
+FetchContent_Declare(llhttp
+  URL "https://github.com/nodejs/llhttp/archive/refs/tags/release/v8.1.0.tar.gz"
+)
+
+
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
+FetchContent_MakeAvailable(llhttp)
+
+FetchContent_Declare(expected-lite
+  URL "https://github.com/martinmoene/expected-lite/archive/refs/tags/v0.6.3.tar.gz" 
+)
+FetchContent_MakeAvailable(expected-lite)
+
+
+set(RESTINIO_ASIO_SOURCE "boost")
+# add_subdirectory(third_party/restinio-0.6.17/dev/nodejs/http_parser)
+# add_subdirectory(third_party/restinio-0.6.17/dev/restinio)
+
+add_subdirectory(third_party/restinio-v.0.7.0/dev/restinio)
 
 # TODO make it compile
 #add_compile_options(-Werror -Wpedantic)
