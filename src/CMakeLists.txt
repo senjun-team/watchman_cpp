@@ -22,7 +22,7 @@ target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_p
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${Boost_INCLUDE_DIR})
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
-target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient spdlog fmt::fmt)
+target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient spdlog fmt::fmt )
 
 install(TARGETS ${WATCHMAN_CORE} DESTINATION lib)
 install(FILES ${CORE_HEADERS} DESTINATION include)
@@ -43,7 +43,7 @@ set(SERVER_SOURCES
 set(SERVER "${PROJECT_NAME}")
 add_executable(${SERVER} ${SERVER_SOURCES})
 target_compile_definitions(${SERVER} PRIVATE RAPIDJSON_HAS_STDSTRING)
-target_link_libraries(${SERVER} spdlog restinio::restinio fmt::fmt ${WATCHMAN_CORE})
+target_link_libraries(${SERVER} PUBLIC spdlog restinio::restinio fmt::fmt ${WATCHMAN_CORE})
 
 install(TARGETS ${SERVER} DESTINATION bin)
 install(FILES ${SERVER_HEADERS} DESTINATION include)
