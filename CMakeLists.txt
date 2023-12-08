@@ -22,12 +22,7 @@ set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
 set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
 
 add_subdirectory(third_party/llhttp-release-v9.1.3)
-
-include(FetchContent)
-FetchContent_Declare(expected-lite
-  URL "https://github.com/martinmoene/expected-lite/archive/refs/tags/v0.6.3.tar.gz" 
-)
-FetchContent_MakeAvailable(expected-lite)
+add_subdirectory(third_party/expected-lite-0.6.3)
 
 
 set(RESTINIO_ASIO_SOURCE "boost")
