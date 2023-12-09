@@ -17,10 +17,12 @@ include(GoogleTest)
 add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/spdlog)
 add_subdirectory(third_party/DockerClient)
+add_subdirectory(third_party/llhttp-release-v9.1.3)
+add_subdirectory(third_party/expected-lite-0.6.3)
 
-set(RESTINIO_USE_BOOST_ASIO "shared")
-add_subdirectory(third_party/restinio-0.6.17/dev/nodejs/http_parser)
-add_subdirectory(third_party/restinio-0.6.17/dev/restinio)
+
+set(RESTINIO_ASIO_SOURCE "boost")
+add_subdirectory(third_party/restinio-v.0.7.0/dev/restinio)
 
 # TODO make it compile
 #add_compile_options(-Werror -Wpedantic)
