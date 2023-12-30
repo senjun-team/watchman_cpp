@@ -8,6 +8,8 @@
 #include <map>
 #include <string_view>
 
+#include <cctype>
+
 namespace watchman {
 // 3 bytes: code\r\n
 constexpr size_t kEscapeSequenceLen = 3;
@@ -241,7 +243,8 @@ int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
 
     if (hasEscapeSequences) {
         exitStatus = output[output.size() - kEscapeSequenceLen] - '0';
-        output.resize(output.size() - kEscapeSequenceLen);
+        size_t const trimTailSize = isdigit(output[output.size() - kEscapeSequenceLen]) ? kEscapeSequenceLen : kEscapeSequenceLen - 1;
+        output.resize(output.size() - trimTailSize);
         return exitStatus;
     }
 
