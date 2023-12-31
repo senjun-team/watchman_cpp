@@ -33,8 +33,8 @@ Devel
 %autosetup
 
 %build
-%cmake
-%cmake_build -DCMAKE_BUILD_TYPE=Release
+%cmake -DCMAKE_BUILD_TYPE=Release
+%cmake_build
 
 %install
 %cmake_install
