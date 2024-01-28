@@ -12,6 +12,7 @@ namespace watchman {
 struct StringContainers {
     static std::string_view constexpr python = "python";
     static std::string_view constexpr rust = "rust";
+    static std::string_view constexpr golang = "golang";
 };
 
 size_t getCpuCount() {
@@ -27,6 +28,10 @@ ContainerType getContainerType(std::string const & type) {
 
     if (type == StringContainers::rust) {
         return ContainerType::Rust;
+    }
+
+    if (type == StringContainers::golang) {
+        return ContainerType::Golang;
     }
 
     return ContainerType::Unknown;

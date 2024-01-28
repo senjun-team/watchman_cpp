@@ -8,7 +8,11 @@
     },
     "rust": {
       "image-name": "senjun_courses_rust",
-      "launched": 6
+      "launched": 3
+    },
+    "golang": {
+      "image-name": "senjun_courses_golang",
+      "launched": 3
     }
   }
 }

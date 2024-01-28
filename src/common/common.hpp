@@ -15,7 +15,7 @@ using ErrorCode = int32_t;
 static ErrorCode constexpr kSuccessCode = 0;
 static ErrorCode constexpr kInvalidCode = -1;
 
-enum class ContainerType { Python, Rust, Unknown };
+enum class ContainerType { Python, Rust, Golang, Unknown };
 
 struct RunTaskParams {
     std::string containerType;
