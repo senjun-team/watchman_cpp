@@ -15,8 +15,6 @@ using ErrorCode = int32_t;
 static ErrorCode constexpr kSuccessCode = 0;
 static ErrorCode constexpr kInvalidCode = -1;
 
-enum class ContainerType { Python, Rust, Golang, Unknown };
-
 struct RunTaskParams {
     std::string containerType;
     std::string sourceRun;
@@ -39,13 +37,13 @@ struct Language {
 };
 
 struct Config {
+    using ContainerType = std::string;
     std::optional<size_t> threadPoolSize;
     uint32_t maxContainersAmount{0};
     std::unordered_map<ContainerType, Language> languages;
 };
 
 size_t getCpuCount();
-ContainerType getContainerType(std::string const & type);
 
 Config readConfig(std::string_view configPath);
 std::ostringstream makeTar(std::string const & sourceCode, std::string const & sourceTests);

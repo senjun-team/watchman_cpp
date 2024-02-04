@@ -9,32 +9,10 @@
 
 namespace watchman {
 
-struct StringContainers {
-    static std::string_view constexpr python = "python";
-    static std::string_view constexpr rust = "rust";
-    static std::string_view constexpr golang = "golang";
-};
-
 size_t getCpuCount() {
     constexpr size_t kDefCpuCount = 4;
     const auto cpuCount = static_cast<size_t>(std::thread::hardware_concurrency());
     return cpuCount > 0 ? cpuCount : kDefCpuCount;
-}
-
-ContainerType getContainerType(std::string const & type) {
-    if (type == StringContainers::python) {
-        return ContainerType::Python;
-    }
-
-    if (type == StringContainers::rust) {
-        return ContainerType::Rust;
-    }
-
-    if (type == StringContainers::golang) {
-        return ContainerType::Golang;
-    }
-
-    return ContainerType::Unknown;
 }
 
 template<typename Ptree>
@@ -72,11 +50,7 @@ Config fillConfig(Ptree const & root) {
             std::terminate();
         }
 
-        auto const containerType = getContainerType(language.first);
-        if (containerType == ContainerType::Unknown) {
-            Log::error("Container type: \'{}\' is unknown", language.first);
-            std::terminate();
-        }
+        auto const & containerType = language.first;
 
         config.languages.insert({containerType,
                                  {imageName.value().template get_value<std::string>(),

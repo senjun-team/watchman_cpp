@@ -18,10 +18,10 @@ TEST(Service, ReadConfig) {
     ASSERT_TRUE(cfg.threadPoolSize.value() == 10);
     ASSERT_TRUE(cfg.maxContainersAmount == 8);
 
-    watchman::Language const & python = cfg.languages.at(watchman::ContainerType::Python);
+    watchman::Language const & python = cfg.languages.at("python");
     ASSERT_TRUE(python.launched == 1 && python.imageName == "senjun_courses_python");
 
-    watchman::Language const & rust = cfg.languages.at(watchman::ContainerType::Rust);
+    watchman::Language const & rust = cfg.languages.at("rust");
     ASSERT_TRUE(rust.launched == 1 && rust.imageName == "senjun_courses_rust");
 }
 
@@ -32,7 +32,7 @@ TEST(Service, Run) {
     std::string testingCode = "print(42)";
 
     watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
-                                         std::move(testingCode)};
+                                         std::move(testingCode), {}};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(!response.output.empty());
@@ -44,7 +44,7 @@ TEST(Service, UnknownContainerType) {
     std::string sourceCode = "prnt(42)";
     std::string testingCode = "print(42)";
     watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
-                                         std::move(testingCode)};
+                                         std::move(testingCode), {}};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == watchman::kInvalidCode);
     ASSERT_TRUE(!response.output.empty());
@@ -56,7 +56,7 @@ TEST(Service, Sleep) {
     std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
     std::string testingCode = "print(42)";
     watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
-                                         std::move(testingCode)};
+                                         std::move(testingCode), {}} ;
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
     ASSERT_TRUE(!response.output.empty());
@@ -70,7 +70,7 @@ TEST(Service, RaceCondition) {
         std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
         std::string testingCode = "print(42)";
         watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
-                                             std::move(testingCode)};
+                                             std::move(testingCode), {}};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "42");
@@ -81,7 +81,7 @@ TEST(Service, RaceCondition) {
         std::string sourceCode = "print(69)";
         std::string testingCode = "print(42)";
         watchman::RunTaskParams const params{std::move(containerType), std::move(sourceCode),
-                                             std::move(testingCode)};
+                                             std::move(testingCode), {}};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "69");

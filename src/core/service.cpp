@@ -5,10 +5,9 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
+#include <cctype>
 #include <map>
 #include <string_view>
-
-#include <cctype>
 
 namespace watchman {
 // 3 bytes: code\r\n
@@ -45,7 +44,7 @@ detail::ContainerController::ContainerController(Config && config)
     launchNewContainers(dockerWrapper, m_config.languages);
 }
 
-detail::Container & detail::ContainerController::getReadyContainer(ContainerType type) {
+detail::Container & detail::ContainerController::getReadyContainer(Config::ContainerType type) {
     std::unique_lock lock(m_mutex);
 
     auto & containers = m_containers.at(type);
@@ -76,7 +75,8 @@ void detail::ContainerController::containerReleased(Container & container) {
 detail::ContainerController::~ContainerController() = default;
 
 void detail::ContainerController::killOldContainers(
-    DockerWrapper & dockerWrapper, std::unordered_map<ContainerType, Language> const & languages) {
+    DockerWrapper & dockerWrapper,
+    std::unordered_map<Config::ContainerType, Language> const & languages) {
     auto const workingContainers = dockerWrapper.getAllContainers();
     for (auto const & [_, language] : languages) {
         for (auto const & container : workingContainers) {
@@ -93,7 +93,8 @@ void detail::ContainerController::killOldContainers(
 }
 
 void detail::ContainerController::launchNewContainers(
-    DockerWrapper & dockerWrapper, std::unordered_map<ContainerType, Language> const & languages) {
+    DockerWrapper & dockerWrapper,
+    std::unordered_map<Config::ContainerType, Language> const & languages) {
     for (auto const & [type, language] : languages) {
         std::vector<std::shared_ptr<Container>> containers;
         for (size_t index = 0; index < language.launched; ++index) {
@@ -105,8 +106,7 @@ void detail::ContainerController::launchNewContainers(
 
             std::string id = dockerWrapper.run(std::move(params));
             if (id.empty()) {
-                Log::warning("Internal error: can't run container of type {}",
-                             static_cast<int>(type));
+                Log::warning("Internal error: can't run container of type {}", type);
                 continue;
             }
 
@@ -140,17 +140,16 @@ std::vector<std::string> getArgs(std::string const & filename,
 }
 
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
-    auto const containerType = getContainerType(runTaskParams.containerType);
-    if (containerType == ContainerType::Unknown) {
-        Log::warning("Unknown container type is provided");
+    if (!m_containerController.containerNameIsValid(runTaskParams.containerType)) {
+        Log::warning("Invalid container type is provided");
         return {.sourceCode = kInvalidCode,
                 .testsCode = kInvalidCode,
-                .output = fmt::format("Error: unknown container type \'{}\'",
+                .output = fmt::format("Error: Invalid container type \'{}\'",
                                       runTaskParams.containerType),
                 .testsOutput = ""};
     }
 
-    auto raiiContainer = getReadyContainer(containerType);  // here we have got a race
+    auto raiiContainer = getReadyContainer(runTaskParams.containerType);  // here we have got a race
     auto & container = raiiContainer.container;
     if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
         Log::warning("Couldn't pass tar to container");
@@ -197,7 +196,7 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     return {kSuccessCode, kSuccessCode, resultSourceRun.output, testResult};
 }
 
-detail::ReleasingContainer Service::getReadyContainer(ContainerType type) {
+detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
     auto & container = m_containerController.getReadyContainer(type);
 
     return {container,
@@ -243,7 +242,9 @@ int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
 
     if (hasEscapeSequences) {
         exitStatus = output[output.size() - kEscapeSequenceLen] - '0';
-        size_t const trimTailSize = isdigit(output[output.size() - kEscapeSequenceLen]) ? kEscapeSequenceLen : kEscapeSequenceLen - 1;
+        size_t const trimTailSize = isdigit(output[output.size() - kEscapeSequenceLen])
+                                      ? kEscapeSequenceLen
+                                      : kEscapeSequenceLen - 1;
         output.resize(output.size() - trimTailSize);
         return exitStatus;
     }
@@ -276,9 +277,9 @@ detail::Container::DockerAnswer detail::Container::clean() {
     return {.code = kSuccessCode};
 }
 
-detail::Container::Container(std::string id, ContainerType type)
+detail::Container::Container(std::string id, Config::ContainerType type)
     : id(std::move(id))
-    , type(type) {}
+    , type(std::move(type)) {}
 
 bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
 
@@ -289,4 +290,7 @@ detail::ReleasingContainer::ReleasingContainer(detail::Container & container,
 
 detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
+bool detail::ContainerController::containerNameIsValid(const std::string & name) const {
+    return m_containers.contains(name);
+}
 }  // namespace watchman

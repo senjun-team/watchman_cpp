@@ -23,10 +23,10 @@ struct Container {
 
     DockerWrapper dockerWrapper;
     std::string id;
-    ContainerType type{ContainerType::Unknown};
+    Config::ContainerType type;
     bool isReserved{false};
 
-    Container(std::string id, ContainerType type);
+    Container(std::string id, Config::ContainerType type);
     DockerAnswer runCode(std::vector<std::string> && cmdLineArgs);
 
     // Creates in-memory tar and passes it to docker
@@ -44,11 +44,12 @@ public:
     ContainerController & operator=(ContainerController const & other) = delete;
     ContainerController & operator=(ContainerController && other) = delete;
 
-    Container & getReadyContainer(ContainerType type);
+    Container & getReadyContainer(Config::ContainerType type);
     void containerReleased(Container & container);
+    bool containerNameIsValid(const std::string & name)const;
 
 private:
-    std::unordered_map<ContainerType, std::vector<std::shared_ptr<Container>>> m_containers;
+    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<Container>>> m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
@@ -56,9 +57,9 @@ private:
     Config m_config;
 
     void killOldContainers(DockerWrapper & dockerWrapper,
-                           std::unordered_map<ContainerType, Language> const & languages);
+                           std::unordered_map<Config::ContainerType, Language> const & languages);
     void launchNewContainers(DockerWrapper & dockerWrapper,
-                             std::unordered_map<ContainerType, Language> const & languages);
+                             std::unordered_map<Config::ContainerType, Language> const & languages);
 };
 
 class ReleasingContainer {
@@ -93,7 +94,7 @@ public:
     Response runTask(RunTaskParams const & runTaskParams);
 
 private:
-    detail::ReleasingContainer getReadyContainer(ContainerType type);
+    detail::ReleasingContainer getReadyContainer(Config::Config::ContainerType type);
 
     detail::ContainerController m_containerController;
 };
