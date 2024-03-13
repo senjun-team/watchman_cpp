@@ -10,8 +10,54 @@
 #include <string_view>
 
 namespace watchman {
+
+enum class ExitCodes : int32_t {
+    Ok,         // no errors
+    UserError,  // error: syntax / building / bad running user code
+    TestError,  // test case failed
+    Unknown     // trash answer from container
+};
+
 // 3 bytes: code\r\n
-constexpr size_t kEscapeSequenceLen = 3;
+std::string_view constexpr kEscapeSequence = "\r\n";
+std::string_view constexpr kCodeTestsSeparator = "user_code_ok_f936a25e";
+
+std::string_view constexpr kWrongDockerImage = "Maybe wrong docker image?";
+
+struct MarkToStatusCode {
+    std::string_view string;
+    ExitCodes code;
+};
+
+std::vector<MarkToStatusCode> const kCorrelations{
+    {"user_solution_ok_f936a25e", ExitCodes::Ok},
+    {"user_solution_error_f936a25e", ExitCodes::UserError},
+    {"tests_cases_error_f936a25e", ExitCodes::TestError}};
+
+size_t getStringLength(ExitCodes code) {
+    switch (code) {
+    case ExitCodes::Ok: return kCorrelations[0].string.size();
+    case ExitCodes::UserError: return kCorrelations[1].string.size();
+    case ExitCodes::TestError: return kCorrelations[2].string.size();
+    case ExitCodes::Unknown: return -1;
+    }
+}
+
+// debug function for macos purposes
+void removeEscapeSequences(std::string & string) {
+    size_t constexpr size = kEscapeSequence.size();
+    while (size_t const from = string.find(kEscapeSequence)) {
+        if (from == std::string::npos) {
+            break;
+        }
+        string.erase(from, size);
+    }
+}
+
+struct ContainerMessages {
+    std::string usersOutput;
+    std::string testsOutput;
+};
 
 // For all exit statuses of 'timeout' util see "man timeout"
 static const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
@@ -143,7 +189,6 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     if (!m_containerController.containerNameIsValid(runTaskParams.containerType)) {
         Log::warning("Invalid container type is provided");
         return {.sourceCode = kInvalidCode,
-                .testsCode = kInvalidCode,
                 .output = fmt::format("Error: Invalid container type \'{}\'",
                                       runTaskParams.containerType),
                 .testsOutput = ""};
@@ -154,46 +199,18 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
         Log::warning("Couldn't pass tar to container");
         return {.sourceCode = kInvalidCode,
-                .testsCode = kInvalidCode,
                 .output = fmt::format("Couldn't pass tar to container"),
                 .testsOutput = ""};
     }
 
-    detail::Container::DockerAnswer resultSourceRun;
-    resultSourceRun.code = kSuccessCode;
+    Response resultSourceRun;
 
     if (!runTaskParams.sourceRun.empty()) {
         resultSourceRun = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
-        if (!resultSourceRun.isValid()) {
-            return {.sourceCode = resultSourceRun.code,
-                    .testsCode = kInvalidCode,
-                    .output = std::move(resultSourceRun.output),
-                    .testsOutput = ""};
-        }
+        return resultSourceRun;
     }
 
-    std::string testResult;
-    if (!runTaskParams.sourceTest.empty()) {
-        auto result = container.runCode(getArgs(kFilenameTaskTests, {}));
-        testResult = std::move(result.output);
-
-        if (!result.isValid()) {
-            return {.sourceCode = kSuccessCode,
-                    .testsCode = result.code,
-                    .output = std::move(resultSourceRun.output),
-                    .testsOutput = std::move(testResult)};
-        }
-    }
-
-    if (auto result = container.clean(); !result.isValid()) {
-        Log::error("Error while removing files for {}", container.id);
-        return {.sourceCode = kSuccessCode,
-                .testsCode = kSuccessCode,
-                .output = std::move(resultSourceRun.output),
-                .testsOutput = std::move(result.output)};
-    }
-
-    return {kSuccessCode, kSuccessCode, resultSourceRun.output, testResult};
+    return {kUserCodeError, "Empty user code", ""};
 }
 
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
@@ -221,67 +238,137 @@ bool detail::Container::prepareCode(std::string const & code, std::string const 
     return true;
 }
 
-bool findEscapeSequences(std::string const & output) {
-    if (output.size() < kEscapeSequenceLen) {
+bool hasEscapeSequences(std::string const & output) {
+    if (output.size() < kEscapeSequence.size()) {
         return false;
     }
 
-    return output[output.size() - 1] == '\n' && output[output.size() - 2] == '\r';
+    return output.ends_with(kEscapeSequence);
 }
 
-int32_t getExitCode(bool hasEscapeSequences, std::string & output) {
+ContainerMessages getOutputsWithEscapeSequence(ExitCodes code, std::string const & messages) {
+    size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
+    std::string usersOutput = userCodeEndIndex > kEscapeSequence.size()
+                                ? messages.substr(0, userCodeEndIndex - kEscapeSequence.size())
+                                : std::string{};
+
+    size_t const from = userCodeEndIndex + kCodeTestsSeparator.size() + kEscapeSequence.size();
+    size_t const amount = messages.size() - from - getStringLength(code) - kEscapeSequence.size();
+    std::string testsOutput = messages.substr(from, amount);
+    if (testsOutput.ends_with(kEscapeSequence)) {
+        testsOutput = testsOutput.substr(0, testsOutput.size() - kEscapeSequence.size());
+    }
+
+    return {std::move(usersOutput), std::move(testsOutput)};
+}
+
+ContainerMessages getOutputsNormal(ExitCodes code, std::string const & messages) {
+    size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
+    std::string usersOutput = userCodeEndIndex == 0 ? std::string{}
+                                                    : messages.substr(0, userCodeEndIndex);
+
+    size_t const from = userCodeEndIndex + kCodeTestsSeparator.size();
+    size_t const amount = messages.size() - from - getStringLength(code);
+    std::string testsOutput = messages.substr(from, amount);
+
+    return {std::move(usersOutput), std::move(testsOutput)};
+}
+
+ExitCodes getSequencedExitCode(std::string const & containerOutput) {
     // Case when timeout util returns its status code
     for (auto const & [codeStr, code] : kTimeoutUtilCodes) {
-        if (output.ends_with(codeStr)) {
-            output.resize(output.size() - codeStr.size());
-            return code;
+        if (containerOutput.ends_with(codeStr)) {
+            return static_cast<ExitCodes>(code);
         }
     }
 
-    int32_t exitStatus = -1;
-
-    if (hasEscapeSequences) {
-        exitStatus = output[output.size() - kEscapeSequenceLen] - '0';
-        size_t const trimTailSize = isdigit(output[output.size() - kEscapeSequenceLen])
-                                      ? kEscapeSequenceLen
-                                      : kEscapeSequenceLen - 1;
-        output.resize(output.size() - trimTailSize);
-        return exitStatus;
+    for (auto const & pattern : kCorrelations) {
+        if (containerOutput.find(pattern.string) != std::string::npos) {
+            return pattern.code;
+        }
     }
 
-    exitStatus = output[output.size() - 1] - '0';
-    output.resize(output.size() - 1);
-    return exitStatus;
+    return ExitCodes::Unknown;
 }
 
-detail::Container::DockerAnswer
-detail::Container::runCode(std::vector<std::string> && cmdLineArgs) {
+std::string getUserOutput(std::string const & message) {
+    return message.substr(0, message.size() - kEscapeSequence.size()
+                                 - getStringLength(ExitCodes::UserError));
+}
+
+std::string getUserOutputNormal(std::string const & message) {
+    return message.substr(0, message.size() - getStringLength(ExitCodes::UserError));
+}
+
+Response processSequenceEndedMessage(std::string const & message) {
+    ExitCodes const exitCode = getSequencedExitCode(message);
+    switch (exitCode) {
+    case ExitCodes::Ok: {
+        // pattern: user's_output user_code_ok_f936a25e user_solution_ok_f936a25e
+        auto [usersOutput, testsOutput] = getOutputsWithEscapeSequence(ExitCodes::Ok, message);
+        return {kSuccessCode, std::move(usersOutput), std::move(testsOutput)};
+    }
+
+    case ExitCodes::UserError: {
+        // pattern: user's_output user_solution_error_f936a25e
+        return {kUserCodeError, getUserOutput(message), std::string{}};
+    }
+
+    case ExitCodes::TestError: {
+        // pattern: user's_output user_code_ok_f936a25e tests_cases_error_f936a25e
+        auto [usersOutput, testsOutput] =
+            getOutputsWithEscapeSequence(ExitCodes::TestError, message);
+        return {kTestsError, std::move(usersOutput), std::move(testsOutput)};
+    }
+
+    default:
+        Log::warning(kWrongDockerImage);
+        return {static_cast<int32_t>(exitCode), "Internal error", ""};
+    }
+}
+
+Response processNormalEndedMessage(std::string const & message) {
+    ExitCodes const exitCode = getSequencedExitCode(message);
+    switch (exitCode) {
+    case ExitCodes::Ok: {
+        // pattern: user's_output user_code_ok_f936a25e user_solution_ok_f936a25e
+        auto [usersOutput, testsOutput] = getOutputsNormal(ExitCodes::Ok, message);
+        return {kSuccessCode, std::move(usersOutput), std::move(testsOutput)};
+    }
+
+    case ExitCodes::UserError: {
+        // pattern: user's_output user_solution_error_f936a25e
+        return {kUserCodeError, getUserOutputNormal(message), std::string{}};
+    }
+
+    case ExitCodes::TestError: {
+        // pattern: user's_output user_code_ok_f936a25e tests_cases_error_f936a25e
+        auto [usersOutput, testsOutput] = getOutputsNormal(ExitCodes::TestError, message);
+        return {kTestsError, std::move(usersOutput), std::move(testsOutput)};
+    }
+
+    default:
+        Log::warning(kWrongDockerImage);
+        return {static_cast<int32_t>(exitCode), "Internal error", ""};
+    }
+}
+
+Response detail::Container::runCode(std::vector<std::string> && cmdLineArgs) {
     auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
     }
 
-    bool hasEscapeSequences = findEscapeSequences(result.message);
-    int32_t const exitStatus = getExitCode(hasEscapeSequences, result.message);
-
-    hasEscapeSequences = findEscapeSequences(result.message);
-    if (hasEscapeSequences) {
-        result.message.resize(result.message.size() - 2);
+    if (hasEscapeSequences(result.message)) {
+        return processSequenceEndedMessage(result.message);
     }
 
-    return {exitStatus, result.message};
-}
-
-detail::Container::DockerAnswer detail::Container::clean() {
-    // TODO may be here we need to remove user code from container or in runCode
-    return {.code = kSuccessCode};
+    return processNormalEndedMessage(result.message);
 }
 
 detail::Container::Container(std::string id, Config::ContainerType type)
     : id(std::move(id))
     , type(std::move(type)) {}
-
-bool detail::Container::DockerAnswer::isValid() const { return code == kSuccessCode; }
 
 detail::ReleasingContainer::ReleasingContainer(detail::Container & container,
                                                std::function<void()> deleter)

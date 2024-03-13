@@ -13,6 +13,8 @@ std::string const kFilenameTask = "task";
 std::string const kFilenameTaskTests = "task_tests";
 using ErrorCode = int32_t;
 static ErrorCode constexpr kSuccessCode = 0;
+static ErrorCode constexpr kUserCodeError = 1;
+static ErrorCode constexpr kTestsError = 2;
 static ErrorCode constexpr kInvalidCode = -1;
 
 struct RunTaskParams {
@@ -26,7 +28,6 @@ struct RunTaskParams {
 
 struct Response {
     ErrorCode sourceCode{kInvalidCode};
-    ErrorCode testsCode{kInvalidCode};
     std::string output;
     std::string testsOutput;
 };
