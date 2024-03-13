@@ -56,34 +56,28 @@ std::string Server::processRequest(std::string const & body) {
         rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
 
         writer.StartObject();
-        writer.Key("error_code");
+        writer.Key("status_code");
         writer.Int64(response.sourceCode);
 
         if (response.sourceCode == kDockerTimeoutCode) {
-            writer.Key("output");
+            writer.Key("user_code_output");
             writer.String("Timeout");
             writer.EndObject();
             return stringBuffer.GetString();
         }
 
         if (response.sourceCode == kDockerMemoryKill) {
-            writer.Key("output");
+            writer.Key("user_code_output");
             writer.String("Out of memory");
             writer.EndObject();
             return stringBuffer.GetString();
         }
 
-        writer.Key("output");
+        writer.Key("user_code_output");
         writer.String(response.output);
 
-        if (response.sourceCode == 0) {
-            writer.Key("tests_error_code");
-            writer.Int64(response.testsCode);
-            writer.Key("tests_error");
-            writer.String(response.testsOutput);
-            writer.EndObject();
-            return stringBuffer.GetString();
-        }
+        writer.Key("tests_output");
+        writer.String(response.testsOutput);
 
         writer.EndObject();
         return stringBuffer.GetString();

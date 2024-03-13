@@ -14,24 +14,16 @@ namespace watchman {
 namespace detail {
 
 struct Container {
-    struct DockerAnswer {
-        ErrorCode code{kInvalidCode};
-        std::string output;
-
-        bool isValid() const;
-    };
-
     DockerWrapper dockerWrapper;
     std::string id;
     Config::ContainerType type;
     bool isReserved{false};
 
     Container(std::string id, Config::ContainerType type);
-    DockerAnswer runCode(std::vector<std::string> && cmdLineArgs);
+    Response runCode(std::vector<std::string> && cmdLineArgs);
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string const & code, std::string const & codeTests);
-    DockerAnswer clean();
 };
 
 class ContainerController {
