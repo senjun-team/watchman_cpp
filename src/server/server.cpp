@@ -13,6 +13,41 @@ namespace watchman {
 constexpr size_t kPort = 8000;
 std::string const kIpAddress = "0.0.0.0";
 
+size_t constexpr kDockerTimeoutCode = 124;
+size_t constexpr kDockerMemoryKill = 137;
+
+std::string makeJson(Response && response) {
+    rapidjson::StringBuffer stringBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
+
+    writer.StartObject();
+    writer.Key("status_code");
+    writer.Int64(response.sourceCode);
+
+    if (response.sourceCode == kDockerTimeoutCode) {
+        writer.Key("user_code_output");
+        writer.String("Timeout");
+        writer.EndObject();
+        return stringBuffer.GetString();
+    }
+
+    if (response.sourceCode == kDockerMemoryKill) {
+        writer.Key("user_code_output");
+        writer.String("Out of memory");
+        writer.EndObject();
+        return stringBuffer.GetString();
+    }
+
+    writer.Key("user_code_output");
+    writer.String(response.output);
+
+    writer.Key("tests_output");
+    writer.String(response.testsOutput);
+
+    writer.EndObject();
+    return stringBuffer.GetString();
+}
+
 Server::Server(Config && config)
     : m_service(std::move(config)) {}
 
@@ -51,38 +86,6 @@ std::string Server::processRequest(std::string const & body) {
         return {};
     }
 
-    auto const makeJson = [this](Response && response) -> std::string {
-        rapidjson::StringBuffer stringBuffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
-
-        writer.StartObject();
-        writer.Key("status_code");
-        writer.Int64(response.sourceCode);
-
-        if (response.sourceCode == kDockerTimeoutCode) {
-            writer.Key("user_code_output");
-            writer.String("Timeout");
-            writer.EndObject();
-            return stringBuffer.GetString();
-        }
-
-        if (response.sourceCode == kDockerMemoryKill) {
-            writer.Key("user_code_output");
-            writer.String("Out of memory");
-            writer.EndObject();
-            return stringBuffer.GetString();
-        }
-
-        writer.Key("user_code_output");
-        writer.String(response.output);
-
-        writer.Key("tests_output");
-        writer.String(response.testsOutput);
-
-        writer.EndObject();
-        return stringBuffer.GetString();
-    };
     return makeJson(m_service.runTask(params));
 }
-
 }  // namespace watchman
