@@ -203,14 +203,11 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
                 .testsOutput = ""};
     }
 
-    Response resultSourceRun;
-
-    if (!runTaskParams.sourceRun.empty()) {
-        resultSourceRun = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
-        return resultSourceRun;
+    if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
+        return {kUserCodeError, "Empty input", ""};
     }
 
-    return {kUserCodeError, "Empty user code", ""};
+    return container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
 }
 
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
