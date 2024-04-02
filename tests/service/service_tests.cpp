@@ -62,6 +62,20 @@ TEST(Service, Sleep) {
     ASSERT_TRUE(!response.output.empty());
 }
 
+TEST(Service, Golang) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    std::string containerType = "golang";
+    std::string sourceCode = "package main\nimport \"fmt\"\nfunc main() {\tfmt.Println(\"Hello, 世界\")}";
+    std::string testingCode = "package main\nimport (\"fmt\"\n\"testing\")\nfunc TestMain(m *testing.M) {\tfmt.Println(\"tests are ok\")}";
+
+    watchman::RunTaskParams const params{
+        std::move(containerType), std::move(sourceCode), std::move(testingCode), {}};
+    auto response = service.runTask(params);
+    ASSERT_TRUE(response.sourceCode == 0);
+    ASSERT_TRUE(!response.output.empty());
+    ASSERT_TRUE(!response.testsOutput.empty());
+}
+
 TEST(Service, RaceCondition) {
     // it is assumed, that python containers less than threads
     watchman::Service service(watchman::readConfig(kParams.config));
