@@ -10,7 +10,7 @@ do
         j) jobs=${OPTARG};;
         f) file=${OPTARG};;
         t) type_check=${OPTARG};;
-        v) task_type = ${OPTARG};;
+        v) task_type=${OPTARG};;
     esac
 done
 

@@ -193,18 +193,14 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     if (!m_containerController.containerNameIsValid(runTaskParams.containerType)) {
         Log::warning("Invalid container type: {}", runTaskParams.containerType);
-        return {.sourceCode = kInvalidCode,
-                .output = "",
-                .testsOutput = ""};
+        return {};
     }
 
     auto raiiContainer = getReadyContainer(runTaskParams.containerType);  // here we have got a race
     auto & container = raiiContainer.container;
     if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
-        Log::warning("Couldn't pass tar to container");
-        return {.sourceCode = kInvalidCode,
-                .output = "",
-                .testsOutput = ""};
+        Log::warning("Couldn't pass tar to container. Source: {}", runTaskParams.sourceRun);
+        return {};
     }
 
     return container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
