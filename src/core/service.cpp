@@ -186,11 +186,15 @@ std::vector<std::string> getArgs(std::string const & filename,
 }
 
 Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
+    if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
+        Log::warning("Empty files with code and test");
+        return {kUserCodeError, "Sources and tests are not provided", ""};
+    }
+
     if (!m_containerController.containerNameIsValid(runTaskParams.containerType)) {
-        Log::warning("Invalid container type is provided");
+        Log::warning("Invalid container type: {}", runTaskParams.containerType);
         return {.sourceCode = kInvalidCode,
-                .output = fmt::format("Error: Invalid container type \'{}\'",
-                                      runTaskParams.containerType),
+                .output = "",
                 .testsOutput = ""};
     }
 
@@ -199,12 +203,8 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
         Log::warning("Couldn't pass tar to container");
         return {.sourceCode = kInvalidCode,
-                .output = fmt::format("Couldn't pass tar to container"),
+                .output = "",
                 .testsOutput = ""};
-    }
-
-    if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
-        return {kUserCodeError, "Empty input", ""};
     }
 
     return container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
