@@ -19,8 +19,7 @@ rm -rf /home/code_runner > /dev/null 2>&1
 
 
 # if exists file with user code
-if [ "$task_type" = "code" ]; then 
-
+if [ $task_type = "code" ]; then
         if [ ! -z "$type_check" ]; then
             timeout 5s mypy --strict $file
             if [ "$?" -ne 0 ]; then
@@ -40,6 +39,7 @@ if [ "$task_type" = "code" ]; then
 else
     echo user_code_ok_f936a25e
 fi
+
 
 timeout 10s python ${file}_tests
 if [ "$?" -ne 0 ]; then
