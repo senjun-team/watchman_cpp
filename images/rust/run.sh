@@ -2,12 +2,13 @@
 
 # parse flags - single letters prefixed fith hyphen before each argument
 # example: sh run.sh -c never -j 4
-while getopts c:j:f: flag
+while getopts c:j:f:v: flag
 do
     case "${flag}" in
         c) color=${OPTARG};;
         j) jobs=${OPTARG};;
         f) file=${OPTARG};;
+        v) task_type=${OPTARG};;
     esac
 done
 

@@ -2,13 +2,15 @@
 
 # parse flags - single letters prefixed fith hyphen before each argument
 # example: sh run.sh -f task
-while getopts c:j:f:t: flag
+
+while getopts c:j:f:t:v: flag
 do
     case "${flag}" in
         c) color=${OPTARG};;
         j) jobs=${OPTARG};;
         f) file=${OPTARG};;
         t) type_check=${OPTARG};;
+        v) task_type=${OPTARG};;
     esac
 done
 
@@ -17,8 +19,7 @@ rm -rf /home/code_runner > /dev/null 2>&1
 
 
 # if exists file with user code
-if [ -f $file ]; then
-
+if [ $task_type = "code" ]; then
         if [ ! -z "$type_check" ]; then
             timeout 5s mypy --strict $file
             if [ "$?" -ne 0 ]; then
@@ -38,6 +39,7 @@ if [ -f $file ]; then
 else
     echo user_code_ok_f936a25e
 fi
+
 
 timeout 10s python ${file}_tests
 if [ "$?" -ne 0 ]; then

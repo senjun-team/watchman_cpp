@@ -1,7 +1,7 @@
 FROM python:3.12.0-slim
 LABEL ru.senjun.image.authors="Shipilov Dmitry"
 
-RUN python3 -m pip install mypy
+RUN python3 -m pip install mypy pympler
 
 RUN useradd -ms /bin/bash code_runner \
     && chown root:code_runner /home/code_runner\
