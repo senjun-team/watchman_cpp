@@ -96,7 +96,8 @@ TEST(DockerWrapper, run_user_code) {
         dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)").str()});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42\r\n0\r\n";
+    std::string const reference =
+        "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
     std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
 
     auto result = dockerWrapper.exec({id, commands});
@@ -128,7 +129,7 @@ TEST(DockerWrapper, execute_task) {
         dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)").str()});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42\r\n0\r\n";
+    std::string const reference = "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
     std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
 
     auto result = dockerWrapper.exec({id, commands});
