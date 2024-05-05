@@ -13,6 +13,10 @@
     "golang": {
       "image-name": "senjun_courses_golang",
       "launched": 3
+    },
+    "haskell": {
+      "image-name": "senjun_courses_haskell",
+      "launched": 1
     }
   }
 }
