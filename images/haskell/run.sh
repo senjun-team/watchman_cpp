@@ -26,7 +26,7 @@ cd /home/code_runner/user-code
 
 f_capture="/tmp/capture.txt"
 
-if ! ( timeout 10s stack build --verbosity warn --ghc-options -fno-warn-missing-export-lists  && stack exec user-code-exe  | tee $f_capture ); then
+if ! ( timeout 10s stack build --verbosity warn --ghc-options '-fno-warn-missing-export-lists -Wno-type-defaults' && stack exec user-code-exe  | tee $f_capture ); then
    echo user_solution_error_f936a25e
    exit
 fi
