@@ -31,26 +31,26 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    auto const & languages = root.get_child_optional("languages");
-    if (!languages.has_value()) {
-        Log::error("Required field \'languages\' is absent");
+    auto const & courses = root.get_child_optional("courses");
+    if (!courses.has_value()) {
+        Log::error("Required field \'courses\' is absent");
         std::terminate();
     }
 
-    for (auto const & language : languages.value()) {
-        auto imageName = language.second.get_child_optional("image-name");
+    for (auto const & course : courses.value()) {
+        auto imageName = course.second.get_child_optional("image-name");
         if (!imageName.has_value()) {
-            Log::error("Required field \'image-name\' is absent in {}", language.first);
+            Log::error("Required field \'image-name\' is absent in {}", course.first);
             std::terminate();
         }
 
-        auto const launched = language.second.get_child_optional("launched");
+        auto const launched = course.second.get_child_optional("launched");
         if (!launched.has_value()) {
-            Log::error("Required field \'launched\' is absent in {}", language.first);
+            Log::error("Required field \'launched\' is absent in {}", course.first);
             std::terminate();
         }
 
-        auto const & containerType = language.first;
+        auto const & containerType = course.first;
 
         config.languages.insert({containerType,
                                  {imageName.value().template get_value<std::string>(),

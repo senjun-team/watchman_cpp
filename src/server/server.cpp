@@ -117,5 +117,8 @@ std::string Server::processCheck(std::string const & body) {
     return makeJsonCourse(m_service.runTask(params));
 }
 
-std::string Server::processPlayground(std::string const & body) {}
+std::string Server::processPlayground(std::string const & body) {
+    // todo process playground case
+    return {"{}"};
+}
 }  // namespace watchman

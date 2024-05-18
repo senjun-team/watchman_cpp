@@ -1,7 +1,7 @@
 {
   "max-containers-amount": 8,
   "thread-pool-size": 12,
-  "languages": {
+  "courses": {
     "python": {
       "image-name": "senjun_courses_python",
       "launched": 1
