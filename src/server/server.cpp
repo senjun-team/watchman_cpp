@@ -3,7 +3,6 @@
 #include "common/common.hpp"
 #include "common/logging.hpp"
 
-#include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
 #include <restinio/all.hpp>
@@ -15,6 +14,23 @@ std::string const kIpAddress = "0.0.0.0";
 
 size_t constexpr kDockerTimeoutCode = 124;
 size_t constexpr kDockerMemoryKill = 137;
+
+constexpr std::string_view kCheck = "/check";
+constexpr std::string_view kPlayground = "/playground";
+
+enum class Operation { Check, Playground, Unknown };
+
+Operation getOperation(std::string_view handle) {
+    if (handle == kCheck) {
+        return Operation::Check;
+    }
+
+    if (handle == kPlayground) {
+        return Operation::Playground;
+    }
+
+    return Operation::Unknown;
+}
 
 std::string makeJson(Response && response) {
     rapidjson::StringBuffer stringBuffer;
@@ -64,7 +80,7 @@ void Server::start(size_t threadPoolSize) {
                               return restinio::request_rejected();
                           }
 
-                          auto const result = processRequest(req->body());
+                          auto const result = processRequest(req->header().path(), req->body());
                           req->create_response()
                               .append_header(restinio::http_field::version,
                                              std::to_string(req->header().http_major()))
@@ -79,8 +95,15 @@ void Server::start(size_t threadPoolSize) {
                       }));
 }
 
-std::string Server::processRequest(std::string const & body) {
-    Log::info("Processing body:\n {}", body);
+std::string Server::processRequest(std::string_view handle, std::string const & body) {
+    Log::info("Processing handle {}, body:\n {}", handle, body);
+
+    switch (getOperation(handle)) {
+    case Operation::Check: break;
+    case Operation::Playground: break;
+    case Operation::Unknown: return std::string{R"({"output": "unknown handle"})"};
+    }
+
     auto const params = parse(body);
     if (params.containerType.empty()) {
         return {};

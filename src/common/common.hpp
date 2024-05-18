@@ -39,11 +39,17 @@ struct Language {
     uint32_t launched{0};
 };
 
+struct Playground {
+    std::string imageName;
+    uint32_t launched{0};
+};
+
 struct Config {
     using ContainerType = std::string;
     std::optional<size_t> threadPoolSize;
     uint32_t maxContainersAmount{0};
     std::unordered_map<ContainerType, Language> languages;
+    std::unordered_map<ContainerType, Playground> playgrounds;
 };
 
 size_t getCpuCount();

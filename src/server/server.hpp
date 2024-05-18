@@ -13,7 +13,7 @@ public:
     void start(size_t threadPoolSize);
 
 private:
-    std::string processRequest(std::string const & body);
+    std::string processRequest(std::string_view handle, std::string const & body);
     Service m_service;
 };
 }  // namespace watchman
