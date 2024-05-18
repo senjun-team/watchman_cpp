@@ -8,7 +8,7 @@ RUN useradd -ms /bin/bash code_runner \
     && chmod 1775 /home/code_runner
 
 WORKDIR /home/code_runner
-COPY run.sh .
+COPY run_playground.sh .
 
 USER code_runner
 

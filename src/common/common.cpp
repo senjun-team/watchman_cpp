@@ -83,6 +83,32 @@ Config fillConfig(Ptree const & root) {
                                     launched.value().template get_value<uint32_t>()}});
     }
 
+    auto const & playground = root.get_child_optional("playground");
+    if (!playground.has_value()) {
+        Log::error("Required field \'playground\' is absent");
+        std::terminate();
+    }
+
+    for (auto const & language : playground.value()) {
+        auto imageName = language.second.get_child_optional("image-name");
+        if (!imageName.has_value()) {
+            Log::error("Required field \'image-name\' is absent in {}", language.first);
+            std::terminate();
+        }
+
+        auto const launched = language.second.get_child_optional("launched");
+        if (!launched.has_value()) {
+            Log::error("Required field \'launched\' is absent in {}", language.first);
+            std::terminate();
+        }
+
+        auto const & containerType = language.first;
+
+        config.playgrounds.insert({containerType,
+                                 {imageName.value().template get_value<std::string>(),
+                                  launched.value().template get_value<uint32_t>()}});
+    }
+
     return config;
 }
 
