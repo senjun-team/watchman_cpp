@@ -13,24 +13,31 @@ do
 done
 
 
+# TODO
 # clear previous container use
 # rm -rf /home/code_runner > /dev/null 2>&1
 
-# run user code
 f="$(basename -- $file)"
 
-cp /home/code_runner/$f /home/code_runner/user-code/app/Main.hs
-
-# go to /home/code_runner/user_code for stack compiling and running
-cd /home/code_runner/user-code
-
 f_capture="/tmp/capture.txt"
+rm $f_capture > /dev/null 2>&1
 
-if ! ( timeout 10s stack build --verbosity warn --ghc-options '-fno-warn-missing-export-lists -Wno-type-defaults' && stack exec user-code-exe  | tee $f_capture ); then
-   echo user_solution_error_f936a25e
-   exit
+# if exists file with user code
+# run user code
+if [ $task_type = "code" ]; then
+    cp /home/code_runner/$f /home/code_runner/user-code/app/Main.hs
+
+    # go to /home/code_runner/user_code for stack compiling and running
+    cd /home/code_runner/user-code
+
+    if ! ( timeout 10s stack build --verbosity warn --ghc-options '-fno-warn-missing-export-lists -Wno-type-defaults' && stack exec user-code-exe  | tee $f_capture ); then
+        echo user_solution_error_f936a25e
+        exit
+    fi
+    echo user_code_ok_f936a25e
+else
+    echo user_code_ok_f936a25e
 fi
-echo user_code_ok_f936a25e
 
 
 # run tests
