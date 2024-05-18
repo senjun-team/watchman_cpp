@@ -2,6 +2,7 @@
 
 #include "common/common.hpp"
 #include "common/logging.hpp"
+#include "parser.hpp"
 
 #include <rapidjson/prettywriter.h>
 
@@ -32,7 +33,7 @@ Operation getOperation(std::string_view handle) {
     return Operation::Unknown;
 }
 
-std::string makeJson(Response && response) {
+std::string makeJsonCourse(Response && response) {
     rapidjson::StringBuffer stringBuffer;
     rapidjson::Writer writer(stringBuffer);
 
@@ -99,16 +100,22 @@ std::string Server::processRequest(std::string_view handle, std::string const & 
     Log::info("Processing handle {}, body:\n {}", handle, body);
 
     switch (getOperation(handle)) {
-    case Operation::Check: break;
-    case Operation::Playground: break;
-    case Operation::Unknown: return std::string{R"({"output": "unknown handle"})"};
+    case Operation::Check: return processCheck(body);
+    case Operation::Playground: return processPlayground(body);
+    default: break;
     }
 
+    return std::string{R"({"output": "unknown handle"})"};
+}
+
+std::string Server::processCheck(std::string const & body) {
     auto const params = parse(body);
     if (params.containerType.empty()) {
         return {};
     }
 
-    return makeJson(m_service.runTask(params));
+    return makeJsonCourse(m_service.runTask(params));
 }
+
+std::string Server::processPlayground(std::string const & body) {}
 }  // namespace watchman

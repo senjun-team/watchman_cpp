@@ -32,13 +32,13 @@ install(FILES ${CORE_HEADERS} DESTINATION include)
 set(SERVER_HEADERS
         server/parser.hpp
         server/server.hpp
-        )
+)
 
 set(SERVER_SOURCES
         main.cpp
         server/server.cpp
         server/parser.cpp
-        )
+)
 
 set(SERVER "${PROJECT_NAME}")
 add_executable(${SERVER} ${SERVER_SOURCES})
