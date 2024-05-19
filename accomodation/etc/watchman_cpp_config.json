@@ -8,7 +8,7 @@
     },
     "rust": {
       "image-name": "senjun_courses_rust",
-      "launched": 0
+      "launched": 1
     },
     "golang": {
       "image-name": "senjun_courses_golang",
@@ -22,6 +22,10 @@
   "playground": {
     "python": {
       "image-name": "senjun_playground_python",
+      "launched": 1
+    },
+    "rust": {
+      "image-name": "senjun_playground_rust",
       "launched": 1
     }
   }

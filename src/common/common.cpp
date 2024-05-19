@@ -52,7 +52,7 @@ Config fillConfig(Ptree const & root) {
 
         auto const & containerType = course.first;
 
-        config.languages.insert({containerType,
+        config.languages.insert({containerType + "_check",
                                  {imageName.value().template get_value<std::string>(),
                                   launched.value().template get_value<uint32_t>()}});
     }
@@ -78,7 +78,7 @@ Config fillConfig(Ptree const & root) {
 
         auto const & containerType = language.first;
 
-        config.playgrounds.insert({containerType,
+        config.playgrounds.insert({containerType + "_playground",
                                    {imageName.value().template get_value<std::string>(),
                                     launched.value().template get_value<uint32_t>()}});
     }

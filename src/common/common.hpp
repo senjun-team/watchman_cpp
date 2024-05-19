@@ -48,7 +48,7 @@ using Language = CointainerTypeInfo;
 using Playground = CointainerTypeInfo;
 
 struct Config {
-    using ContainerType = std::string;
+    using ContainerType = std::string; // python/rust/go/haskell
     std::optional<size_t> threadPoolSize;
     uint32_t maxContainersAmount{0};
     std::unordered_map<ContainerType, Language> languages;

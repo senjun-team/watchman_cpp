@@ -168,8 +168,9 @@ void detail::ContainerController::launchNewContainers(DockerWrapper & dockerWrap
                 Log::info("Launch container: {}, id: {}", info.imageName, id);
 
                 std::shared_ptr<BaseContainer> container;
-                if (type.find("playground") != std::string::npos) {
-                    container = std::make_shared<PlaygroundContainer>(std::move(id), type);
+                if (info.imageName.find("playground") != std::string::npos) {
+                    container =
+                        std::make_shared<PlaygroundContainer>(std::move(id), type);
                 } else {
                     container = std::make_shared<CourseContainer>(std::move(id), type);
                 }
@@ -249,7 +250,7 @@ Response Service::runPlayground(RunCodeParams const & runCodeParams) {
     }
 
     auto raiiContainer = getReadyContainer(runCodeParams.containerType);  // here we have got a race
-    auto & container = raiiContainer.container;
+        auto & container = raiiContainer.container;
 
     std::vector<CodeFilename> data{{runCodeParams.sourceRun, kFilenameTask}};
     if (!container.prepareCode(makeTar(std::move(data)))) {

@@ -101,7 +101,9 @@ RunTaskParams parse(std::string const & body, Api api) {
     }
 
     RunTaskParams params;
-    params.containerType = getString(containerType);
+    // todo change name of container depend on api
+    std::string const suffix = api == Api::Check ? "_check" : "_playground";
+    params.containerType = getString(containerType) + suffix;
     params.sourceRun = getString(sourceRun);
 
     if (api == Api::Check) {
