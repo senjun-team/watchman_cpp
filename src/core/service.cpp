@@ -237,7 +237,28 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     return result;
 }
 
-Response Service::runPlayground(RunCodeParams const & runCodeParams) {}
+Response Service::runPlayground(RunCodeParams const & runCodeParams) {
+    if (runCodeParams.sourceRun.empty()) {
+        Log::warning("Empty file with code");
+        return {kUserCodeError, "Source code not provided"};
+    }
+
+    if (!m_containerController.containerNameIsValid(runCodeParams.containerType)) {
+        Log::warning("Invalid container type: {}", runCodeParams.containerType);
+        return {};
+    }
+
+    auto raiiContainer = getReadyContainer(runCodeParams.containerType);  // here we have got a race
+    auto & container = raiiContainer.container;
+
+    std::vector<CodeFilename> data{{runCodeParams.sourceRun, kFilenameTask}};
+    if (!container.prepareCode(makeTar(std::move(data)))) {
+        Log::warning("Couldn't pass tar to container. Source: {}", runCodeParams.sourceRun);
+        return {};
+    }
+
+    return container.runCode(getArgs(kFilenameTask, runCodeParams.cmdLineArgs));
+}
 
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
     auto & container = m_containerController.getReadyContainer(type);
@@ -262,8 +283,6 @@ bool detail::BaseContainer::prepareCode(std::ostringstream && stream) {
 
 detail::PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
     : BaseContainer(std::move(id), type) {}
-
-Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {}
 
 bool hasEscapeSequences(std::string const & output) {
     if (output.size() < kEscapeSequence.size()) {
@@ -409,5 +428,18 @@ detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
 bool detail::ContainerController::containerNameIsValid(const std::string & name) const {
     return m_containers.contains(name);
+}
+
+Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {
+    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
+    if (!result.success) {
+        return {result.success, result.message};
+    }
+
+    if (hasEscapeSequences(result.message)) {
+        return processSequenceEndedMessage(result.message);
+    }
+
+    return processNormalEndedMessage(result.message);
 }
 }  // namespace watchman

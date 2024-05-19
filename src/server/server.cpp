@@ -62,7 +62,9 @@ std::string makeJsonCourse(Response && response) {
     return stringBuffer.GetString();
 }
 
-std::string makeJsonPlayground(Response && response) {}
+std::string makeJsonPlayground(Response && response) {
+    return makeJsonCourse(std::move(response));
+}
 
 Server::Server(Config && config)
     : m_service(std::move(config)) {}
