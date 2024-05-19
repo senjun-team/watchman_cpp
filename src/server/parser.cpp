@@ -45,7 +45,7 @@ curl -X 'POST' \
 }'
 */
 
-RunTaskParams parse(std::string const & body) {
+RunTaskParams parse(std::string const & body, Api api) {
     // Required json fields
     std::string const containerType = "container_type";
     std::string const sourceRun = "source_run";
@@ -84,15 +84,32 @@ RunTaskParams parse(std::string const & body) {
         return document[member].GetString();
     };
 
-    for (std::string const & requiredField : {containerType, sourceRun, sourceTest}) {
-        if (!hasField(requiredField) || !isString(requiredField)) {
+    auto const requiredFieldIsOk = [&hasField, &isString](std::string const & member) -> bool {
+        if (!hasField(member) || !isString(member)) {
+            return false;
+        }
+        return true;
+    };
+
+    // required fields for all handles
+    std::vector const requiredFields{containerType, sourceRun};
+
+    for (std::string const & requiredField : requiredFields) {
+        if (!requiredFieldIsOk(requiredField)) {
             return {};
         }
     }
 
-    RunTaskParams params{.containerType = getString(containerType),
-                         .sourceRun = getString(sourceRun),
-                         .sourceTest = getString(sourceTest)};
+    RunTaskParams params;
+    params.containerType = getString(containerType);
+    params.sourceRun = getString(sourceRun);
+
+    if (api == Api::Check) {
+        if (!requiredFieldIsOk(sourceTest)) {
+            return {};
+        }
+        params.sourceTest = getString(sourceTest);
+    }
 
     if (hasField(cmdLineArgs, false)) {
         if (!document[cmdLineArgs].IsArray()) {

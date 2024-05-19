@@ -79,8 +79,8 @@ Config fillConfig(Ptree const & root) {
         auto const & containerType = language.first;
 
         config.playgrounds.insert({containerType,
-                                 {imageName.value().template get_value<std::string>(),
-                                  launched.value().template get_value<uint32_t>()}});
+                                   {imageName.value().template get_value<std::string>(),
+                                    launched.value().template get_value<uint32_t>()}});
     }
 
     return config;
@@ -99,13 +99,17 @@ Config readConfig(std::string_view configPath) {
     }
 }
 
-std::ostringstream makeTar(std::string const & sourceCode, std::string const & sourceTests) {
+std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     std::ostringstream stream(std::ios::binary | std::ios::trunc);
-    if (!sourceCode.empty()) {
-        tar::tar_to_stream(stream, kFilenameTask, sourceCode.data(), sourceCode.size());
+
+    for (auto const & element : data) {
+        if (!element.code.empty()) {
+            tar::tar_to_stream(stream, element.filename, element.code.data(), element.code.size());
+        }
     }
-    tar::tar_to_stream(stream, kFilenameTaskTests, sourceTests.data(), sourceTests.size());
+
     tar::tar_to_stream_tail(stream);
+    Log::info("stream: {}", stream.str());
     return stream;
 }
 

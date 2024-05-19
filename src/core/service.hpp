@@ -19,7 +19,6 @@ public:
     virtual ~ContainerInterface() = default;
 
     virtual Response runCode(std::vector<std::string> && cmdLineArgs) = 0;
-    virtual bool prepareCode(RunTaskParams const & params) = 0;
 };
 
 struct BaseContainer : ContainerInterface {
@@ -29,23 +28,20 @@ struct BaseContainer : ContainerInterface {
     bool isReserved{false};
 
     BaseContainer(std::string id, Config::ContainerType type);
-};
-
-struct CourseContainer : BaseContainer {
-    CourseContainer(std::string id, Config::ContainerType type);
-    Response runCode(std::vector<std::string> && cmdLineArgs) override;
 
     // Creates in-memory tar and passes it to docker
-    bool prepareCode(RunTaskParams const & params) override;
+    bool prepareCode(std::ostringstream && stream);
 };
 
-struct PlaygroundContainer : BaseContainer {
+struct CourseContainer final : BaseContainer {
+    CourseContainer(std::string id, Config::ContainerType type);
+    Response runCode(std::vector<std::string> && cmdLineArgs) override;
+};
+
+struct PlaygroundContainer final : BaseContainer {
     PlaygroundContainer(std::string id, Config::ContainerType type);
 
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
-
-    // Creates in-memory tar and passes it to docker
-    bool prepareCode(RunTaskParams const & params) override;
 };
 
 class ContainerController {
@@ -58,7 +54,7 @@ public:
     ContainerController & operator=(ContainerController const & other) = delete;
     ContainerController & operator=(ContainerController && other) = delete;
 
-    BaseContainer & getReadyContainer(Config::ContainerType type);
+    BaseContainer & getReadyContainer(Config::ContainerType const & type);
     void containerReleased(BaseContainer & container);
     bool containerNameIsValid(const std::string & name) const;
 
@@ -85,7 +81,7 @@ public:
     ReleasingContainer & operator=(ReleasingContainer const &) = delete;
     ReleasingContainer & operator=(ReleasingContainer &&) = delete;
 
-    ContainerInterface & container;
+    BaseContainer & container;
 
 private:
     std::function<void()> m_releaser;
@@ -105,6 +101,7 @@ public:
     Service & operator=(Service &&) = delete;
 
     Response runTask(RunTaskParams const & runTaskParams);
+    Response runPlayground(RunCodeParams const & runCodeParams);
 
 private:
     detail::ReleasingContainer getReadyContainer(Config::Config::ContainerType type);

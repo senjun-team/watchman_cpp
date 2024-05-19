@@ -9,7 +9,6 @@
 #include <restinio/all.hpp>
 
 namespace watchman {
-
 constexpr size_t kPort = 8000;
 std::string const kIpAddress = "0.0.0.0";
 
@@ -19,18 +18,16 @@ size_t constexpr kDockerMemoryKill = 137;
 constexpr std::string_view kCheck = "/check";
 constexpr std::string_view kPlayground = "/playground";
 
-enum class Operation { Check, Playground, Unknown };
-
-Operation getOperation(std::string_view handle) {
+Api getApi(std::string_view handle) {
     if (handle == kCheck) {
-        return Operation::Check;
+        return Api::Check;
     }
 
     if (handle == kPlayground) {
-        return Operation::Playground;
+        return Api::Playground;
     }
 
-    return Operation::Unknown;
+    throw std::runtime_error{"Unkonwn api"};
 }
 
 std::string makeJsonCourse(Response && response) {
@@ -59,11 +56,13 @@ std::string makeJsonCourse(Response && response) {
     writer.String(response.output);
 
     writer.Key("tests_output");
-    writer.String(response.testsOutput);
+    writer.String(*response.testsOutput);
 
     writer.EndObject();
     return stringBuffer.GetString();
 }
+
+std::string makeJsonPlayground(Response && response) {}
 
 Server::Server(Config && config)
     : m_service(std::move(config)) {}
@@ -96,20 +95,23 @@ void Server::start(size_t threadPoolSize) {
                       }));
 }
 
-std::string Server::processRequest(std::string_view handle, std::string const & body) {
-    Log::info("Processing handle {}, body:\n {}", handle, body);
+std::string Server::processRequest(std::string_view api, std::string const & body) {
+    Log::info("Processing handle {}, body:\n {}", api, body);
 
-    switch (getOperation(handle)) {
-    case Operation::Check: return processCheck(body);
-    case Operation::Playground: return processPlayground(body);
-    default: break;
+    try {
+        switch (getApi(api)) {
+        case Api::Check: return processCheck(body);
+        case Api::Playground: return processPlayground(body);
+        }
+    } catch (std::exception const & exception) {
+        Log::error(exception.what());
     }
 
     return std::string{R"({"output": "unknown handle"})"};
 }
 
 std::string Server::processCheck(std::string const & body) {
-    auto const params = parse(body);
+    auto const params = parse(body, Api::Check);
     if (params.containerType.empty()) {
         return {};
     }
@@ -118,7 +120,11 @@ std::string Server::processCheck(std::string const & body) {
 }
 
 std::string Server::processPlayground(std::string const & body) {
-    // todo process playground case
-    return {"{}"};
+    auto const params = parse(body, Api::Playground);
+    if (params.containerType.empty()) {
+        return {};
+    }
+
+    return makeJsonPlayground(m_service.runPlayground(params));
 }
 }  // namespace watchman

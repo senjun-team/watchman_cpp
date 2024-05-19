@@ -19,30 +19,33 @@ static ErrorCode constexpr kInvalidCode = -1;
 
 bool errorCodeIsUnexpected(ErrorCode code);
 
-struct RunTaskParams {
+enum class Api { Check, Playground };
+
+struct RunCodeParams {
     std::string containerType;
     std::string sourceRun;
-    std::string sourceTest;
 
     // Command-line arguments for interpreter
     std::vector<std::string> cmdLineArgs;
 };
 
+struct RunTaskParams : RunCodeParams {
+    std::string sourceTest;
+};
+
 struct Response {
     ErrorCode sourceCode{kInvalidCode};
     std::string output;
-    std::string testsOutput;
+    std::optional<std::string> testsOutput;
 };
 
-struct Language {
+struct CointainerTypeInfo {
     std::string imageName;
     uint32_t launched{0};
 };
 
-struct Playground {
-    std::string imageName;
-    uint32_t launched{0};
-};
+using Language = CointainerTypeInfo;
+using Playground = CointainerTypeInfo;
 
 struct Config {
     using ContainerType = std::string;
@@ -55,7 +58,13 @@ struct Config {
 size_t getCpuCount();
 
 Config readConfig(std::string_view configPath);
-std::ostringstream makeTar(std::string const & sourceCode, std::string const & sourceTests);
+
+struct CodeFilename {
+    std::string code;
+    std::string filename;
+};
+
+std::ostringstream makeTar(std::vector<CodeFilename> && data);
 
 class LogDuration {
 public:
