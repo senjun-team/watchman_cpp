@@ -103,7 +103,8 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     std::ostringstream stream(std::ios::binary | std::ios::trunc);
 
     for (auto const & element : data) {
-        if (!element.code.empty()) {
+        if (!element.code.empty() && element.filename == kFilenameTask
+            || element.filename == kFilenameTaskTests) {
             tar::tar_to_stream(stream, element.filename, element.code.data(), element.code.size());
         }
     }
