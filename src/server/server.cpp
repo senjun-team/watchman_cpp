@@ -104,7 +104,7 @@ std::string Server::processRequest(std::string_view api, std::string const & bod
         case Api::Playground: return processPlayground(body);
         }
     } catch (std::exception const & exception) {
-        Log::error(exception.what());
+        Log::error("Wrong api: {}", exception.what());
     }
 
     return std::string{R"({"output": "unknown handle"})"};
