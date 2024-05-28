@@ -11,10 +11,12 @@ RUN apt-get -y update && apt-get -y upgrade \
 WORKDIR /home/code_runner
 COPY run.sh .
 COPY package.yaml .
+COPY config.yaml .
 
 
 USER code_runner
 RUN stack new user-code \
+    && cp config.yaml .stack/ \
     && cp package.yaml user-code/ \
     && cd user-code \
     && stack build
@@ -22,6 +24,7 @@ RUN stack new user-code \
 USER root
 
 RUN chown root:code_runner /home/code_runner/user-code \ 
+    && rm /home/code_runner/config.yaml \
     && rm /home/code_runner/package.yaml \
     && chmod 1775 /home/code_runner/user-code \
     && chown root:code_runner /home/code_runner/user-code/src \
