@@ -39,8 +39,9 @@ size_t getStringLength(ExitCodes code) {
     case ExitCodes::Ok: return kCorrelations[0].string.size();
     case ExitCodes::UserError: return kCorrelations[1].string.size();
     case ExitCodes::TestError: return kCorrelations[2].string.size();
-    case ExitCodes::Unknown: return -1;
+    case ExitCodes::Unknown: break;
     }
+    return -1;
 }
 
 // debug function for macos purposes
@@ -203,7 +204,12 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
         return {};
     }
 
-    return container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+    auto result = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+    if (errorCodeIsUnexpected(result.sourceCode)) {
+        Log::error("Error return code {} from container {} type of {}", result.sourceCode,
+                   container.id, container.type);
+    }
+    return result;
 }
 
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
@@ -315,7 +321,7 @@ Response processSequenceEndedMessage(std::string const & message) {
     }
 
     default:
-        Log::warning(kWrongDockerImage);
+        Log::error(kWrongDockerImage);
         return {static_cast<int32_t>(exitCode), "Internal error", ""};
     }
 }
@@ -341,7 +347,7 @@ Response processNormalEndedMessage(std::string const & message) {
     }
 
     default:
-        Log::warning(kWrongDockerImage);
+        Log::error(kWrongDockerImage);
         return {static_cast<int32_t>(exitCode), "Internal error", ""};
     }
 }

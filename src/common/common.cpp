@@ -93,4 +93,9 @@ LogDuration::~LogDuration() {
                                                                     - m_start)
                   .count());
 }
+
+bool errorCodeIsUnexpected(ErrorCode code) {
+    return code != kSuccessCode && code != kUserCodeError && code != kTestsError;
+}
+
 };  // namespace watchman
