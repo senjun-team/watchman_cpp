@@ -193,7 +193,9 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     if (!m_containerController.containerNameIsValid(runTaskParams.containerType)) {
         Log::warning("Invalid container type: {}", runTaskParams.containerType);
-        return {};
+        return {kInvalidCode,
+                fmt::format("Invalid container type: {}", runTaskParams.containerType),
+                std::string{}};
     }
 
     auto raiiContainer = getReadyContainer(runTaskParams.containerType);  // here we have got a race
