@@ -169,8 +169,7 @@ void detail::ContainerController::launchNewContainers(DockerWrapper & dockerWrap
 
                 std::shared_ptr<BaseContainer> container;
                 if (info.imageName.find("playground") != std::string::npos) {
-                    container =
-                        std::make_shared<PlaygroundContainer>(std::move(id), type);
+                    container = std::make_shared<PlaygroundContainer>(std::move(id), type);
                 } else {
                     container = std::make_shared<CourseContainer>(std::move(id), type);
                 }
@@ -250,7 +249,7 @@ Response Service::runPlayground(RunCodeParams const & runCodeParams) {
     }
 
     auto raiiContainer = getReadyContainer(runCodeParams.containerType);  // here we have got a race
-        auto & container = raiiContainer.container;
+    auto & container = raiiContainer.container;
 
     std::vector<CodeFilename> data{{runCodeParams.sourceRun, kFilenameTask}};
     if (!container.prepareCode(makeTar(std::move(data)))) {
@@ -358,7 +357,7 @@ Response processSequenceEndedMessage(std::string const & message) {
 
     case ExitCodes::UserError: {
         // pattern: user's_output user_solution_error_f936a25e
-        return {kUserCodeError, getUserOutput(message), std::string{}};
+        return {kUserCodeError, getUserOutput(message), std::nullopt};
     }
 
     case ExitCodes::TestError: {

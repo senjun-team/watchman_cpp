@@ -1,7 +1,7 @@
 {
   "thread-pool-size": 10,
   "max-containers-amount": 8,
-  "languages": {
+  "courses": {
     "python": {
       "image-name": "senjun_courses_python",
       "launched": 1
@@ -12,6 +12,28 @@
     },
     "golang": {
       "image-name": "senjun_courses_golang",
+      "launched": 1
+    },
+    "haskell": {
+      "image-name": "senjun_courses_haskell",
+      "launched": 1
+    }
+  },
+  "playground": {
+    "python": {
+      "image-name": "senjun_playground_python",
+      "launched": 1
+    },
+    "rust": {
+      "image-name": "senjun_playground_rust",
+      "launched": 1
+    },
+    "golang": {
+      "image-name": "senjun_playground_golang",
+      "launched": 1
+    },
+    "haskell": {
+      "image-name": "senjun_playground_haskell",
       "launched": 1
     }
   }
