@@ -17,6 +17,8 @@ static ErrorCode constexpr kUserCodeError = 1;
 static ErrorCode constexpr kTestsError = 2;
 static ErrorCode constexpr kInvalidCode = -1;
 
+bool errorCodeIsUnexpected(ErrorCode code);
+
 struct RunTaskParams {
     std::string containerType;
     std::string sourceRun;

@@ -18,7 +18,7 @@ size_t constexpr kDockerMemoryKill = 137;
 
 std::string makeJson(Response && response) {
     rapidjson::StringBuffer stringBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
+    rapidjson::Writer writer(stringBuffer);
 
     writer.StartObject();
     writer.Key("status_code");
