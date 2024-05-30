@@ -1,14 +1,9 @@
 #include <gtest/gtest.h>
 
+#include "common.hpp"
 #include "core/service.hpp"
 
 #include <thread>
-
-struct ServiceParams {
-    std::string const config = std::string{TEST_DATA_DIR} + "config.json";
-};
-
-static ServiceParams const kParams;
 
 // TODO make containers delete after tests
 
@@ -31,8 +26,8 @@ TEST(Service, Run) {
     std::string sourceCode = "print(42)";
     std::string testingCode = "print(42)";
 
-    watchman::RunTaskParams const params{
-        std::move(containerType), std::move(sourceCode), {}, std::move(testingCode)};
+    watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                         std::move(testingCode)};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(!response.output.empty());
@@ -43,8 +38,8 @@ TEST(Service, UnknownContainerType) {
     std::string containerType = "pythn";
     std::string sourceCode = "prnt(42)";
     std::string testingCode = "print(42)";
-    watchman::RunTaskParams const params{
-        std::move(containerType), std::move(sourceCode), {}, std::move(testingCode)};
+    watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                         std::move(testingCode)};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == watchman::kInvalidCode);
     ASSERT_TRUE(!response.output.empty());
@@ -55,8 +50,8 @@ TEST(Service, Sleep) {
     std::string containerType = "python_check";
     std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
     std::string testingCode = "print(42)";
-    watchman::RunTaskParams const params{
-        std::move(containerType), std::move(sourceCode), {}, std::move(testingCode)};
+    watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                         std::move(testingCode)};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
     ASSERT_TRUE(!response.output.empty());
@@ -70,8 +65,8 @@ TEST(Service, Golang) {
     std::string testingCode =
         "package main\nimport (\"fmt\"\n\"testing\")\nfunc TestMain(m *testing.M) {\tfmt.Println(\"tests are ok\")}";
 
-    watchman::RunTaskParams const params{
-        std::move(containerType), std::move(sourceCode), {}, std::move(testingCode)};
+    watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                         std::move(testingCode)};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(!response.output.empty());
@@ -85,8 +80,8 @@ TEST(Service, RaceCondition) {
         std::string containerType = "python_check";
         std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
         std::string testingCode = "print(42)";
-        watchman::RunTaskParams const params{
-            std::move(containerType), std::move(sourceCode), {}, std::move(testingCode)};
+        watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                             std::move(testingCode)};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "42");
@@ -96,8 +91,8 @@ TEST(Service, RaceCondition) {
         std::string containerType = "python_check";
         std::string sourceCode = "print(69)";
         std::string testingCode = "print(42)";
-        watchman::RunTaskParams const params{
-            std::move(containerType), std::move(sourceCode), {}, std::move(testingCode)};
+        watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                             std::move(testingCode)};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "69");
@@ -123,7 +118,7 @@ TEST(Service, AnswerTypes) {
     // syntax error in user's code
     sourceCode = "print(42";
     testingCode = "lalalala";
-    params = {containerType, sourceCode, {}, testingCode};
+    params = {{containerType, sourceCode, {}}, testingCode};
     response = service.runTask(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
@@ -132,7 +127,7 @@ TEST(Service, AnswerTypes) {
     // exception in user code
     sourceCode = "raise";
     testingCode = "lalalala";
-    params = {containerType, sourceCode, {}, testingCode};
+    params = {{containerType, sourceCode, {}}, testingCode};
     response = service.runTask(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
@@ -141,7 +136,7 @@ TEST(Service, AnswerTypes) {
     // correct code, but test failed
     sourceCode = "print(42)";
     testingCode = "raise";
-    params = {containerType, sourceCode, {}, testingCode};
+    params = {{containerType, sourceCode, {}}, testingCode};
     response = service.runTask(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kTestsError);

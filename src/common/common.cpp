@@ -136,7 +136,6 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     }
 
     tar::tar_to_stream_tail(stream);
-    Log::info("stream: {}", stream.str());
     return stream;
 }
 
