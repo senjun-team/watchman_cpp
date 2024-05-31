@@ -6,5 +6,5 @@
 
 namespace watchman {
 
-RunTaskParams parse(std::string const & body);
+RunTaskParams parse(std::string const & body, Api api);
 }  // namespace watchman

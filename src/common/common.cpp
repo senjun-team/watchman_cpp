@@ -31,13 +31,39 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    auto const & languages = root.get_child_optional("languages");
-    if (!languages.has_value()) {
-        Log::error("Required field \'languages\' is absent");
+    auto const & courses = root.get_child_optional("courses");
+    if (!courses.has_value()) {
+        Log::error("Required field \'courses\' is absent");
         std::terminate();
     }
 
-    for (auto const & language : languages.value()) {
+    for (auto const & course : courses.value()) {
+        auto imageName = course.second.get_child_optional("image-name");
+        if (!imageName.has_value()) {
+            Log::error("Required field \'image-name\' is absent in {}", course.first);
+            std::terminate();
+        }
+
+        auto const launched = course.second.get_child_optional("launched");
+        if (!launched.has_value()) {
+            Log::error("Required field \'launched\' is absent in {}", course.first);
+            std::terminate();
+        }
+
+        auto const & containerType = course.first;
+
+        config.languages.insert({containerType + "_check",
+                                 {imageName.value().template get_value<std::string>(),
+                                  launched.value().template get_value<uint32_t>()}});
+    }
+
+    auto const & playground = root.get_child_optional("playground");
+    if (!playground.has_value()) {
+        Log::error("Required field \'playground\' is absent");
+        std::terminate();
+    }
+
+    for (auto const & language : playground.value()) {
         auto imageName = language.second.get_child_optional("image-name");
         if (!imageName.has_value()) {
             Log::error("Required field \'image-name\' is absent in {}", language.first);
@@ -52,9 +78,9 @@ Config fillConfig(Ptree const & root) {
 
         auto const & containerType = language.first;
 
-        config.languages.insert({containerType,
-                                 {imageName.value().template get_value<std::string>(),
-                                  launched.value().template get_value<uint32_t>()}});
+        config.playgrounds.insert({containerType + "_playground",
+                                   {imageName.value().template get_value<std::string>(),
+                                    launched.value().template get_value<uint32_t>()}});
     }
 
     return config;
@@ -73,13 +99,18 @@ Config readConfig(std::string_view configPath) {
     }
 }
 
-std::ostringstream makeTar(std::string const & sourceCode, std::string const & sourceTests) {
+std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     std::ostringstream stream(std::ios::binary | std::ios::trunc);
-    if (!sourceCode.empty()) {
-        tar::tar_to_stream(stream, kFilenameTask, sourceCode.data(), sourceCode.size());
+
+    for (auto const & element : data) {
+        if (!element.code.empty() && element.filename == kFilenameTask
+            || element.filename == kFilenameTaskTests) {
+            tar::tar_to_stream(stream, element.filename, element.code.data(), element.code.size());
+        }
     }
-    tar::tar_to_stream(stream, kFilenameTaskTests, sourceTests.data(), sourceTests.size());
+
     tar::tar_to_stream_tail(stream);
+    Log::info("stream: {}", stream.str());
     return stream;
 }
 

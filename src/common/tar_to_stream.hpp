@@ -4,6 +4,9 @@
 #include <cstring>
 #include <string>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 namespace tar {
 
 template<typename T>
@@ -76,3 +79,5 @@ void tar_to_stream_tail(T & stream, unsigned int tail_length = 512u * 2u) {
     stream << std::string(tail_length, '\0');
 }
 }  // namespace tar
+
+#pragma clang diagnostic pop

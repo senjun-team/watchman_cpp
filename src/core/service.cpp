@@ -6,6 +6,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <cctype>
+#include <future>
 #include <map>
 #include <string_view>
 
@@ -87,11 +88,14 @@ detail::ContainerController::ContainerController(Config && config)
     Log::info("Service launched");
 
     DockerWrapper dockerWrapper;
-    killOldContainers(dockerWrapper, m_config.languages);
-    launchNewContainers(dockerWrapper, m_config.languages);
+    killOldContainers(dockerWrapper);
+    launchNewContainers(dockerWrapper);
 }
 
-detail::Container & detail::ContainerController::getReadyContainer(Config::ContainerType type) {
+detail::BaseContainer &
+detail::ContainerController::getReadyContainer(Config::ContainerType const & type) {
+    // lock for any container type
+    // todo think of separating containers into different queues
     std::unique_lock lock(m_mutex);
 
     auto & containers = m_containers.at(type);
@@ -111,7 +115,7 @@ detail::Container & detail::ContainerController::getReadyContainer(Config::Conta
     return *containers.at(indexProperContainer);
 }
 
-void detail::ContainerController::containerReleased(Container & container) {
+void detail::ContainerController::containerReleased(BaseContainer & container) {
     {
         std::scoped_lock const lock(m_mutex);
         container.isReserved = false;
@@ -121,51 +125,67 @@ void detail::ContainerController::containerReleased(Container & container) {
 
 detail::ContainerController::~ContainerController() = default;
 
-void detail::ContainerController::killOldContainers(
-    DockerWrapper & dockerWrapper,
-    std::unordered_map<Config::ContainerType, Language> const & languages) {
+void detail::ContainerController::killOldContainers(DockerWrapper & dockerWrapper) {
     auto const workingContainers = dockerWrapper.getAllContainers();
-    for (auto const & [_, language] : languages) {
-        for (auto const & container : workingContainers) {
-            if (container.image.find(language.imageName) != std::string::npos) {
-                if (dockerWrapper.isRunning(container.id)) {
-                    dockerWrapper.killContainer(container.id);
-                }
 
-                Log::info("Remove container type: {}, id: {}", language.imageName, container.id);
-                dockerWrapper.removeContainer(container.id);
+    // todo think about naming, containerTypes is awful
+    auto const killContainers = [this, &dockerWrapper, &workingContainers](auto && containerTypes) {
+        for (auto const & [_, info] : containerTypes) {
+            for (auto const & container : workingContainers) {
+                if (container.image.find(info.imageName) != std::string::npos) {
+                    if (dockerWrapper.isRunning(container.id)) {
+                        dockerWrapper.killContainer(container.id);
+                    }
+
+                    Log::info("Remove container type: {}, id: {}", info.imageName, container.id);
+                    dockerWrapper.removeContainer(container.id);
+                }
             }
         }
-    }
+    };
+
+    killContainers(m_config.languages);
+    killContainers(m_config.playgrounds);
 }
 
-void detail::ContainerController::launchNewContainers(
-    DockerWrapper & dockerWrapper,
-    std::unordered_map<Config::ContainerType, Language> const & languages) {
-    for (auto const & [type, language] : languages) {
-        std::vector<std::shared_ptr<Container>> containers;
-        for (size_t index = 0; index < language.launched; ++index) {
-            RunContainer params;
+void detail::ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
+    auto const launchContainers = [this, &dockerWrapper](auto && containerTypes) {
+        for (auto const & [type, info] : containerTypes) {
+            std::vector<std::shared_ptr<BaseContainer>> containers;
+            for (size_t index = 0; index < info.launched; ++index) {
+                RunContainer params;
 
-            params.image = language.imageName;
-            params.tty = true;
-            params.memory = 300'000'000;
+                params.image = info.imageName;
+                params.tty = true;
+                params.memory = 300'000'000;
 
-            std::string id = dockerWrapper.run(std::move(params));
-            if (id.empty()) {
-                Log::warning("Internal error: can't run container of type {}", type);
-                continue;
+                std::string id = dockerWrapper.run(std::move(params));
+                if (id.empty()) {
+                    Log::warning("Internal error: can't run container of type {}", type);
+                    continue;
+                }
+
+                Log::info("Launch container: {}, id: {}", info.imageName, id);
+
+                std::shared_ptr<BaseContainer> container;
+                if (info.imageName.find("playground") != std::string::npos) {
+                    container =
+                        std::make_shared<PlaygroundContainer>(std::move(id), type);
+                } else {
+                    container = std::make_shared<CourseContainer>(std::move(id), type);
+                }
+
+                containers.emplace_back(std::move(container));
             }
 
-            Log::info("Launch container: {}, id: {}", language.imageName, id);
-            auto container = std::make_shared<Container>(std::move(id), type);
-            containers.emplace_back(std::move(container));
+            if (!containers.empty()) {
+                m_containers.emplace(type, std::move(containers));
+            }
         }
+    };
 
-        if (!containers.empty()) {
-            m_containers.emplace(type, std::move(containers));
-        }
-    }
+    launchContainers(m_config.languages);
+    launchContainers(m_config.playgrounds);
 }
 
 // Returns vector containing sequence: cmd, script, filename, args
@@ -201,7 +221,11 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
 
     auto raiiContainer = getReadyContainer(runTaskParams.containerType);  // here we have got a race
     auto & container = raiiContainer.container;
-    if (!container.prepareCode(runTaskParams.sourceRun, runTaskParams.sourceTest)) {
+
+    std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
+                                   {runTaskParams.sourceTest, kFilenameTaskTests}};
+
+    if (!container.prepareCode(makeTar(std::move(data)))) {
         Log::warning("Couldn't pass tar to container. Source: {}", runTaskParams.sourceRun);
         return {};
     }
@@ -214,6 +238,29 @@ Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParam
     return result;
 }
 
+Response Service::runPlayground(RunCodeParams const & runCodeParams) {
+    if (runCodeParams.sourceRun.empty()) {
+        Log::warning("Empty file with code");
+        return {kUserCodeError, "Source code not provided"};
+    }
+
+    if (!m_containerController.containerNameIsValid(runCodeParams.containerType)) {
+        Log::warning("Invalid container type: {}", runCodeParams.containerType);
+        return {};
+    }
+
+    auto raiiContainer = getReadyContainer(runCodeParams.containerType);  // here we have got a race
+        auto & container = raiiContainer.container;
+
+    std::vector<CodeFilename> data{{runCodeParams.sourceRun, kFilenameTask}};
+    if (!container.prepareCode(makeTar(std::move(data)))) {
+        Log::warning("Couldn't pass tar to container. Source: {}", runCodeParams.sourceRun);
+        return {};
+    }
+
+    return container.runCode(getArgs(kFilenameTask, runCodeParams.cmdLineArgs));
+}
+
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
     auto & container = m_containerController.getReadyContainer(type);
 
@@ -221,11 +268,7 @@ detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type
             [this, &container]() { m_containerController.containerReleased(container); }};
 }
 
-bool detail::Container::prepareCode(std::string const & code, std::string const & codeTests) {
-    std::ostringstream stream(std::ios::binary);
-
-    stream = makeTar(code, codeTests);
-
+bool detail::BaseContainer::prepareCode(std::ostringstream && stream) {
     PutArchive params;
     params.containerId = id;
     params.path = kUserSourceFile;
@@ -238,6 +281,9 @@ bool detail::Container::prepareCode(std::string const & code, std::string const 
 
     return true;
 }
+
+detail::PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
+    : BaseContainer(std::move(id), type) {}
 
 bool hasEscapeSequences(std::string const & output) {
     if (output.size() < kEscapeSequence.size()) {
@@ -354,7 +400,7 @@ Response processNormalEndedMessage(std::string const & message) {
     }
 }
 
-Response detail::Container::runCode(std::vector<std::string> && cmdLineArgs) {
+Response detail::CourseContainer::runCode(std::vector<std::string> && cmdLineArgs) {
     auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
@@ -367,11 +413,14 @@ Response detail::Container::runCode(std::vector<std::string> && cmdLineArgs) {
     return processNormalEndedMessage(result.message);
 }
 
-detail::Container::Container(std::string id, Config::ContainerType type)
+detail::BaseContainer::BaseContainer(std::string id, Config::ContainerType type)
     : id(std::move(id))
     , type(std::move(type)) {}
 
-detail::ReleasingContainer::ReleasingContainer(detail::Container & container,
+detail::CourseContainer::CourseContainer(std::string id, Config::ContainerType type)
+    : BaseContainer(std::move(id), type) {}
+
+detail::ReleasingContainer::ReleasingContainer(detail::BaseContainer & container,
                                                std::function<void()> deleter)
     : container(container)
     , m_releaser(std::move(deleter)) {}
@@ -380,5 +429,18 @@ detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
 bool detail::ContainerController::containerNameIsValid(const std::string & name) const {
     return m_containers.contains(name);
+}
+
+Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {
+    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
+    if (!result.success) {
+        return {result.success, result.message};
+    }
+
+    if (hasEscapeSequences(result.message)) {
+        return processSequenceEndedMessage(result.message);
+    }
+
+    return processNormalEndedMessage(result.message);
 }
 }  // namespace watchman

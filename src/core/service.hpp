@@ -4,6 +4,7 @@
 #include "docker_wrapper.hpp"
 
 #include <condition_variable>
+#include <docker/answer.hpp>
 #include <functional>
 #include <mutex>
 #include <optional>
@@ -13,17 +14,34 @@
 namespace watchman {
 namespace detail {
 
-struct Container {
+class ContainerInterface {
+public:
+    virtual ~ContainerInterface() = default;
+
+    virtual Response runCode(std::vector<std::string> && cmdLineArgs) = 0;
+};
+
+struct BaseContainer : ContainerInterface {
     DockerWrapper dockerWrapper;
     std::string id;
     Config::ContainerType type;
     bool isReserved{false};
 
-    Container(std::string id, Config::ContainerType type);
-    Response runCode(std::vector<std::string> && cmdLineArgs);
+    BaseContainer(std::string id, Config::ContainerType type);
 
     // Creates in-memory tar and passes it to docker
-    bool prepareCode(std::string const & code, std::string const & codeTests);
+    bool prepareCode(std::ostringstream && stream);
+};
+
+struct CourseContainer final : BaseContainer {
+    CourseContainer(std::string id, Config::ContainerType type);
+    Response runCode(std::vector<std::string> && cmdLineArgs) override;
+};
+
+struct PlaygroundContainer final : BaseContainer {
+    PlaygroundContainer(std::string id, Config::ContainerType type);
+
+    Response runCode(std::vector<std::string> && cmdLineArgs) override;
 };
 
 class ContainerController {
@@ -36,27 +54,26 @@ public:
     ContainerController & operator=(ContainerController const & other) = delete;
     ContainerController & operator=(ContainerController && other) = delete;
 
-    Container & getReadyContainer(Config::ContainerType type);
-    void containerReleased(Container & container);
-    bool containerNameIsValid(const std::string & name)const;
+    BaseContainer & getReadyContainer(Config::ContainerType const & type);
+    void containerReleased(BaseContainer & container);
+    bool containerNameIsValid(const std::string & name) const;
 
 private:
-    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<Container>>> m_containers;
+    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
+        m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
 
     Config m_config;
 
-    void killOldContainers(DockerWrapper & dockerWrapper,
-                           std::unordered_map<Config::ContainerType, Language> const & languages);
-    void launchNewContainers(DockerWrapper & dockerWrapper,
-                             std::unordered_map<Config::ContainerType, Language> const & languages);
+    void killOldContainers(DockerWrapper & dockerWrapper);
+    void launchNewContainers(DockerWrapper & dockerWrapper);
 };
 
 class ReleasingContainer {
 public:
-    ReleasingContainer(Container & container, std::function<void()> deleter);
+    ReleasingContainer(BaseContainer & container, std::function<void()> deleter);
     ~ReleasingContainer();
 
     ReleasingContainer(ReleasingContainer const &) = delete;
@@ -64,7 +81,7 @@ public:
     ReleasingContainer & operator=(ReleasingContainer const &) = delete;
     ReleasingContainer & operator=(ReleasingContainer &&) = delete;
 
-    Container & container;
+    BaseContainer & container;
 
 private:
     std::function<void()> m_releaser;
@@ -84,6 +101,7 @@ public:
     Service & operator=(Service &&) = delete;
 
     Response runTask(RunTaskParams const & runTaskParams);
+    Response runPlayground(RunCodeParams const & runCodeParams);
 
 private:
     detail::ReleasingContainer getReadyContainer(Config::Config::ContainerType type);

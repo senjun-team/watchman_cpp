@@ -2,7 +2,6 @@
 
 #include "common/common.hpp"
 #include "core/service.hpp"
-#include "parser.hpp"
 
 #include <string>
 
@@ -13,7 +12,12 @@ public:
     void start(size_t threadPoolSize);
 
 private:
-    std::string processRequest(std::string const & body);
+    std::string processRequest(std::string_view handle, std::string const & body);
+
+    // handles
+    std::string processCheck(std::string const & body);
+    std::string processPlayground(std::string const & body);
+
     Service m_service;
 };
 }  // namespace watchman
