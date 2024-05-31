@@ -13,9 +13,6 @@ static const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
     {"137\r\n", 137}   // if COMMAND (or timeout itself) is sent the KILL (9)
 };
 
-// Also exit statuses of timeout util inside container:
-size_t constexpr kDockerTimeout = 124;
-size_t constexpr kDockerMemoryKill = 137;
 enum class ExitCodes : int32_t {
     Ok,         // no errors
     UserError,  // error: syntax / building / bad running user code
@@ -116,7 +113,7 @@ std::string getUserOutput(std::string const & message) {
                                  - getStringLength(ExitCodes::UserError));
 }
 
-Response processMessage(std::string const & message) {
+Response processCourse(std::string const & message) {
     ExitCodes const exitCode = getSequencedExitCode(message);
     switch (exitCode) {
     case ExitCodes::Ok: {
@@ -142,6 +139,8 @@ Response processMessage(std::string const & message) {
     }
 }
 
+Response processPlayground(std::string const & message) { return {}; }
+
 }  // namespace watchman::linux
 
 namespace watchman::mac {
@@ -162,7 +161,7 @@ std::string getUserOutput(std::string const & message) {
     return message.substr(0, message.size() - getStringLength(ExitCodes::UserError));
 }
 
-Response processMessage(std::string const & message) {
+Response processCourse(std::string const & message) {
     ExitCodes const exitCode = getSequencedExitCode(message);
     switch (exitCode) {
     case ExitCodes::Ok: {
@@ -188,23 +187,25 @@ Response processMessage(std::string const & message) {
     }
 }
 
+Response processPlayground(std::string const & message) { return {}; }
+
 }  // namespace watchman::mac
 
 namespace watchman {
 
 Response getCourseResponse(std::string const & message) {
     if (hasLinuxEscape(message)) {
-        return linux::processMessage(message);
+        return linux::processCourse(message);
     }
 
-    return mac::processMessage(message);
+    return mac::processCourse(message);
 }
 
 Response getPlaygroungResponse(std::string const & message) {
     if (hasLinuxEscape(message)) {
-        return linux::processMessage(message);
+        return linux::processPlayground(message);
     }
 
-    return mac::processMessage(message);
+    return mac::processPlayground(message);
 }
 }  // namespace watchman

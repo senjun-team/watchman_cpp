@@ -12,13 +12,7 @@
 
 namespace watchman {
 
-struct StringImages {
-    static std::string_view constexpr python = "senjun_courses_python";
-    static std::string_view constexpr rust = "senjun_courses_rust";
-};
-
 static std::string const kUserSourceFile = "/home/code_runner";
-static std::string const kUserSourceFileTests = "/home/code_runner";
 
 Service::Service(Config && config)
     : m_containerController(std::move(config)) {}
