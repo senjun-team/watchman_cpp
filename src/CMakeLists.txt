@@ -12,6 +12,7 @@ set(CORE_SOURCES
         core/docker_wrapper.cpp
         common/common.cpp
         common/logging.cpp
+        common/docker_end_answer.cpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}_core")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})

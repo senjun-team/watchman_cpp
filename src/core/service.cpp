@@ -1,5 +1,6 @@
 #include "service.hpp"
 
+#include "common/docker_end_answer.hpp"
 #include "common/logging.hpp"
 #include "core/docker_wrapper.hpp"
 
@@ -7,70 +8,9 @@
 
 #include <cctype>
 #include <future>
-#include <map>
 #include <string_view>
 
 namespace watchman {
-
-enum class ExitCodes : int32_t {
-    Ok,         // no errors
-    UserError,  // error: syntax / building / bad running user code
-    TestError,  // test case failed
-    Unknown     // trash answer from container
-};
-
-// 3 bytes: code\r\n
-std::string_view constexpr kEscapeSequence = "\r\n";
-std::string_view constexpr kCodeTestsSeparator = "user_code_ok_f936a25e";
-
-std::string_view constexpr kWrongDockerImage = "Maybe wrong docker image?";
-
-struct MarkToStatusCode {
-    std::string_view string;
-    ExitCodes code;
-};
-
-std::vector<MarkToStatusCode> const kCorrelations{
-    {"user_solution_ok_f936a25e", ExitCodes::Ok},
-    {"user_solution_error_f936a25e", ExitCodes::UserError},
-    {"tests_cases_error_f936a25e", ExitCodes::TestError}};
-
-size_t getStringLength(ExitCodes code) {
-    switch (code) {
-    case ExitCodes::Ok: return kCorrelations[0].string.size();
-    case ExitCodes::UserError: return kCorrelations[1].string.size();
-    case ExitCodes::TestError: return kCorrelations[2].string.size();
-    case ExitCodes::Unknown: break;
-    }
-    return -1;
-}
-
-// debug function for macos purposes
-void removeEscapeSequences(std::string & string) {
-    size_t constexpr size = kEscapeSequence.size();
-    while (size_t const from = string.find(kEscapeSequence)) {
-        if (from == std::string::npos) {
-            break;
-        }
-        string.erase(from, size);
-    }
-}
-
-struct ContainerMessages {
-    std::string usersOutput;
-    std::string testsOutput;
-};
-
-// For all exit statuses of 'timeout' util see "man timeout"
-static const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
-    {"124\r\n", 124},  // if COMMAND times out, and --preserve-status is not specified
-    {"125\r\n", 125},  // if the timeout command itself fails
-    {"137\r\n", 137}   // if COMMAND (or timeout itself) is sent the KILL (9)
-};
-
-// Also exit statuses of timeout util inside container:
-size_t constexpr kDockerTimeout = 124;
-size_t constexpr kDockerMemoryKill = 137;
 
 struct StringImages {
     static std::string_view constexpr python = "senjun_courses_python";
@@ -284,132 +224,13 @@ bool detail::BaseContainer::prepareCode(std::ostringstream && stream) {
 detail::PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
     : BaseContainer(std::move(id), type) {}
 
-bool hasEscapeSequences(std::string const & output) {
-    if (output.size() < kEscapeSequence.size()) {
-        return false;
-    }
-
-    return output.ends_with(kEscapeSequence);
-}
-
-ContainerMessages getOutputsWithEscapeSequence(ExitCodes code, std::string const & messages) {
-    size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
-    std::string usersOutput = userCodeEndIndex > kEscapeSequence.size()
-                                ? messages.substr(0, userCodeEndIndex - kEscapeSequence.size())
-                                : std::string{};
-
-    size_t const from = userCodeEndIndex + kCodeTestsSeparator.size() + kEscapeSequence.size();
-    size_t const amount = messages.size() - from - getStringLength(code) - kEscapeSequence.size();
-    std::string testsOutput = messages.substr(from, amount);
-    if (testsOutput.ends_with(kEscapeSequence)) {
-        testsOutput = testsOutput.substr(0, testsOutput.size() - kEscapeSequence.size());
-    }
-
-    return {std::move(usersOutput), std::move(testsOutput)};
-}
-
-ContainerMessages getOutputsNormal(ExitCodes code, std::string const & messages) {
-    size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
-    std::string usersOutput = userCodeEndIndex == 0 ? std::string{}
-                                                    : messages.substr(0, userCodeEndIndex);
-
-    size_t const from = userCodeEndIndex + kCodeTestsSeparator.size();
-    size_t const amount = messages.size() - from - getStringLength(code);
-    std::string testsOutput = messages.substr(from, amount);
-
-    return {std::move(usersOutput), std::move(testsOutput)};
-}
-
-ExitCodes getSequencedExitCode(std::string const & containerOutput) {
-    // Case when timeout util returns its status code
-    for (auto const & [codeStr, code] : kTimeoutUtilCodes) {
-        if (containerOutput.ends_with(codeStr)) {
-            return static_cast<ExitCodes>(code);
-        }
-    }
-
-    for (auto const & pattern : kCorrelations) {
-        if (containerOutput.find(pattern.string) != std::string::npos) {
-            return pattern.code;
-        }
-    }
-
-    return ExitCodes::Unknown;
-}
-
-std::string getUserOutput(std::string const & message) {
-    return message.substr(0, message.size() - kEscapeSequence.size()
-                                 - getStringLength(ExitCodes::UserError));
-}
-
-std::string getUserOutputNormal(std::string const & message) {
-    return message.substr(0, message.size() - getStringLength(ExitCodes::UserError));
-}
-
-Response processSequenceEndedMessage(std::string const & message) {
-    ExitCodes const exitCode = getSequencedExitCode(message);
-    switch (exitCode) {
-    case ExitCodes::Ok: {
-        // pattern: user's_output user_code_ok_f936a25e user_solution_ok_f936a25e
-        auto [usersOutput, testsOutput] = getOutputsWithEscapeSequence(ExitCodes::Ok, message);
-        return {kSuccessCode, std::move(usersOutput), std::move(testsOutput)};
-    }
-
-    case ExitCodes::UserError: {
-        // pattern: user's_output user_solution_error_f936a25e
-        return {kUserCodeError, getUserOutput(message), std::nullopt};
-    }
-
-    case ExitCodes::TestError: {
-        // pattern: user's_output user_code_ok_f936a25e tests_cases_error_f936a25e
-        auto [usersOutput, testsOutput] =
-            getOutputsWithEscapeSequence(ExitCodes::TestError, message);
-        return {kTestsError, std::move(usersOutput), std::move(testsOutput)};
-    }
-
-    default:
-        Log::error(kWrongDockerImage);
-        return {static_cast<int32_t>(exitCode), "Internal error", ""};
-    }
-}
-
-Response processNormalEndedMessage(std::string const & message) {
-    ExitCodes const exitCode = getSequencedExitCode(message);
-    switch (exitCode) {
-    case ExitCodes::Ok: {
-        // pattern: user's_output user_code_ok_f936a25e user_solution_ok_f936a25e
-        auto [usersOutput, testsOutput] = getOutputsNormal(ExitCodes::Ok, message);
-        return {kSuccessCode, std::move(usersOutput), std::move(testsOutput)};
-    }
-
-    case ExitCodes::UserError: {
-        // pattern: user's_output user_solution_error_f936a25e
-        return {kUserCodeError, getUserOutputNormal(message), std::string{}};
-    }
-
-    case ExitCodes::TestError: {
-        // pattern: user's_output user_code_ok_f936a25e tests_cases_error_f936a25e
-        auto [usersOutput, testsOutput] = getOutputsNormal(ExitCodes::TestError, message);
-        return {kTestsError, std::move(usersOutput), std::move(testsOutput)};
-    }
-
-    default:
-        Log::error(kWrongDockerImage);
-        return {static_cast<int32_t>(exitCode), "Internal error", ""};
-    }
-}
-
 Response detail::CourseContainer::runCode(std::vector<std::string> && cmdLineArgs) {
     auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
     }
 
-    if (hasEscapeSequences(result.message)) {
-        return processSequenceEndedMessage(result.message);
-    }
-
-    return processNormalEndedMessage(result.message);
+    return getCourseResponse(result.message);
 }
 
 detail::BaseContainer::BaseContainer(std::string id, Config::ContainerType type)
@@ -436,10 +257,6 @@ Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLin
         return {result.success, result.message};
     }
 
-    if (hasEscapeSequences(result.message)) {
-        return processSequenceEndedMessage(result.message);
-    }
-
-    return processNormalEndedMessage(result.message);
+    return getPlaygroungResponse(result.message);
 }
 }  // namespace watchman
