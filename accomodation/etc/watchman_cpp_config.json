@@ -1,5 +1,5 @@
 {
-  "max-containers-amount": 8,
+  "max-containers-amount": 20,
   "thread-pool-size": 12,
   "courses": {
     "python": {
@@ -22,19 +22,19 @@
   "playground": {
     "python": {
       "image-name": "senjun_playground_python",
-      "launched": 1
+      "launched": 3
     },
     "rust": {
       "image-name": "senjun_playground_rust",
-      "launched": 1
+      "launched": 3
     },
     "golang": {
       "image-name": "senjun_playground_golang",
-      "launched": 1
+      "launched": 3
     },
     "haskell": {
       "image-name": "senjun_playground_haskell",
-      "launched": 1
+      "launched": 3
     }
   }
 }
