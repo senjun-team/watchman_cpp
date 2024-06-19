@@ -13,6 +13,9 @@ set(CORE_SOURCES
         common/common.cpp
         common/logging.cpp
         common/docker_end_answer.cpp
+        common/playground.cpp
+        common/courses.cpp
+        common/answer_common.cpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}_core")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})
@@ -39,6 +42,10 @@ set(SERVER_SOURCES
         main.cpp
         server/server.cpp
         server/parser.cpp
+        common/playground.cpp
+        common/answer_common.hpp
+        common/courses.cpp
+        common/answer_common.cpp
 )
 
 set(SERVER "${PROJECT_NAME}")
