@@ -67,11 +67,8 @@ Response processCourse(std::string const & message) {
 }
 
 Response processPlayground(std::string const & message) {
-    // todo here we need to process result from container
-    // we don't need extra string tests_ok like in courses
-    // we have to process answer without tests launching
-    // interesting, that mac answer also has escape sequence now
-    return processCourse(message);
+    // todo is this situation possible?
+    return {};
 }
 
 }  // namespace watchman::linux
@@ -108,9 +105,11 @@ Response processCourse(std::string const & message) {
 }
 
 Response processPlayground(std::string const & message) {
-    // todo is this situation possible?
-
-    return {};
+    // todo here we need to process result from container
+    // we don't need extra string tests_ok like in courses
+    // we have to process answer without tests launching
+    // interesting, that mac answer also has escape sequence now
+    return processCourse(message);
 }
 
 }  // namespace watchman::mac
@@ -127,9 +126,9 @@ Response getCourseResponse(std::string const & message) {
 
 Response getPlaygroungResponse(std::string const & message) {
     if (hasEscapeSequence(message)) {
-        return linux::processPlayground(message);
+        return mac::processPlayground(message);
     }
 
-    return mac::processPlayground(message);
+    return linux::processPlayground(message);
 }
 }  // namespace watchman
