@@ -25,7 +25,7 @@ struct ContainerMessages {
 };
 
 // 3 bytes: code\r\n
-std::string_view constexpr kLinuxEscapeSequence = "\r\n";
+std::string_view constexpr kRNEscapeSequence = "\r\n";
 std::string_view constexpr kCodeTestsSeparator = "user_code_ok_f936a25e";
 
 std::string_view constexpr kWrongDockerImage = "Maybe wrong docker image?";
@@ -42,11 +42,11 @@ std::vector<MarkToStatusCode> const kCorrelations{
 
 size_t getStringLength(ExitCodes code);
 
-ExitCodes getSequencedExitCode(std::string const & containerOutput);
+ExitCodes getExitCode(std::string const & containerOutput);
 
 // debug function for macos purposes
 void removeEscapeSequences(std::string & string);
 
-bool hasLinuxEscape(std::string const & output);
+bool hasEscapeSequence(std::string const & output);
 
 }  // namespace watchman::internal
