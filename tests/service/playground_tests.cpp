@@ -11,6 +11,6 @@ TEST(Playground, Run) {
     watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
-    ASSERT_TRUE(!response.output.empty());
+    ASSERT_TRUE(response.output == "42");
     ASSERT_TRUE(!response.testsOutput.has_value()); // todo fix in code this behaviour
 }

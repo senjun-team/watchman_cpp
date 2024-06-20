@@ -12,8 +12,8 @@ set(CORE_SOURCES
         core/docker_wrapper.cpp
         common/common.cpp
         common/logging.cpp
-        common/docker_end_answer.cpp
-        common/playground.cpp
+        common/process_courses.cpp
+        common/process_playground.cpp
         common/courses.cpp
         common/answer_common.cpp
         )
@@ -42,7 +42,7 @@ set(SERVER_SOURCES
         main.cpp
         server/server.cpp
         server/parser.cpp
-        common/playground.cpp
+        common/process_playground.cpp
         common/answer_common.hpp
         common/courses.cpp
         common/answer_common.cpp

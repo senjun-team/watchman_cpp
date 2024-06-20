@@ -1,6 +1,5 @@
-#include "docker_end_answer.hpp"
-
 #include "answer_common.hpp"
+#include "docker_end_answer.hpp"
 #include "logging.hpp"
 
 #include <map>
@@ -66,11 +65,6 @@ Response processCourse(std::string const & message) {
         [](std::string const & message) { return linux::getUserOutput(message); });
 }
 
-Response processPlayground(std::string const & message) {
-    // todo is this situation possible?
-    return {};
-}
-
 }  // namespace watchman::linux
 
 namespace watchman::mac {
@@ -104,14 +98,6 @@ Response processCourse(std::string const & message) {
         [](std::string const & message) { return mac::getUserOutput(message); });
 }
 
-Response processPlayground(std::string const & message) {
-    // todo here we need to process result from container
-    // we don't need extra string tests_ok like in courses
-    // we have to process answer without tests launching
-    // interesting, that mac answer also has escape sequence now
-    return processCourse(message);
-}
-
 }  // namespace watchman::mac
 
 namespace watchman {
@@ -122,13 +108,5 @@ Response getCourseResponse(std::string const & message) {
     }
 
     return linux::processCourse(message);
-}
-
-Response getPlaygroungResponse(std::string const & message) {
-    if (hasEscapeSequence(message)) {
-        return mac::processPlayground(message);
-    }
-
-    return linux::processPlayground(message);
 }
 }  // namespace watchman

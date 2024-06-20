@@ -19,7 +19,6 @@ ExitCodes getExitCode(std::string const & containerOutput) {
             return static_cast<ExitCodes>(code);
         }
     }
-
     for (auto const & pattern : kCorrelations) {
         if (containerOutput.find(pattern.string) != std::string::npos) {
             return pattern.code;

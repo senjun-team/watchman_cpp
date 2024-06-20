@@ -14,5 +14,4 @@ if [ "$?" -ne 0 ]; then
   exit
 fi
 
-echo user_code_ok_f936a25e
 echo user_solution_ok_f936a25e
