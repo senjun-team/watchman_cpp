@@ -14,7 +14,6 @@ set(CORE_SOURCES
         common/logging.cpp
         common/process_courses.cpp
         common/process_playground.cpp
-        common/courses.cpp
         common/answer_common.cpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}_core")
