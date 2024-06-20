@@ -4,25 +4,19 @@
   "courses": {
     "python": {
       "image-name": "senjun_courses_python",
-      "launched": 1
+      "launched": 6
     },
     "rust": {
       "image-name": "senjun_courses_rust",
-      "launched": 0
+      "launched": 3
     },
     "golang": {
       "image-name": "senjun_courses_golang",
-      "launched": 0
+      "launched": 3
     },
     "haskell": {
       "image-name": "senjun_courses_haskell",
-      "launched": 0
-    }
-  },
-  "playground": {
-    "python": {
-      "image-name": "senjun_playground_python",
-      "launched": 1
+      "launched": 3
     }
   },
   "playground": {

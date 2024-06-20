@@ -43,7 +43,6 @@ set(SERVER_SOURCES
         server/parser.cpp
         common/process_playground.cpp
         common/answer_common.hpp
-        common/courses.cpp
         common/answer_common.cpp
 )
 

@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace watchman::internal {
 // For all exit statuses of 'timeout' util see "man timeout"
