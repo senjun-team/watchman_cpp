@@ -39,7 +39,7 @@ cp /home/code_runner/$f /home/code_runner/user-code/src/main.rs
 # go to /home/code_runner/user_code for cargo compiling and running
 cd /home/code_runner/user-code
 
-if ! ( timeout 10s cargo clean && cargo run --release --quiet --offline $cargo_run_opts ); then
+if ! ( timeout 10s cargo clean --quiet && cargo run --release --quiet --offline $cargo_run_opts ); then
    echo user_solution_error_f936a25e
    exit
 fi
