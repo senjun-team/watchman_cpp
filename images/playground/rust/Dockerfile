@@ -1,4 +1,4 @@
-FROM rust:1.73.0-slim-buster
+FROM rust:1.79.0-slim-buster
 LABEL ru.senjun.image.authors="Shipilov Dmitry"
 
 # change access wrtie for code_runner home directory to root
