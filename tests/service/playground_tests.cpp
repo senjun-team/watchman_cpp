@@ -12,5 +12,5 @@ TEST(Playground, Run) {
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(response.output == "42");
-    ASSERT_TRUE(!response.testsOutput.has_value()); // todo fix in code this behaviour
+    ASSERT_TRUE(!response.testsOutput.has_value());
 }
