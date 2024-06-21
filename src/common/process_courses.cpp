@@ -37,7 +37,7 @@ watchman::Response processCourseTemplate(std::string const & message, GetMessage
 }
 }  // namespace
 
-namespace watchman::linux {
+namespace watchman::lunix {
 
 std::string getUserOutput(std::string const & message) {
     return message.substr(0, message.size() - kRNEscapeSequence.size()
@@ -60,12 +60,12 @@ Response processCourse(std::string const & message) {
     return processCourseTemplate(
         message,
         [](ExitCodes code, std::string const & messages) {
-            return linux::getMessageOutput(code, messages);
+            return lunix::getMessageOutput(code, messages);
         },
-        [](std::string const & message) { return linux::getUserOutput(message); });
+        [](std::string const & message) { return lunix::getUserOutput(message); });
 }
 
-}  // namespace watchman::linux
+}  // namespace watchman::lunix
 
 namespace watchman::mac {
 
@@ -107,6 +107,6 @@ Response getCourseResponse(std::string const & message) {
         return mac::processCourse(message);
     }
 
-    return linux::processCourse(message);
+    return lunix::processCourse(message);
 }
 }  // namespace watchman
