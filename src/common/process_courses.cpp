@@ -2,47 +2,7 @@
 #include "docker_end_answer.hpp"
 #include "logging.hpp"
 
-#include <map>
-
-using namespace watchman::internal;
-
-namespace {
-
-template<typename GetMessage, typename GetUserOutput>
-watchman::Response processCourseTemplate(std::string const & message, GetMessage getMessage,
-                                         GetUserOutput getUserOutput) {
-    ExitCodes const exitCode = getExitCode(message);
-    switch (exitCode) {
-    case ExitCodes::Ok: {
-        // pattern: user's_output user_code_ok_f936a25e user_solution_ok_f936a25e
-        auto [usersOutput, testsOutput] = getMessage(ExitCodes::Ok, message);
-        return {watchman::kSuccessCode, std::move(usersOutput), std::move(testsOutput)};
-    }
-
-    case ExitCodes::UserError: {
-        // pattern: user's_output user_solution_error_f936a25e
-        return {watchman::kUserCodeError, getUserOutput(message), std::nullopt};
-    }
-
-    case ExitCodes::TestError: {
-        // pattern: user's_output user_code_ok_f936a25e tests_cases_error_f936a25e
-        auto [usersOutput, testsOutput] = getMessage(ExitCodes::TestError, message);
-        return {watchman::kTestsError, std::move(usersOutput), std::move(testsOutput)};
-    }
-
-    default:
-        watchman::Log::error(kWrongDockerImage);
-        return {static_cast<int32_t>(exitCode), "Internal error", ""};
-    }
-}
-}  // namespace
-
-namespace watchman::os_linux {
-
-std::string getUserOutput(std::string const & message) {
-    return message.substr(0, message.size() - kRNEscapeSequence.size()
-                                 - getStringLength(ExitCodes::UserError));
-}
+namespace watchman::internal {
 
 ContainerMessages getMessageOutput(ExitCodes code, std::string const & messages) {
     size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
@@ -56,57 +16,46 @@ ContainerMessages getMessageOutput(ExitCodes code, std::string const & messages)
     return {std::move(usersOutput), std::move(testsOutput)};
 }
 
-Response processCourse(std::string const & message) {
-    return processCourseTemplate(
-        message,
-        [](ExitCodes code, std::string const & messages) {
-            return os_linux::getMessageOutput(code, messages);
-        },
-        [](std::string const & message) { return os_linux::getUserOutput(message); });
-}
-
-}  // namespace watchman::os_linux
-
-namespace watchman::mac {
-
-ContainerMessages getMessageOutput(ExitCodes code, std::string const & messages) {
-    size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
-    std::string usersOutput = userCodeEndIndex > kRNEscapeSequence.size()
-                                ? messages.substr(0, userCodeEndIndex - kRNEscapeSequence.size())
-                                : std::string{};
-
-    size_t const from = userCodeEndIndex + kCodeTestsSeparator.size() + kRNEscapeSequence.size();
-    size_t const amount = messages.size() - from - getStringLength(code) - kRNEscapeSequence.size();
-    std::string testsOutput = messages.substr(from, amount);
-    if (testsOutput.ends_with(kRNEscapeSequence)) {
-        testsOutput = testsOutput.substr(0, testsOutput.size() - kRNEscapeSequence.size());
-    }
-
-    return {std::move(usersOutput), std::move(testsOutput)};
-}
-
 std::string getUserOutput(std::string const & message) {
     return message.substr(0, message.size() - getStringLength(ExitCodes::UserError));
 }
 
 Response processCourse(std::string const & message) {
-    return processCourseTemplate(
-        message,
-        [](ExitCodes code, std::string const & messages) {
-            return mac::getMessageOutput(code, messages);
-        },
-        [](std::string const & message) { return mac::getUserOutput(message); });
+    ExitCodes const exitCode = getExitCode(message);
+    switch (exitCode) {
+    case ExitCodes::Ok: {
+        // pattern: user's_output user_code_ok_f936a25e user_solution_ok_f936a25e
+        auto [usersOutput, testsOutput] = getMessageOutput(ExitCodes::Ok, message);
+        return {kSuccessCode, std::move(usersOutput), std::move(testsOutput)};
+    }
+
+    case ExitCodes::UserError: {
+        // pattern: user's_output user_solution_error_f936a25e
+        return {watchman::kUserCodeError, getUserOutput(message), std::nullopt};
+    }
+
+    case ExitCodes::TestError: {
+        // pattern: user's_output user_code_ok_f936a25e tests_cases_error_f936a25e
+        auto [usersOutput, testsOutput] = getMessageOutput(ExitCodes::TestError, message);
+        return {watchman::kTestsError, std::move(usersOutput), std::move(testsOutput)};
+    }
+
+    default:
+        watchman::Log::error(kWrongDockerImage);
+        return {static_cast<int32_t>(exitCode), "Internal error", ""};
+    }
 }
 
-}  // namespace watchman::mac
+}  // namespace watchman::internal
 
 namespace watchman {
 
 Response getCourseResponse(std::string const & message) {
-    if (hasEscapeSequence(message)) {
-        return mac::processCourse(message);
+    if (internal::hasEscapeSequence(message)) {
+        auto noEscapeMessage = internal::removeEscapeSequences(message);
+        return internal::processCourse(noEscapeMessage);
     }
 
-    return os_linux::processCourse(message);
+    return internal::processCourse(message);
 }
 }  // namespace watchman

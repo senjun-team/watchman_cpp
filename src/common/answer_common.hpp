@@ -46,9 +46,11 @@ size_t getStringLength(ExitCodes code);
 
 ExitCodes getExitCode(std::string const & containerOutput);
 
-// debug function for macos purposes
-void removeEscapeSequences(std::string & string);
+// my favorite funcion
+std::string removeEscapeSequences(std::string const & string);
 
 bool hasEscapeSequence(std::string const & output);
+
+std::string getUserOutput(std::string const & message);
 
 }  // namespace watchman::internal

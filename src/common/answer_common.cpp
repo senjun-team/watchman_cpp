@@ -28,19 +28,18 @@ ExitCodes getExitCode(std::string const & containerOutput) {
     return ExitCodes::Unknown;
 }
 
-// debug function for macos purposes
-void removeEscapeSequences(std::string & string) {
+std::string removeEscapeSequences(std::string const & string) {
+    std::string noEscapeString(string);
     size_t constexpr size = kRNEscapeSequence.size();
-    while (size_t const from = string.find(kRNEscapeSequence)) {
+    while (size_t const from = noEscapeString.find(kRNEscapeSequence)) {
         if (from == std::string::npos) {
             break;
         }
-        string.erase(from, size);
+        noEscapeString.erase(from, size);
     }
+    return noEscapeString;
 }
 
-bool hasEscapeSequence(std::string const & output) {
-    return output.ends_with(kRNEscapeSequence);
-}
+bool hasEscapeSequence(std::string const & output) { return output.ends_with(kRNEscapeSequence); }
 
 }  // namespace watchman::internal
