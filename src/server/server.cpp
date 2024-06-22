@@ -56,7 +56,7 @@ std::string makeJsonCourse(Response && response) {
     writer.String(response.output);
 
     writer.Key("tests_output");
-    writer.String(*response.testsOutput);
+    writer.String(response.testsOutput.value_or(""));
 
     writer.EndObject();
     return stringBuffer.GetString();
