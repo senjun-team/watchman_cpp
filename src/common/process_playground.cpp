@@ -28,7 +28,7 @@ watchman::Response processPlaygroundTemplate(std::string const & message, GetMes
 }
 }  // namespace
 
-namespace watchman::lunix::playground {
+namespace watchman::os_linux::playground {
 
 std::string getMessageOutput(std::string const & messages) {
     size_t const userCodeEndIndex = messages.find(kUserCodeSeparator);
@@ -45,10 +45,10 @@ std::string getUserOutput(std::string const & message) {
 
 Response processPlayground(std::string const & message) {
     return processPlaygroundTemplate(
-        message, [](auto && message) { return lunix::playground::getMessageOutput(message); },
-        [](auto && message) { return lunix::playground::getUserOutput(message); });
+        message, [](auto && message) { return os_linux::playground::getMessageOutput(message); },
+        [](auto && message) { return os_linux::playground::getUserOutput(message); });
 }
-}  // namespace watchman::lunix::playground
+}  // namespace watchman::os_linux::playground
 
 namespace watchman::mac::playground {
 
@@ -79,7 +79,7 @@ Response getPlaygroungResponse(std::string const & message) {
         return mac::playground::processPlayground(message);
     }
 
-    return lunix::playground::processPlayground(message);
+    return os_linux::playground::processPlayground(message);
 }
 
 }  // namespace watchman
