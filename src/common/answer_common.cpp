@@ -40,10 +40,6 @@ void removeEscapeSequences(std::string & string) {
 }
 
 bool hasEscapeSequence(std::string const & output) {
-    if (output.size() < kRNEscapeSequence.size()) {
-        return false;
-    }
-
     return output.ends_with(kRNEscapeSequence);
 }
 
