@@ -26,3 +26,13 @@ TEST(Playground, Go) {
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "2 2");
 }
+
+TEST(Playground, Haskell) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    std::string containerType = "haskell_playground";
+    std::string sourceCode = "module Main where\nmain :: IO ()\nmain = putStrLn (show 129";
+
+    watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+    auto response = service.runPlayground(params);
+    ASSERT_TRUE(response.sourceCode == 1);
+}
