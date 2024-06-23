@@ -10,6 +10,7 @@ set(CORE_HEADERS
 set(CORE_SOURCES
         core/service.cpp
         core/docker_wrapper.cpp
+        core/parser.cpp
         common/common.cpp
         common/logging.cpp
         common/process_courses.cpp
@@ -33,14 +34,12 @@ install(FILES ${CORE_HEADERS} DESTINATION include)
 #-----------------------------------------------------------------------------------------------------------------------
 
 set(SERVER_HEADERS
-        server/parser.hpp
         server/server.hpp
 )
 
 set(SERVER_SOURCES
         main.cpp
         server/server.cpp
-        server/parser.cpp
         common/process_playground.cpp
         common/answer_common.hpp
         common/answer_common.cpp
@@ -48,7 +47,7 @@ set(SERVER_SOURCES
 
 set(SERVER "${PROJECT_NAME}")
 add_executable(${SERVER} ${SERVER_SOURCES})
-target_compile_definitions(${SERVER} PRIVATE RAPIDJSON_HAS_STDSTRING)
+#target_compile_definitions(${SERVER} PRIVATE RAPIDJSON_HAS_STDSTRING)
 target_link_libraries(${SERVER} spdlog restinio::restinio fmt::fmt ${WATCHMAN_CORE})
 
 install(TARGETS ${SERVER} DESTINATION bin)
