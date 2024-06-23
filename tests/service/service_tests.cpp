@@ -49,6 +49,23 @@ TEST(Service, TestError) {
     ASSERT_EQ(response.testsOutput, "There is no `err_service_unavailable` variable\r\n");
 }
 
+TEST(Service, UserSyntaxError) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    std::string containerType = "python_check";
+    std::string sourceCode = "err_service_unavailable = 503)";
+    std::string testingCode =
+        "from io import StringIO\nimport sys\n\n\nold_stdout = sys.stdout\nsys.stdout = mystdout = StringIO()\n\nprint(2, 2)\nprint(3, 3)\n\nsys.stdout = old_stdout\n\nif 'err_service_unavailable' not in locals():\n    print(\"There is no `err_service_unavailable` variable\")\n    exit(1)\n\nif type(err_service_unavailable) is not int:\n    print(\"Variable is not an integer\")\n    exit(1)\n\nif err_service_unavailable != 503:\n    print(\"Variable value is not 503\")\n    exit(1)";
+
+    watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
+                                         std::move(testingCode)};
+    auto response = service.runTask(params);
+    ASSERT_EQ(response.sourceCode, 1);
+    ASSERT_EQ(
+        response.output,
+        "  File \"/home/code_runner/task\", line 1\r\n    err_service_unavailable = 503)\r\n                                 ^\r\nSyntaxError: unmatched ')'\r\n");
+    ASSERT_FALSE(response.testsOutput.has_value());
+}
+
 TEST(Service, UnknownContainerType) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "pythn";

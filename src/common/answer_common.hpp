@@ -37,6 +37,9 @@ std::string_view constexpr kEscapedUserCodeSeparator = "user_solution_ok_f936a25
 std::string_view constexpr kTestCasesError = "tests_cases_error_f936a25e";
 std::string_view constexpr kEscapedTestCasesError = "tests_cases_error_f936a25e\r\n";
 
+std::string_view constexpr kUserSolutionError = "user_solution_error_f936a25e";
+std::string_view constexpr kEscapedUserSolutionError = "user_solution_error_f936a25e\r\n";
+
 std::string_view constexpr kWrongDockerImage = "Maybe wrong docker image?";
 
 struct MarkToStatusCode {
