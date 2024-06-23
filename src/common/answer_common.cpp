@@ -2,7 +2,8 @@
 
 namespace watchman::internal {
 
-std::vector const kEscapePatterns{kEscapedCodeTestsSeparator, kEscapedUserCodeSeparator};
+std::vector const kEscapePatterns{kEscapedCodeTestsSeparator, kEscapedUserCodeSeparator,
+                                  kEscapedTestCasesError};
 
 size_t getStringLength(ExitCodes code) {
     switch (code) {

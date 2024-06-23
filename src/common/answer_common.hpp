@@ -27,10 +27,15 @@ struct ContainerMessages {
 
 // 3 bytes: code\r\n
 std::string_view constexpr kRNEscapeSequence = "\r\n";
+
 std::string_view constexpr kCodeTestsSeparator = "user_code_ok_f936a25e";
 std::string_view constexpr kEscapedCodeTestsSeparator = "user_code_ok_f936a25e\r\n";
+
 std::string_view constexpr kUserCodeSeparator = "user_solution_ok_f936a25e";
 std::string_view constexpr kEscapedUserCodeSeparator = "user_solution_ok_f936a25e\r\n";
+
+std::string_view constexpr kTestCasesError = "tests_cases_error_f936a25e";
+std::string_view constexpr kEscapedTestCasesError = "tests_cases_error_f936a25e\r\n";
 
 std::string_view constexpr kWrongDockerImage = "Maybe wrong docker image?";
 
