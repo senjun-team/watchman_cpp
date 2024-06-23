@@ -2,6 +2,8 @@
 
 namespace watchman::internal {
 
+std::vector const kEscapePatterns{kEscapedCodeTestsSeparator, kEscapedUserCodeSeparator};
+
 size_t getStringLength(ExitCodes code) {
     switch (code) {
     case ExitCodes::Ok: return kCorrelations[0].string.size();
@@ -38,6 +40,20 @@ std::string removeEscapeSequences(std::string const & string) {
         noEscapeString.erase(from, size);
     }
     return noEscapeString;
+}
+
+std::string removeEscapeSequencesTender(std::string const & string) {
+    std::string noExcessEscapeSymbols(string);
+    for (auto const pattern : kEscapePatterns) {
+        size_t const beginPattern = noExcessEscapeSymbols.find(pattern);
+        if (beginPattern == std::string::npos) {
+            continue;
+        }
+
+        size_t const beginRN = beginPattern + pattern.size() - kRNEscapeSequence.size();
+        noExcessEscapeSymbols.erase(beginRN, kRNEscapeSequence.size());
+    }
+    return noExcessEscapeSymbols;
 }
 
 bool hasEscapeSequence(std::string const & output) { return output.ends_with(kRNEscapeSequence); }

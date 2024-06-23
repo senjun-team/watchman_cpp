@@ -23,13 +23,14 @@ TEST(Service, ReadConfig) {
 TEST(Service, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "python_check";
-    std::string sourceCode = "print(42)";
+    std::string sourceCode = "print(42)\nprint(42)";
     std::string testingCode = "print(42)";
 
     watchman::RunTaskParams const params{{std::move(containerType), std::move(sourceCode), {}},
                                          std::move(testingCode)};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
+    ASSERT_EQ(response.output, "42\r\n42\r\n");
     ASSERT_TRUE(!response.output.empty());
 }
 
@@ -84,7 +85,7 @@ TEST(Service, RaceCondition) {
                                              std::move(testingCode)};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
-        ASSERT_EQ(response.output, "42");
+        ASSERT_EQ(response.output, "42\r\n");
     });
 
     std::thread t2([&service]() {
@@ -95,7 +96,7 @@ TEST(Service, RaceCondition) {
                                              std::move(testingCode)};
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
-        ASSERT_EQ(response.output, "69");
+        ASSERT_EQ(response.output, "69\r\n");
     });
 
     t1.join();
@@ -112,8 +113,8 @@ TEST(Service, AnswerTypes) {
     watchman::RunTaskParams params{{containerType, sourceCode, {}}, testingCode};
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
-    ASSERT_TRUE(response.output == "42");
-    ASSERT_TRUE(response.testsOutput == "69");
+    ASSERT_TRUE(response.output == "42\r\n");
+    ASSERT_TRUE(response.testsOutput == "69\r\n");
 
     // syntax error in user's code
     sourceCode = "print(42";
@@ -140,6 +141,6 @@ TEST(Service, AnswerTypes) {
     response = service.runTask(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kTestsError);
-    ASSERT_TRUE(response.output == "42");
+    ASSERT_TRUE(response.output == "42\r\n");
     ASSERT_TRUE(response.testsOutput.has_value());
 }

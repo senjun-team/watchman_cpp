@@ -52,7 +52,7 @@ namespace watchman {
 
 Response getCourseResponse(std::string const & message) {
     if (internal::hasEscapeSequence(message)) {
-        auto noEscapeMessage = internal::removeEscapeSequences(message);
+        auto noEscapeMessage = internal::removeEscapeSequencesTender(message);
         return internal::processCourse(noEscapeMessage);
     }
 

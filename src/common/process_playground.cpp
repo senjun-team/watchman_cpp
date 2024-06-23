@@ -37,7 +37,7 @@ namespace watchman {
 
 Response getPlaygroungResponse(std::string const & message) {
     if (internal::hasEscapeSequence(message)) {
-        std::string messageWithoutEscapeSequence = internal::removeEscapeSequences(message);
+        std::string messageWithoutEscapeSequence = internal::removeEscapeSequencesTender(message);
         return internal::processPlayground(messageWithoutEscapeSequence);
     }
 
