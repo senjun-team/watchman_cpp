@@ -82,7 +82,6 @@ Config fillConfig(Ptree const & root) {
                                    {imageName.value().template get_value<std::string>(),
                                     launched.value().template get_value<uint32_t>()}});
     }
-
     return config;
 }
 
@@ -110,7 +109,6 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     }
 
     tar::tar_to_stream_tail(stream);
-    Log::info("stream: {}", stream.str());
     return stream;
 }
 

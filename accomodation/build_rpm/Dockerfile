@@ -8,6 +8,6 @@ RUN yum upgrade -y \
     && yum install -y -q boost-devel zlib-devel curl-devel
 
 # env variable for spec file. watchman_cpp release version
-ENV VERSION="0.1.26"
+ENV VERSION="0.1.27"
 
 ENTRYPOINT sh /mnt/watchman_cpp/accomodation/build_rpm/build_rpm.sh

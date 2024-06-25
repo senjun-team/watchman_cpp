@@ -1,0 +1,68 @@
+#pragma once
+
+#include <map>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace watchman::internal {
+// For all exit statuses of 'timeout' util see "man timeout"
+const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
+    {"124\r\n", 124},  // if COMMAND times out, and --preserve-status is not specified
+    {"125\r\n", 125},  // if the timeout command itself fails
+    {"137\r\n", 137}   // if COMMAND (or timeout itself) is sent the KILL (9)
+};
+
+enum class ExitCodes : int32_t {
+    Ok,         // no errors
+    UserError,  // error: syntax / building / bad running user code
+    TestError,  // test case failed
+    Unknown     // trash answer from container
+};
+
+struct ContainerMessages {
+    std::string usersOutput;
+    std::string testsOutput;
+};
+
+// 3 bytes: code\r\n
+std::string_view constexpr kRNEscapeSequence = "\r\n";
+
+std::string_view constexpr kCodeTestsSeparator = "user_code_ok_f936a25e";
+std::string_view constexpr kEscapedCodeTestsSeparator = "user_code_ok_f936a25e\r\n";
+
+std::string_view constexpr kUserCodeSeparator = "user_solution_ok_f936a25e";
+std::string_view constexpr kEscapedUserCodeSeparator = "user_solution_ok_f936a25e\r\n";
+
+std::string_view constexpr kTestCasesError = "tests_cases_error_f936a25e";
+std::string_view constexpr kEscapedTestCasesError = "tests_cases_error_f936a25e\r\n";
+
+std::string_view constexpr kUserSolutionError = "user_solution_error_f936a25e";
+std::string_view constexpr kEscapedUserSolutionError = "user_solution_error_f936a25e\r\n";
+
+std::string_view constexpr kWrongDockerImage = "Maybe wrong docker image?";
+
+struct MarkToStatusCode {
+    std::string_view string;
+    ExitCodes code;
+};
+
+std::vector<MarkToStatusCode> const kCorrelations{
+    {"user_solution_ok_f936a25e", ExitCodes::Ok},
+    {"user_solution_error_f936a25e", ExitCodes::UserError},
+    {"tests_cases_error_f936a25e", ExitCodes::TestError}};
+
+size_t getStringLength(ExitCodes code);
+
+ExitCodes getExitCode(std::string const & containerOutput);
+
+// my favorite funcion
+std::string removeEscapeSequences(std::string const & string);
+
+std::string removeEscapeSequencesTender(std::string const & string);
+
+bool hasEscapeSequence(std::string const & output);
+
+std::string getUserOutput(std::string const & message);
+
+}  // namespace watchman::internal

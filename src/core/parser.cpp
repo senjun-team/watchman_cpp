@@ -1,10 +1,15 @@
-#include "server/parser.hpp"
+#include "parser.hpp"
 
 #include "common/logging.hpp"
 
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 
 namespace watchman {
+
+size_t constexpr kDockerTimeoutCode = 124;
+size_t constexpr kDockerMemoryKill = 137;
+
 // Reads rapid json array to std::vector
 template<class T>
 void getArray(rapidjson::Value const & src, std::vector<T> & dst) {
@@ -123,5 +128,41 @@ RunTaskParams parse(std::string const & body, Api api) {
 
     return params;
 }
+
+std::string makeJsonCourse(Response && response) {
+    rapidjson::StringBuffer stringBuffer;
+    rapidjson::Writer writer(stringBuffer);
+
+    writer.StartObject();
+    writer.Key("status_code");
+    writer.Int64(response.sourceCode);
+
+    if (response.sourceCode == kDockerTimeoutCode) {
+        writer.Key("user_code_output");
+        writer.String("Timeout");
+        writer.EndObject();
+        return stringBuffer.GetString();
+    }
+
+    if (response.sourceCode == kDockerMemoryKill) {
+        writer.Key("user_code_output");
+        writer.String("Out of memory");
+        writer.EndObject();
+        return stringBuffer.GetString();
+    }
+
+    writer.Key("user_code_output");
+    writer.String(response.output);
+
+    if (response.testsOutput.has_value()) {
+        writer.Key("tests_output");
+        writer.String(*response.testsOutput);
+    }
+
+    writer.EndObject();
+    return stringBuffer.GetString();
+}
+
+std::string makeJsonPlayground(Response && response) { return makeJsonCourse(std::move(response)); }
 
 }  // namespace watchman

@@ -14,6 +14,14 @@ std::string const kPythonImage = "senjun_courses_python";
 
 // TODO make containers delete after tests
 
+namespace {
+std::string makeCourseTar(std::string code, std::string tests) {
+    std::vector<CodeFilename> temp{{std::move(code), kFilenameTask},
+                                   {std::move(tests), kFilenameTaskTests}};
+    return makeTar(std::move(temp)).str();
+}
+}  // namespace
+
 TEST(DockerWrapper, run_kill_delete) {
     for (size_t index = 0; index < 10; ++index) {
         // DockerRunParams params{.image = kPythonImage, .tty = true, .memoryLimit = 7000000};
@@ -80,7 +88,7 @@ TEST(DockerWrapper, put_archive) {
     std::string const pathInContainer = "/home/code_runner";
 
     bool const success =
-        dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)").str()});
+        dockerWrapper.putArchive({id, pathInContainer, makeCourseTar("print(42)", "print(42)")});
     ASSERT_TRUE(success);
     ASSERT_TRUE(dockerWrapper.killContainer(id));
     ASSERT_TRUE(dockerWrapper.removeContainer(id));
@@ -93,7 +101,7 @@ TEST(DockerWrapper, run_user_code) {
     std::string const pathInContainer = "/home/code_runner";
 
     bool const success =
-        dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)").str()});
+        dockerWrapper.putArchive({id, pathInContainer, makeCourseTar("print(42)", "print(42)")});
     ASSERT_TRUE(success);
 
     std::string const reference =
@@ -112,7 +120,7 @@ TEST(Logger, writeToLog) { Log::info("Hello, logger"); }
 TEST(Tar, makeTar) {
     std::string const archiveName = "python_archive.tar";
     std::string const sourceCode = "print(42)\n";
-    makeTar(archiveName, sourceCode);
+    makeTar({{sourceCode, archiveName}});
 
     std::remove(archiveName.c_str());
     ASSERT_TRUE(!std::ifstream(archiveName));
@@ -126,10 +134,11 @@ TEST(DockerWrapper, execute_task) {
     std::string const sourceCode = "print(42)\n";
 
     bool const success =
-        dockerWrapper.putArchive({id, pathInContainer, makeTar("print(42)", "print(42)").str()});
+        dockerWrapper.putArchive({id, pathInContainer, makeCourseTar("print(42)", "print(42)")});
     ASSERT_TRUE(success);
 
-    std::string const reference = "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
+    std::string const reference =
+        "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
     std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
 
     auto result = dockerWrapper.exec({id, commands});
