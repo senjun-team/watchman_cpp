@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # parse flags - single letters prefixed fith hyphen before each argument
-# example: sh run.sh -f task
+# example: sh run.sh -f task -v code
 
 while getopts c:j:f:t:v: flag
 do
@@ -16,7 +16,6 @@ done
 
 # clear previous container use
 rm -rf /home/code_runner > /dev/null 2>&1
-
 
 # if exists file with user code
 if [ $task_type = "code" ]; then
