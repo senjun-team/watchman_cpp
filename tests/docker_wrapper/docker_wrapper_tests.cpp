@@ -106,7 +106,8 @@ TEST(DockerWrapper, run_user_code) {
 
     std::string const reference =
         "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
-    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
+    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask),
+                                            fmt::format("-v code")};
 
     auto result = dockerWrapper.exec({id, commands});
     ASSERT_TRUE(result.success);
@@ -139,7 +140,8 @@ TEST(DockerWrapper, execute_task) {
 
     std::string const reference =
         "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
-    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask)};
+    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask),
+                                            fmt::format("-v code")};
 
     auto result = dockerWrapper.exec({id, commands});
     ASSERT_TRUE(result.success);
