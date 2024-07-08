@@ -1,4 +1,4 @@
-FROM golang:1.21.6-bookworm
+FROM golang:1.22.5
 LABEL ru.senjun.image.authors="Shipilov Dmitry"
 
 # change access wrtie for code_runner home directory to root
