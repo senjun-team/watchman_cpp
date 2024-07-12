@@ -17,6 +17,10 @@
     "haskell": {
       "image-name": "senjun_courses_haskell",
       "launched": 1
+    },
+    "cpp": {
+      "image-name": "senjun_courses_cpp",
+      "launched": 1
     }
   },
   "playground": {
@@ -34,6 +38,10 @@
     },
     "haskell": {
       "image-name": "senjun_playground_haskell",
+      "launched": 1
+    },
+    "cpp": {
+      "image-name": "senjun_playground_cpp",
       "launched": 1
     }
   }
