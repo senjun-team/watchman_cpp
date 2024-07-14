@@ -23,7 +23,7 @@ cd /home/code_runner
 
 executable="main"
 
-if ! ( timeout 10s g++ -o $executable main.cpp && ./$executable ); then
+if ! ( timeout 10s g++ -o $executable main.cpp -std=c++20 && ./$executable ); then
    echo user_solution_error_f936a25e
    exit
 fi

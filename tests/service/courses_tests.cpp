@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "core/service.hpp"
 
-TEST(Coursess, C_plus_plous) {
+TEST(Coursess, C_plus_plus) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "cpp_check";
     std::string sourceCode =

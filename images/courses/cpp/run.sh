@@ -22,7 +22,7 @@ cp $f main.cpp # otherwise impossible to compile
 cd /home/code_runner
 
 executable="main"
-timeout 10s g++ -o $executable main.cpp
+timeout 10s g++ -o $executable main.cpp -std=c++20
 
 if ! ( timeout 10s "./$executable" ); then
    echo user_solution_error_f936a25e
@@ -32,7 +32,7 @@ echo user_code_ok_f936a25e
 
 f="$(basename -- ${file}_tests)"
 cp $f main.cpp # otherwise impossible to compile
-timeout 10s g++ -o $executable main.cpp
+timeout 10s g++ -o $executable main.cpp -std=c++20
 
 if ! ( timeout 10s "./$executable" ); then
    echo tests_cases_error_f936a25e
