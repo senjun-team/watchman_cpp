@@ -112,6 +112,10 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     return stream;
 }
 
+void makeFolderStructure(Folder const & folder) {
+    // TODO implement creating files and folders
+}
+
 LogDuration::LogDuration(std::string operation)
     : m_operation(std::move(operation))
     , m_start(std::chrono::system_clock::now()) {}

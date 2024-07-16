@@ -77,6 +77,8 @@ struct Folder {
     std::vector<Folder> folders;
 };
 
+void makeFolderStructure(Folder const & folder);
+
 class LogDuration {
 public:
     LogDuration(std::string operation);
