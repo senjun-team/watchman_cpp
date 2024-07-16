@@ -29,7 +29,7 @@ TEST(Parser, FoldersParser) {
     std::stringstream json;
     json << file.rdbuf();
 
-    watchman::Folder rootFolder = watchman::fillFolder(json.str());
+    watchman::Folder rootFolder = watchman::jsonToFolder(json.str());
     ASSERT_EQ(rootFolder.name, "watchman_cpp");
     ASSERT_EQ(rootFolder.files.size(), 3);
     ASSERT_EQ(rootFolder.folders.size(), 1);

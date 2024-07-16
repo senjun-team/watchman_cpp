@@ -11,6 +11,7 @@ set(CORE_SOURCES
         core/service.cpp
         core/docker_wrapper.cpp
         core/parser.cpp
+        core/folder_passer.cpp
         common/common.cpp
         common/logging.cpp
         common/process_courses.cpp
