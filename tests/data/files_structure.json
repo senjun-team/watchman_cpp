@@ -1,6 +1,6 @@
 {
   "default_syntax": "cpp",
-  "name": "watchman_cpp",
+  "name": "watchman_cpp_dir",
   "children": [
     {"name": "README.md", "contents": "Some readme", "syntax": "txt"},
     {"name": ".gitignore", "contents": "build/*", "syntax": "txt"},
