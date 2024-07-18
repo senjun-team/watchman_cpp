@@ -30,7 +30,7 @@ TEST(Parser, FoldersParser) {
     json << file.rdbuf();
 
     watchman::Folder rootFolder = watchman::jsonToFolder(json.str());
-    ASSERT_EQ(rootFolder.name, "watchman_cpp");
+    ASSERT_EQ(rootFolder.name, "watchman_cpp_dir");
     ASSERT_EQ(rootFolder.files.size(), 3);
     ASSERT_EQ(rootFolder.folders.size(), 1);
 
@@ -44,4 +44,14 @@ TEST(Parser, FoldersParser) {
     ASSERT_EQ(core.name, "core");
     ASSERT_EQ(core.files.size(), 4);
     ASSERT_TRUE(core.folders.empty());
+}
+
+TEST(Parser, FileCreator) {
+    std::string assetName = std::string{TEST_DATA_DIR} + "files_structure.json";
+    std::ifstream file(assetName);
+    std::stringstream json;
+    json << file.rdbuf();
+
+    watchman::Folder rootFolder = watchman::jsonToFolder(json.str());
+    makeFolderStructure(rootFolder);
 }
