@@ -79,6 +79,12 @@ struct Directory {
 
 void makeDirectoryStructure(Directory const & directory);
 
+struct PathContent {
+    std::string path;
+    std::string content;
+};
+std::vector<PathContent> getPathsToFiles(Directory const & directory);
+
 class LogDuration {
 public:
     LogDuration(std::string operation);

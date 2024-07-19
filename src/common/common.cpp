@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <thread>
 
+namespace fs = std::filesystem;
+
 namespace watchman {
 
 size_t getCpuCount() {
@@ -119,24 +121,24 @@ void createFile(File const & file) {
     osFile.close();
 }
 
-void makeDirectoryStructure(Directory const & rootDirectory) {
-    try {
-        create_directory(std::filesystem::current_path().append(rootDirectory.name));
-    } catch (std::exception const & e) {
-        Log::warning("File with name `{}` already exists", rootDirectory.name);
-        throw;
-    }
-    auto const newPath = std::filesystem::current_path().append(rootDirectory.name);
-    current_path(newPath);
-
-    for (auto const & file : rootDirectory.files) {
-        createFile(file);
+void recursiveFillAbsolutePaths(Directory const & directory, fs::path const & currentPath,
+                                std::vector<PathContent> & paths) {
+    for (auto & file : directory.files) {
+        paths.push_back({currentPath / file.name, file.content});
     }
 
-    for (auto const & directory : rootDirectory.directories) {
-        makeDirectoryStructure(directory);
+    for (auto & subDirectory : directory.directories) {
+        recursiveFillAbsolutePaths(subDirectory, currentPath / subDirectory.name, paths);
     }
 }
+
+std::vector<PathContent> getPathsToFiles(Directory const & rootDirectory) {
+    std::vector<PathContent> paths;
+    recursiveFillAbsolutePaths(rootDirectory, rootDirectory.name, paths);
+    return paths;
+}
+
+void fillAbsolutePaths(Directory & rootDirectory) {}
 
 LogDuration::LogDuration(std::string operation)
     : m_operation(std::move(operation))

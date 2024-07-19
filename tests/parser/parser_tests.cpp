@@ -3,6 +3,7 @@
 #include "core/parser.hpp"
 #include "core/service.hpp"
 
+#include <common/tar_to_stream.hpp>
 #include <filesystem>
 #include <fstream>
 
@@ -59,11 +60,31 @@ TEST(Parser, DirectoriesParser) {
     ASSERT_TRUE(core.directories.empty());
 }
 
-TEST(Parser, FileCreator) {
+TEST(Parser, FillPaths) {
     std::ifstream file(getAssetPath(kFilesStructureAssets));
     std::stringstream json;
     json << file.rdbuf();
 
     watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
-    makeDirectoryStructure(rootDirectory);
+    auto paths = getPathsToFiles(rootDirectory);
+    ASSERT_EQ(paths.size(), 9);
+}
+
+TEST(Parser, DISABLED_TarDir) {
+    std::ifstream file(getAssetPath(kFilesStructureAssets));
+    std::stringstream json;
+    json << file.rdbuf();
+
+    watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
+    auto pathsContents = getPathsToFiles(rootDirectory);
+
+    std::ofstream stream("my_tarball.tar", std::ios::binary | std::ios::trunc);
+
+    for (auto const & pathContent : pathsContents) {
+        tar::tar_to_stream(stream, pathContent.path, pathContent.content.data(),
+                           pathContent.content.size());
+    }
+    tar::tar_to_stream_tail(stream);
+
+    ASSERT_TRUE(true);
 }
