@@ -71,13 +71,13 @@ struct File {
     std::string content;
 };
 
-struct Folder {
+struct Directory {
     std::string name;
     std::vector<File> files;
-    std::vector<Folder> folders;
+    std::vector<Directory> directories;
 };
 
-void makeFolderStructure(Folder const & folder);
+void makeDirectoryStructure(Directory const & directory);
 
 class LogDuration {
 public:

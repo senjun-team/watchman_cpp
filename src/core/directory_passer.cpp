@@ -12,14 +12,14 @@ std::string const contents = "contents";
 
 bool isFile(auto && child) { return child.HasMember(contents); };
 
-bool isFolder(auto && child) { return child.HasMember(children); };
+bool isDirectory(auto && child) { return child.HasMember(children); };
 
-void recursiveFolderPass(watchman::Folder & folder, auto && document) {
+void recursiveDirectoryPass(watchman::Directory & directory, auto && document) {
     if (!document.HasMember(name)) {
-        watchman::Log::warning("Folder without name");
+        watchman::Log::warning("Directory without name");
         return;
     }
-    folder.name = document[name].GetString();
+    directory.name = document[name].GetString();
     if (!document.HasMember(children) || !document[children].IsArray()) {
         return;
     }
@@ -27,14 +27,14 @@ void recursiveFolderPass(watchman::Folder & folder, auto && document) {
     auto const & childrenArray = document[children].GetArray();
     for (auto const & child : childrenArray) {
         if (isFile(child)) {
-            folder.files.push_back({child[name].GetString(), child[contents].GetString()});
+            directory.files.push_back({child[name].GetString(), child[contents].GetString()});
             continue;
         }
 
-        if (isFolder(child)) {
-            auto & subFolder = folder.folders.emplace_back();
-            subFolder.name = child[name].GetString();
-            recursiveFolderPass(subFolder, child);
+        if (isDirectory(child)) {
+            auto & subDirectory = directory.directories.emplace_back();
+            subDirectory.name = child[name].GetString();
+            recursiveDirectoryPass(subDirectory, child);
         }
     }
 }
@@ -42,15 +42,15 @@ void recursiveFolderPass(watchman::Folder & folder, auto && document) {
 
 namespace watchman {
 
-Folder jsonToFolder(std::string const & json) {
+Directory jsonToDirectory(std::string const & json) {
     rapidjson::Document document;
     if (document.Parse(json).HasParseError()) {
         Log::error("Incoming json has parse error: {}", json);
         return {};
     }
 
-    Folder folder;
-    recursiveFolderPass(folder, document);
-    return folder;
+    Directory directory;
+    recursiveDirectoryPass(directory, document);
+    return directory;
 }
 }  // namespace watchman

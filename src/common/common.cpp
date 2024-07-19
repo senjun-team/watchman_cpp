@@ -119,22 +119,22 @@ void createFile(File const & file) {
     osFile.close();
 }
 
-void makeFolderStructure(Folder const & rootFolder) {
+void makeDirectoryStructure(Directory const & rootDirectory) {
     try {
-        create_directory(std::filesystem::current_path().append(rootFolder.name));
+        create_directory(std::filesystem::current_path().append(rootDirectory.name));
     } catch (std::exception const & e) {
-        Log::warning("File with name `{}` already exists", rootFolder.name);
+        Log::warning("File with name `{}` already exists", rootDirectory.name);
         throw;
     }
-    auto const newPath = std::filesystem::current_path().append(rootFolder.name);
+    auto const newPath = std::filesystem::current_path().append(rootDirectory.name);
     current_path(newPath);
 
-    for (auto const & file : rootFolder.files) {
+    for (auto const & file : rootDirectory.files) {
         createFile(file);
     }
 
-    for (auto const & folder : rootFolder.folders) {
-        makeFolderStructure(folder);
+    for (auto const & directory : rootDirectory.directories) {
+        makeDirectoryStructure(directory);
     }
 }
 

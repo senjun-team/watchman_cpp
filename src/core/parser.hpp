@@ -6,7 +6,7 @@
 
 namespace watchman {
 
-Folder jsonToFolder(std::string const & json);
+Directory jsonToDirectory(std::string const & json);
 // parse request
 RunTaskParams parse(std::string const & body, Api api);
 
