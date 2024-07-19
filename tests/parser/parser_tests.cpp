@@ -3,7 +3,21 @@
 #include "core/parser.hpp"
 #include "core/service.hpp"
 
+#include <filesystem>
 #include <fstream>
+
+namespace fs = std::filesystem;
+
+namespace {
+fs::path getAssetPath(std::string const & assetName) {
+    fs::path dir(TEST_DATA_DIR);
+    fs::path asset(assetName);
+    return dir / asset;
+}
+
+std::string const kFilesStructureAssets = "files_structure.json";
+
+}  // namespace
 
 TEST(Parser, emptyTestString) {
     watchman::Response response;
@@ -24,8 +38,7 @@ TEST(Parser, notEmptyTestString) {
 }
 
 TEST(Parser, DirectoriesParser) {
-    std::string assetName = std::string{TEST_DATA_DIR} + "files_structure.json";
-    std::ifstream file(assetName);
+    std::ifstream file(getAssetPath(kFilesStructureAssets));
     std::stringstream json;
     json << file.rdbuf();
 
@@ -47,17 +60,10 @@ TEST(Parser, DirectoriesParser) {
 }
 
 TEST(Parser, FileCreator) {
-    std::string assetName = std::string{TEST_DATA_DIR} + "files_structure.json";
-    std::ifstream file(assetName);
+    std::ifstream file(getAssetPath(kFilesStructureAssets));
     std::stringstream json;
     json << file.rdbuf();
 
     watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
     makeDirectoryStructure(rootDirectory);
-
-    std::ifstream dirTree(
-        "/Users/dmitryshipilov/workspace/Senjun/watchman_cpp/cmake-build-debug/bin/watchman_cpp_dir");
-    std::stringstream arch;
-    arch << dirTree.rdbuf();
-    watchman::makeTar({{arch.str(), "arch"}});
 }
