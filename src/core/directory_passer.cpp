@@ -45,7 +45,7 @@ namespace watchman {
 Directory jsonToDirectory(std::string const & json) {
     rapidjson::Document document;
     if (document.Parse(json).HasParseError()) {
-        Log::error("Incoming json has parse error: {}", json);
+        Log::info("Incoming json has parse error: {}", json);
         return {};
     }
 
