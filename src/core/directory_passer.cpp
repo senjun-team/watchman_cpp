@@ -19,6 +19,7 @@ void recursiveDirectoryPass(watchman::Directory & directory, auto && document) {
         watchman::Log::warning("Directory without name");
         return;
     }
+
     directory.name = document[name].GetString();
     if (!document.HasMember(children) || !document[children].IsArray()) {
         return;
@@ -33,7 +34,6 @@ void recursiveDirectoryPass(watchman::Directory & directory, auto && document) {
 
         if (isDirectory(child)) {
             auto & subDirectory = directory.directories.emplace_back();
-            subDirectory.name = child[name].GetString();
             recursiveDirectoryPass(subDirectory, child);
         }
     }
