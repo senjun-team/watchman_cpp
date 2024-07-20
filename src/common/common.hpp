@@ -64,8 +64,6 @@ struct CodeFilename {
     std::string filename;
 };
 
-std::ostringstream makeTar(std::vector<CodeFilename> && data);
-
 struct File {
     std::string name;
     std::string content;
@@ -78,6 +76,20 @@ struct Directory {
 };
 
 void makeDirectoryStructure(Directory const & directory);
+
+struct PathContent {
+    std::string path;
+    std::string content;
+};
+std::vector<PathContent> getPathsToFiles(Directory const & directory);
+
+struct Project {
+    std::string name;
+    std::vector<PathContent> pathsContents;
+};
+
+std::ostringstream makeTar(std::vector<CodeFilename> && data);
+std::ostringstream makeProjectTar(Project const & project);
 
 class LogDuration {
 public:
