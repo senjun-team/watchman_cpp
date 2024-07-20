@@ -115,6 +115,17 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     return stream;
 }
 
+std::ostringstream makeProjectTar(Project const & project) {
+    std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
+
+    for (auto const & pathContent : project.pathsContents) {
+        tar::tar_to_stream(stream, pathContent.path, pathContent.content.data(),
+                           pathContent.content.size());
+    }
+    tar::tar_to_stream_tail(stream);
+    return stream;
+}
+
 void createFile(File const & file) {
     std::ofstream osFile(file.name);
     osFile << file.content;
