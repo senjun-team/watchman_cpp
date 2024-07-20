@@ -1,0 +1,19 @@
+{
+  "default_syntax": "cpp",
+  "name": "watchman_cpp_dir",
+  "children": [
+    {"name": "README.md", "contents": "Some readme", "syntax": "txt"},
+    {"name": ".gitignore", "contents": "build/*", "syntax": "txt"},
+    {"name": "src", "children": [
+      {"name": "main.cpp", "contents": "int main() {}", "is_main_file": true},
+      {"name": "CMakeLists.txt", "contents": "set(CORE_HEADERS..."},
+      {"name": "core", "children": [
+        {"name": "service.hpp", "contents": "#pragma once ..."},
+        {"name": "service.cpp", "contents": "#include ..."},
+        {"name": "parser.hpp", "contents": "#pragma ..."},
+        {"name": "parser.cpp", "contents": "#include ...", "syntax": "txt"}
+      ]}
+    ]},
+    {"name": "CMakeLists.txt", "contents": "cmake_minimum_required(VERSION 3.12 FATAL_ERROR)", "syntax": "txt"}
+  ]
+}

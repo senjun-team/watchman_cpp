@@ -48,7 +48,7 @@ using Language = CointainerTypeInfo;
 using Playground = CointainerTypeInfo;
 
 struct Config {
-    using ContainerType = std::string; // python/rust/go/haskell
+    using ContainerType = std::string;  // python/rust/go/haskell
     std::optional<size_t> threadPoolSize;
     uint32_t maxContainersAmount{0};
     std::unordered_map<ContainerType, Language> languages;
@@ -65,6 +65,19 @@ struct CodeFilename {
 };
 
 std::ostringstream makeTar(std::vector<CodeFilename> && data);
+
+struct File {
+    std::string name;
+    std::string content;
+};
+
+struct Directory {
+    std::string name;
+    std::vector<File> files;
+    std::vector<Directory> directories;
+};
+
+void makeDirectoryStructure(Directory const & directory);
 
 class LogDuration {
 public:

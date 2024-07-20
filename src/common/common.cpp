@@ -5,6 +5,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
+#include <filesystem>
 #include <thread>
 
 namespace watchman {
@@ -110,6 +111,31 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
 
     tar::tar_to_stream_tail(stream);
     return stream;
+}
+
+void createFile(File const & file) {
+    std::ofstream osFile(file.name);
+    osFile << file.content;
+    osFile.close();
+}
+
+void makeDirectoryStructure(Directory const & rootDirectory) {
+    try {
+        create_directory(std::filesystem::current_path().append(rootDirectory.name));
+    } catch (std::exception const & e) {
+        Log::warning("File with name `{}` already exists", rootDirectory.name);
+        throw;
+    }
+    auto const newPath = std::filesystem::current_path().append(rootDirectory.name);
+    current_path(newPath);
+
+    for (auto const & file : rootDirectory.files) {
+        createFile(file);
+    }
+
+    for (auto const & directory : rootDirectory.directories) {
+        makeDirectoryStructure(directory);
+    }
 }
 
 LogDuration::LogDuration(std::string operation)
