@@ -14,7 +14,7 @@ bool isFile(auto && child) { return child.HasMember(contents); };
 
 bool isDirectory(auto && child) { return child.HasMember(children); };
 
-void recursiveDirectoryPass(watchman::Directory & directory, auto && document) {
+void recursiveDirectoryTraverse(watchman::Directory & directory, auto && document) {
     if (!document.HasMember(name)) {
         watchman::Log::warning("Directory without name");
         return;
@@ -34,7 +34,7 @@ void recursiveDirectoryPass(watchman::Directory & directory, auto && document) {
 
         if (isDirectory(child)) {
             auto & subDirectory = directory.directories.emplace_back();
-            recursiveDirectoryPass(subDirectory, child);
+            recursiveDirectoryTraverse(subDirectory, child);
         }
     }
 }
@@ -50,7 +50,7 @@ Directory jsonToDirectory(std::string const & json) {
     }
 
     Directory directory;
-    recursiveDirectoryPass(directory, document);
+    recursiveDirectoryTraverse(directory, document);
     return directory;
 }
 }  // namespace watchman
