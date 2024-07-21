@@ -24,10 +24,11 @@ target_compile_definitions(${WATCHMAN_CORE} PRIVATE RAPIDJSON_HAS_STDSTRING)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/rapidjson/include/)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/spdlog/include)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/fmt/include/)
+target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/third_party/libunifex-0.4.0/include)
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${Boost_INCLUDE_DIR})
 target_include_directories(${WATCHMAN_CORE} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
-target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient spdlog fmt::fmt)
+target_link_libraries(${WATCHMAN_CORE} PUBLIC DockerClient spdlog fmt::fmt unifex)
 
 install(TARGETS ${WATCHMAN_CORE} DESTINATION lib)
 install(FILES ${CORE_HEADERS} DESTINATION include)

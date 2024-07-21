@@ -19,6 +19,7 @@ add_subdirectory(third_party/spdlog)
 add_subdirectory(third_party/DockerClient)
 add_subdirectory(third_party/llhttp-release-v9.1.3)
 add_subdirectory(third_party/expected-lite-0.6.3)
+add_subdirectory(third_party/libunifex-0.4.0)
 
 
 set(RESTINIO_ASIO_SOURCE "boost")
