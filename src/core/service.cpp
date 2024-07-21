@@ -9,6 +9,8 @@
 #include <cctype>
 #include <future>
 #include <string_view>
+#include <unifex/sync_wait.hpp>
+#include <unifex/then.hpp>
 
 namespace watchman {
 
@@ -35,6 +37,7 @@ detail::ContainerController::getReadyContainer(Config::ContainerType const & typ
     auto & containers = m_containers.at(type);
     size_t indexProperContainer;  // there's no need for initialization
 
+    // todo create new container when old is killed
     m_containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
         for (size_t index = 0, size = containers.size(); index < size; ++index) {
             if (!containers[index]->isReserved) {
@@ -50,11 +53,16 @@ detail::ContainerController::getReadyContainer(Config::ContainerType const & typ
 }
 
 void detail::ContainerController::containerReleased(BaseContainer & container) {
-    {
-        std::scoped_lock const lock(m_mutex);
-        container.isReserved = false;
-    }
-    m_containerFree.notify_one();
+    std::scoped_lock const lock(m_mutex);
+    std::string id = container.id;
+
+    auto & containers = m_containers.at(container.type);
+
+    containers.erase(std::remove_if(containers.begin(), containers.end(),
+                                    [&container](auto const & c) { return c->id == container.id; }),
+                     containers.end());
+
+    removeContainerFromOs(id);
 }
 
 detail::ContainerController::~ContainerController() = default;
@@ -243,6 +251,11 @@ detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
 bool detail::ContainerController::containerNameIsValid(const std::string & name) const {
     return m_containers.contains(name);
+}
+
+void detail::ContainerController::removeContainerFromOs(std::string const & id) {
+    unifex::schedule(m_containerKiller.get_scheduler())
+        | unifex::then([this, &id] { m_dockerWrapper.killContainer(id); }) | unifex::sync_wait();
 }
 
 Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {

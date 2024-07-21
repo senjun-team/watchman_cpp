@@ -8,6 +8,7 @@
 #include <functional>
 #include <mutex>
 #include <optional>
+#include <unifex/single_thread_context.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -58,12 +59,17 @@ public:
     void containerReleased(BaseContainer & container);
     bool containerNameIsValid(const std::string & name) const;
 
+    void removeContainerFromOs(std::string const & id);
+
 private:
     std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
         m_containers;
 
     std::mutex m_mutex;
     std::condition_variable m_containerFree;
+
+    DockerWrapper m_dockerWrapper;
+    unifex::single_thread_context m_containerKiller;
 
     Config m_config;
 
