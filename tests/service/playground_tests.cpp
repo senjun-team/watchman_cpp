@@ -63,7 +63,7 @@ TEST(Playground, C_plus_plus_failure) {
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
 }
 
-TEST(Playground, DISABLED_TarDir) {
+TEST(Playground, TarDir) {
     std::ifstream file(getAssetPath(kFilesStructureAssets));
     std::stringstream json;
     json << file.rdbuf();
