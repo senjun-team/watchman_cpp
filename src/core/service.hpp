@@ -60,6 +60,7 @@ public:
     bool containerNameIsValid(const std::string & name) const;
 
     void removeContainerFromOs(std::string const & id);
+    void createNewContainer(Config::ContainerType type, std::string const & image);
 
 private:
     std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>

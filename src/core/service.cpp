@@ -53,16 +53,21 @@ detail::ContainerController::getReadyContainer(Config::ContainerType const & typ
 }
 
 void detail::ContainerController::containerReleased(BaseContainer & container) {
-    std::scoped_lock const lock(m_mutex);
-    std::string id = container.id;
+    std::string const id = container.id;
+    std::string const image = container.dockerWrapper.getImage(id);
+    Config::ContainerType const type = container.type;
+    {
+        std::scoped_lock const lock(m_mutex);
 
-    auto & containers = m_containers.at(container.type);
+        auto & containers = m_containers.at(container.type);
 
-    containers.erase(std::remove_if(containers.begin(), containers.end(),
-                                    [&container](auto const & c) { return c->id == container.id; }),
-                     containers.end());
-
+        containers.erase(
+            std::remove_if(containers.begin(), containers.end(),
+                           [&container](auto const & c) { return c->id == container.id; }),
+            containers.end());
+    }
     removeContainerFromOs(id);
+    createNewContainer(type, image);
 }
 
 detail::ContainerController::~ContainerController() = default;
@@ -256,6 +261,38 @@ bool detail::ContainerController::containerNameIsValid(const std::string & name)
 void detail::ContainerController::removeContainerFromOs(std::string const & id) {
     unifex::schedule(m_containerKiller.get_scheduler())
         | unifex::then([this, &id] { m_dockerWrapper.killContainer(id); }) | unifex::sync_wait();
+}
+
+void detail::ContainerController::createNewContainer(Config::ContainerType type,
+                                                     std::string const & image) {
+    unifex::schedule(m_containerKiller.get_scheduler()) | unifex::then([this, type, image] {
+        {
+            std::scoped_lock lock(m_mutex);
+            RunContainer params;
+
+            params.image = image;
+            params.tty = true;
+            params.memory = 300'000'000;
+
+            std::string id = m_dockerWrapper.run(std::move(params));
+            if (id.empty()) {
+                Log::warning("Internal error: can't run container of type {}", type);
+                return;
+            }
+
+            Log::info("Launch container: {}, id: {}", image, id);
+
+            std::shared_ptr<BaseContainer> container;
+            if (image.find("playground") != std::string::npos) {
+                container = std::make_shared<PlaygroundContainer>(std::move(id), type);
+            } else {
+                container = std::make_shared<CourseContainer>(std::move(id), type);
+            }
+
+            m_containers.at(type).push_back(container);
+        }
+        m_containerFree.notify_all();
+    }) | unifex::sync_wait();
 }
 
 Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {
