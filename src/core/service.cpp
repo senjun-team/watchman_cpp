@@ -259,13 +259,15 @@ bool detail::ContainerController::containerNameIsValid(const std::string & name)
 }
 
 void detail::ContainerController::removeContainerFromOs(std::string const & id) {
-    unifex::schedule(m_containerKiller.get_scheduler())
-        | unifex::then([this, &id] { m_dockerWrapper.killContainer(id); }) | unifex::sync_wait();
+    unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, &id] {
+        m_dockerWrapper.killContainer(id);
+        m_dockerWrapper.removeContainer(id);
+    }) | unifex::sync_wait();
 }
 
 void detail::ContainerController::createNewContainer(Config::ContainerType type,
                                                      std::string const & image) {
-    unifex::schedule(m_containerKiller.get_scheduler()) | unifex::then([this, type, image] {
+    unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, type, image] {
         {
             std::scoped_lock lock(m_mutex);
             RunContainer params;

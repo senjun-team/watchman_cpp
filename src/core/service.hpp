@@ -70,7 +70,7 @@ private:
     std::condition_variable m_containerFree;
 
     DockerWrapper m_dockerWrapper;
-    unifex::single_thread_context m_containerKiller;
+    unifex::single_thread_context m_containerKillerAliver;
 
     Config m_config;
 
