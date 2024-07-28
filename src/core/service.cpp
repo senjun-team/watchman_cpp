@@ -13,6 +13,59 @@
 #include <unifex/then.hpp>
 
 namespace watchman {
+namespace detail {
+
+class ContainerOSManipulator {
+public:
+    ContainerOSManipulator(ProtectedContainers & protectedContainers)
+        : m_protectedConteiners(protectedContainers) {}
+    void removeContainerFromOs(std::string const & id) {
+        unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, &id] {
+            m_dockerWrapper.killContainer(id);
+            m_dockerWrapper.removeContainer(id);
+        }) | unifex::sync_wait();
+    }
+
+    void createNewContainer(Config::ContainerType type, std::string const & image) {
+        unifex::schedule(m_containerKillerAliver.get_scheduler())
+            | unifex::then([this, type, image] {
+                  {
+                      std::scoped_lock lock(m_protectedConteiners.mutex);
+                      RunContainer params;
+
+                      params.image = image;
+                      params.tty = true;
+                      params.memory = 300'000'000;
+
+                      std::string id = m_dockerWrapper.run(std::move(params));
+                      if (id.empty()) {
+                          Log::warning("Internal error: can't run container of type {}", type);
+                          return;
+                      }
+
+                      Log::info("Launch container: {}, id: {}", image, id);
+
+                      std::shared_ptr<BaseContainer> container;
+                      if (image.find("playground") != std::string::npos) {
+                          container = std::make_shared<PlaygroundContainer>(std::move(id), type);
+                      } else {
+                          container = std::make_shared<CourseContainer>(std::move(id), type);
+                      }
+
+                      m_protectedConteiners.containers.at(type).push_back(container);
+                  }
+                  m_protectedConteiners.containerFree.notify_all();
+              })
+            | unifex::sync_wait();
+    }
+
+private:
+    ProtectedContainers & m_protectedConteiners;
+
+    unifex::single_thread_context m_containerKillerAliver;
+    DockerWrapper m_dockerWrapper;
+};
+}  // namespace detail
 
 static std::string const kUserSourceFile = "/home/code_runner";
 
@@ -32,13 +85,12 @@ detail::BaseContainer &
 detail::ContainerController::getReadyContainer(Config::ContainerType const & type) {
     // lock for any container type
     // todo think of separating containers into different queues
-    std::unique_lock lock(m_mutex);
+    std::unique_lock lock(m_protectedCcontainers.mutex);
 
-    auto & containers = m_containers.at(type);
+    auto & containers = m_protectedCcontainers.containers.at(type);
     size_t indexProperContainer;  // there's no need for initialization
 
-    // todo create new container when old is killed
-    m_containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
+    m_protectedCcontainers.containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
         for (size_t index = 0, size = containers.size(); index < size; ++index) {
             if (!containers[index]->isReserved) {
                 indexProperContainer = index;
@@ -57,9 +109,9 @@ void detail::ContainerController::containerReleased(BaseContainer & container) {
     std::string const image = container.dockerWrapper.getImage(id);
     Config::ContainerType const type = container.type;
     {
-        std::scoped_lock const lock(m_mutex);
+        std::scoped_lock const lock(m_protectedCcontainers.mutex);
 
-        auto & containers = m_containers.at(container.type);
+        auto & containers = m_protectedCcontainers.containers.at(container.type);
 
         containers.erase(
             std::remove_if(containers.begin(), containers.end(),
@@ -125,7 +177,7 @@ void detail::ContainerController::launchNewContainers(DockerWrapper & dockerWrap
             }
 
             if (!containers.empty()) {
-                m_containers.emplace(type, std::move(containers));
+                m_protectedCcontainers.containers.emplace(type, std::move(containers));
             }
         }
     };
@@ -255,46 +307,16 @@ detail::ReleasingContainer::ReleasingContainer(detail::BaseContainer & container
 detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
 bool detail::ContainerController::containerNameIsValid(const std::string & name) const {
-    return m_containers.contains(name);
+    return m_protectedCcontainers.containers.contains(name);
 }
 
 void detail::ContainerController::removeContainerFromOs(std::string const & id) {
-    unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, &id] {
-        m_dockerWrapper.killContainer(id);
-        m_dockerWrapper.removeContainer(id);
-    }) | unifex::sync_wait();
+    m_manipulator->removeContainerFromOs(id);
 }
 
 void detail::ContainerController::createNewContainer(Config::ContainerType type,
                                                      std::string const & image) {
-    unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, type, image] {
-        {
-            std::scoped_lock lock(m_mutex);
-            RunContainer params;
-
-            params.image = image;
-            params.tty = true;
-            params.memory = 300'000'000;
-
-            std::string id = m_dockerWrapper.run(std::move(params));
-            if (id.empty()) {
-                Log::warning("Internal error: can't run container of type {}", type);
-                return;
-            }
-
-            Log::info("Launch container: {}, id: {}", image, id);
-
-            std::shared_ptr<BaseContainer> container;
-            if (image.find("playground") != std::string::npos) {
-                container = std::make_shared<PlaygroundContainer>(std::move(id), type);
-            } else {
-                container = std::make_shared<CourseContainer>(std::move(id), type);
-            }
-
-            m_containers.at(type).push_back(container);
-        }
-        m_containerFree.notify_all();
-    }) | unifex::sync_wait();
+    m_manipulator->createNewContainer(type, image);
 }
 
 Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {

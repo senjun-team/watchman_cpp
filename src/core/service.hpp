@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <docker/answer.hpp>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <unifex/single_thread_context.hpp>
@@ -45,6 +46,14 @@ struct PlaygroundContainer final : BaseContainer {
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
 };
 
+class ContainerOSManipulator;
+struct ProtectedContainers {
+    std::mutex mutex;
+    std::condition_variable containerFree;
+    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
+        containers;
+};
+
 class ContainerController {
 public:
     explicit ContainerController(Config && config);
@@ -63,14 +72,8 @@ public:
     void createNewContainer(Config::ContainerType type, std::string const & image);
 
 private:
-    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
-        m_containers;
-
-    std::mutex m_mutex;
-    std::condition_variable m_containerFree;
-
-    DockerWrapper m_dockerWrapper;
-    unifex::single_thread_context m_containerKillerAliver;
+    std::unique_ptr<ContainerOSManipulator> m_manipulator;
+    ProtectedContainers m_protectedCcontainers;
 
     Config m_config;
 
