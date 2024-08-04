@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace watchman::internal {
+namespace watchman::detail {
 // For all exit statuses of 'timeout' util see "man timeout"
 const std::map<std::string_view, int32_t> kTimeoutUtilCodes{
     {"124\r\n", 124},  // if COMMAND times out, and --preserve-status is not specified

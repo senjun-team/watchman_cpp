@@ -1,8 +1,8 @@
 #include "answer_common.hpp"
-#include "docker_end_answer.hpp"
-#include "logging.hpp"
+#include "common/docker_end_answer.hpp"
+#include "common/logging.hpp"
 
-namespace watchman::internal {
+namespace watchman::detail {
 
 std::string getMessageOutput(std::string const & messages) {
     size_t const userCodeEndIndex = messages.find(kUserCodeSeparator);
@@ -31,17 +31,17 @@ Response processPlayground(std::string const & message) {
         return {static_cast<int32_t>(exitCode), "Internal error", ""};
     }
 }
-}  // namespace watchman::internal
+}  // namespace watchman::detail
 
 namespace watchman {
 
 Response getPlaygroungResponse(std::string const & message) {
-    if (internal::hasEscapeSequence(message)) {
-        std::string messageWithoutEscapeSequence = internal::removeEscapeSequencesTender(message);
-        return internal::processPlayground(messageWithoutEscapeSequence);
+    if (detail::hasEscapeSequence(message)) {
+        std::string messageWithoutEscapeSequence = detail::removeEscapeSequencesTender(message);
+        return detail::processPlayground(messageWithoutEscapeSequence);
     }
 
-    return internal::processPlayground(message);
+    return detail::processPlayground(message);
 }
 
 }  // namespace watchman

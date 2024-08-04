@@ -14,9 +14,9 @@ set(CORE_SOURCES
         core/directory_traverser.cpp
         common/common.cpp
         common/logging.cpp
-        common/process_courses.cpp
-        common/process_playground.cpp
-        common/answer_common.cpp
+        common/detail/process_courses.cpp
+        common/detail/process_playground.cpp
+        common/detail/answer_common.cpp
         common/detail/containers.cpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}_core")
@@ -43,9 +43,9 @@ set(SERVER_HEADERS
 set(SERVER_SOURCES
         main.cpp
         server/server.cpp
-        common/process_playground.cpp
-        common/answer_common.hpp
-        common/answer_common.cpp
+        common/detail/process_playground.cpp
+        common/detail/answer_common.hpp
+        common/detail/answer_common.cpp
 )
 
 set(SERVER "${PROJECT_NAME}")

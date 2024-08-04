@@ -1,8 +1,8 @@
 #include "answer_common.hpp"
-#include "docker_end_answer.hpp"
-#include "logging.hpp"
+#include "common/docker_end_answer.hpp"
+#include "common/logging.hpp"
 
-namespace watchman::internal {
+namespace watchman::detail {
 
 ContainerMessages getMessageOutput(ExitCodes code, std::string const & messages) {
     size_t const userCodeEndIndex = messages.find(kCodeTestsSeparator);
@@ -46,16 +46,16 @@ Response processCourse(std::string const & message) {
     }
 }
 
-}  // namespace watchman::internal
+}  // namespace watchman::detail
 
 namespace watchman {
 
 Response getCourseResponse(std::string const & message) {
-    if (internal::hasEscapeSequence(message)) {
-        auto noEscapeMessage = internal::removeEscapeSequencesTender(message);
-        return internal::processCourse(noEscapeMessage);
+    if (detail::hasEscapeSequence(message)) {
+        auto noEscapeMessage = detail::removeEscapeSequencesTender(message);
+        return detail::processCourse(noEscapeMessage);
     }
 
-    return internal::processCourse(message);
+    return detail::processCourse(message);
 }
 }  // namespace watchman
