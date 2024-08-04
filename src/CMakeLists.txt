@@ -17,6 +17,7 @@ set(CORE_SOURCES
         common/process_courses.cpp
         common/process_playground.cpp
         common/answer_common.cpp
+        common/containers.cpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}_core")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})

@@ -100,4 +100,19 @@ private:
     std::string const m_operation;
     std::chrono::system_clock::time_point m_start;
 };
+
+namespace detail {
+
+class BaseContainer;
+class ContainerOSManipulator;
+
+}  // namespace detail
+
+struct ProtectedContainers {
+    std::mutex mutex;
+    std::condition_variable containerFree;
+    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<detail::BaseContainer>>>
+        containers;
+};
+
 }  // namespace watchman
