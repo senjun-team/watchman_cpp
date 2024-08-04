@@ -14,7 +14,7 @@ namespace watchman::detail {
 class ContainerOSManipulator {
 public:
     ContainerOSManipulator(ProtectedContainers & protectedContainers)
-        : m_protectedConteiners(protectedContainers) {}
+        : m_protectedContainers(protectedContainers) {}
     void removeContainerFromOs(std::string const & id) {
         unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, &id] {
             m_dockerWrapper.killContainer(id);
@@ -26,7 +26,7 @@ public:
         unifex::schedule(m_containerKillerAliver.get_scheduler())
             | unifex::then([this, type, image] {
                   {
-                      std::scoped_lock lock(m_protectedConteiners.mutex);
+                      std::scoped_lock lock(m_protectedContainers.mutex);
                       RunContainer params;
 
                       params.image = image;
@@ -48,15 +48,15 @@ public:
                           container = std::make_shared<CourseContainer>(std::move(id), type);
                       }
 
-                      m_protectedConteiners.containers.at(type).push_back(container);
+                      m_protectedContainers.containers.at(type).push_back(container);
                   }
-                  m_protectedConteiners.containerFree.notify_all();
+                  m_protectedContainers.containerFree.notify_all();
               })
             | unifex::sync_wait();
     }
 
 private:
-    ProtectedContainers & m_protectedConteiners;
+    ProtectedContainers & m_protectedContainers;
 
     unifex::single_thread_context m_containerKillerAliver;
     DockerWrapper m_dockerWrapper;

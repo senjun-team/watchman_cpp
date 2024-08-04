@@ -105,7 +105,6 @@ private:
 
 namespace detail {
 class BaseContainer;
-class ContainerOSManipulator;
 
 struct ProtectedContainers {
     std::mutex mutex;

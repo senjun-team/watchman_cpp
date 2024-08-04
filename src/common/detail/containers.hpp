@@ -38,6 +38,7 @@ struct PlaygroundContainer final : BaseContainer {
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
 };
 
+class ContainerOSManipulator;
 class ContainerController {
 public:
     explicit ContainerController(Config && config);
@@ -56,8 +57,8 @@ public:
     void createNewContainer(Config::ContainerType type, std::string const & image);
 
 private:
-    std::unique_ptr<ContainerOSManipulator> m_manipulator;
     ProtectedContainers m_protectedCcontainers;
+    std::unique_ptr<ContainerOSManipulator> m_manipulator;
 
     Config m_config;
 

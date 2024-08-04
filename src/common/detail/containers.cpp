@@ -27,7 +27,8 @@ bool detail::BaseContainer::prepareCode(std::ostringstream && stream) {
 }
 
 detail::ContainerController::ContainerController(Config && config)
-    : m_config(std::move(config)) {
+    : m_manipulator(std::make_unique<ContainerOSManipulator>(m_protectedCcontainers))
+    , m_config(std::move(config)) {
     Log::info("Service launched");
 
     DockerWrapper dockerWrapper;
