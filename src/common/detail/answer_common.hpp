@@ -65,4 +65,4 @@ bool hasEscapeSequence(std::string const & output);
 
 std::string getUserOutput(std::string const & message);
 
-}  // namespace watchman::internal
+}  // namespace watchman::detail

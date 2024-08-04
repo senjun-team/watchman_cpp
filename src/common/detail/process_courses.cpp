@@ -41,7 +41,7 @@ Response processCourse(std::string const & message) {
     }
 
     default:
-        watchman::Log::error(kWrongDockerImage);
+        Log::error(kWrongDockerImage);
         return {static_cast<int32_t>(exitCode), "Internal error", ""};
     }
 }

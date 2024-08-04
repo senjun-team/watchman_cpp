@@ -5,10 +5,12 @@
 #include "common/logging.hpp"
 #include "core/docker_wrapper.hpp"
 
+#include <unifex/single_thread_context.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>
 
 namespace watchman::detail {
+
 class ContainerOSManipulator {
 public:
     ContainerOSManipulator(ProtectedContainers & protectedContainers)

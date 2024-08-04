@@ -4,7 +4,6 @@
 #include "core/docker_wrapper.hpp"
 
 #include <functional>
-#include <unifex/single_thread_context.hpp>
 #include <vector>
 
 namespace watchman::detail {

@@ -11,7 +11,7 @@ set(CORE_SOURCES
         core/service.cpp
         core/docker_wrapper.cpp
         core/parser.cpp
-        core/directory_traverser.cpp
+        core/detail/directory_traverser.cpp
         common/common.cpp
         common/logging.cpp
         common/detail/process_courses.cpp
