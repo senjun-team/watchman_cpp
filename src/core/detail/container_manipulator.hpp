@@ -48,7 +48,7 @@ public:
                           container = std::make_shared<CourseContainer>(std::move(id), type);
                       }
 
-                      // m_protectedConteiners.containers.at(type).push_back(container);
+                      m_protectedConteiners.containers.at(type).push_back(container);
                   }
                   m_protectedConteiners.containerFree.notify_all();
               })
