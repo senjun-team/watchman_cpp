@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -102,17 +104,15 @@ private:
 };
 
 namespace detail {
-
 class BaseContainer;
 class ContainerOSManipulator;
-
-}  // namespace detail
 
 struct ProtectedContainers {
     std::mutex mutex;
     std::condition_variable containerFree;
-    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<detail::BaseContainer>>>
+    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
         containers;
 };
+}  // namespace detail
 
 }  // namespace watchman

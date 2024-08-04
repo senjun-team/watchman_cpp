@@ -1,8 +1,8 @@
 #include "containers.hpp"
 
-#include "core/container_manipulator.hpp"
-#include "docker_end_answer.hpp"
-#include "logging.hpp"
+#include "common/docker_end_answer.hpp"
+#include "common/logging.hpp"
+#include "core/detail/container_manipulator.hpp"
 
 namespace watchman {
 

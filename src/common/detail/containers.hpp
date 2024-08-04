@@ -1,19 +1,11 @@
 #pragma once
 
-
 #include "common/common.hpp"
 #include "core/docker_wrapper.hpp"
 
-#include <condition_variable>
-#include <docker/answer.hpp>
 #include <functional>
-#include <memory>
-#include <mutex>
-#include <optional>
 #include <unifex/single_thread_context.hpp>
-#include <unordered_map>
 #include <vector>
-
 
 namespace watchman::detail {
 
@@ -46,7 +38,6 @@ struct PlaygroundContainer final : BaseContainer {
 
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
 };
-
 
 class ContainerController {
 public:
@@ -91,4 +82,4 @@ private:
     std::function<void()> m_releaser;
 };
 
-}  // namespace detail
+}  // namespace watchman::detail

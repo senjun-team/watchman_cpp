@@ -1,6 +1,6 @@
 #pragma once
-#include "common/common.hpp"
-#include "common/containers.hpp"
+
+#include "common/detail/containers.hpp"
 
 namespace watchman {
 
@@ -20,7 +20,6 @@ public:
 
 private:
     detail::ReleasingContainer getReadyContainer(Config::Config::ContainerType type);
-
     detail::ContainerController m_containerController;
 };
 }  // namespace watchman

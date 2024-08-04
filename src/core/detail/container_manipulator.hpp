@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common/common.hpp"
-#include "common/containers.hpp"
+#include "common/detail/containers.hpp"
 #include "common/logging.hpp"
-#include "docker_wrapper.hpp"
+#include "core/docker_wrapper.hpp"
 
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>

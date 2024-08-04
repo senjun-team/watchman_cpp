@@ -2,10 +2,7 @@
 
 #include "common/docker_end_answer.hpp"
 #include "common/logging.hpp"
-#include "container_manipulator.hpp"
-
-#include <cctype>
-#include <future>
+#include "detail/container_manipulator.hpp"
 
 namespace watchman {
 
@@ -30,7 +27,7 @@ std::vector<std::string> getArgs(std::string const & filename,
     return runArgs;
 }
 
-Response watchman::Service::runTask(watchman::RunTaskParams const & runTaskParams) {
+Response Service::runTask(RunTaskParams const & runTaskParams) {
     if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
         Log::warning("Empty files with code and test");
         return {kUserCodeError, "Sources and tests are not provided", ""};
