@@ -11,6 +11,7 @@
 #include <vector>
 
 namespace watchman {
+
 std::string const kFilenameTask = "task";
 std::string const kFilenameTaskTests = "task_tests";
 using ErrorCode = int32_t;

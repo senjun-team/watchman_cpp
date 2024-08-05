@@ -1,6 +1,6 @@
 #include "service.hpp"
 
-#include "common/docker_end_answer.hpp"
+#include "common/detail/docker_end_answer.hpp"
 #include "common/logging.hpp"
 #include "detail/container_manipulator.hpp"
 

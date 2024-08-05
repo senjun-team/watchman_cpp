@@ -1,18 +1,18 @@
 #include "containers.hpp"
 
-#include "common/docker_end_answer.hpp"
+#include "common/detail/docker_end_answer.hpp"
 #include "common/logging.hpp"
 #include "core/detail/container_manipulator.hpp"
 
-namespace watchman {
+namespace watchman::detail {
 
 static std::string const kUserSourceFile = "/home/code_runner";
 
-detail::BaseContainer::BaseContainer(std::string id, Config::ContainerType type)
+BaseContainer::BaseContainer(std::string id, Config::ContainerType type)
     : id(std::move(id))
     , type(std::move(type)) {}
 
-bool detail::BaseContainer::prepareCode(std::ostringstream && stream) {
+bool BaseContainer::prepareCode(std::ostringstream && stream) {
     PutArchive params;
     params.containerId = id;
     params.path = kUserSourceFile;
@@ -26,7 +26,7 @@ bool detail::BaseContainer::prepareCode(std::ostringstream && stream) {
     return true;
 }
 
-detail::ContainerController::ContainerController(Config && config)
+ContainerController::ContainerController(Config && config)
     : m_manipulator(std::make_unique<ContainerOSManipulator>(m_protectedCcontainers))
     , m_config(std::move(config)) {
     Log::info("Service launched");
@@ -36,8 +36,7 @@ detail::ContainerController::ContainerController(Config && config)
     launchNewContainers(dockerWrapper);
 }
 
-detail::BaseContainer &
-detail::ContainerController::getReadyContainer(Config::ContainerType const & type) {
+BaseContainer & ContainerController::getReadyContainer(Config::ContainerType const & type) {
     // lock for any container type
     // todo think of separating containers into different queues
     std::unique_lock lock(m_protectedCcontainers.mutex);
@@ -59,7 +58,7 @@ detail::ContainerController::getReadyContainer(Config::ContainerType const & typ
     return *containers.at(indexProperContainer);
 }
 
-void detail::ContainerController::containerReleased(BaseContainer & container) {
+void ContainerController::containerReleased(BaseContainer & container) {
     std::string const id = container.id;
     std::string const image = container.dockerWrapper.getImage(id);
     Config::ContainerType const type = container.type;
@@ -77,9 +76,9 @@ void detail::ContainerController::containerReleased(BaseContainer & container) {
     createNewContainer(type, image);
 }
 
-detail::ContainerController::~ContainerController() = default;
+ContainerController::~ContainerController() = default;
 
-void detail::ContainerController::killOldContainers(DockerWrapper & dockerWrapper) {
+void ContainerController::killOldContainers(DockerWrapper & dockerWrapper) {
     auto const workingContainers = dockerWrapper.getAllContainers();
 
     // todo think about naming, containerTypes is awful
@@ -102,7 +101,7 @@ void detail::ContainerController::killOldContainers(DockerWrapper & dockerWrappe
     killContainers(m_config.playgrounds);
 }
 
-void detail::ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
+void ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
     auto const launchContainers = [this, &dockerWrapper](auto && containerTypes) {
         for (auto const & [type, info] : containerTypes) {
             std::vector<std::shared_ptr<BaseContainer>> containers;
@@ -141,10 +140,10 @@ void detail::ContainerController::launchNewContainers(DockerWrapper & dockerWrap
     launchContainers(m_config.playgrounds);
 }
 
-detail::PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
+PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
     : BaseContainer(std::move(id), type) {}
 
-Response detail::CourseContainer::runCode(std::vector<std::string> && cmdLineArgs) {
+Response CourseContainer::runCode(std::vector<std::string> && cmdLineArgs) {
     auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
@@ -153,30 +152,29 @@ Response detail::CourseContainer::runCode(std::vector<std::string> && cmdLineArg
     return getCourseResponse(result.message);
 }
 
-detail::CourseContainer::CourseContainer(std::string id, Config::ContainerType type)
+CourseContainer::CourseContainer(std::string id, Config::ContainerType type)
     : BaseContainer(std::move(id), type) {}
 
-detail::ReleasingContainer::ReleasingContainer(detail::BaseContainer & container,
-                                               std::function<void()> deleter)
+ReleasingContainer::ReleasingContainer(BaseContainer & container, std::function<void()> deleter)
     : container(container)
     , m_releaser(std::move(deleter)) {}
 
-detail::ReleasingContainer::~ReleasingContainer() { m_releaser(); }
+ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
-bool detail::ContainerController::containerNameIsValid(const std::string & name) const {
+bool ContainerController::containerNameIsValid(const std::string & name) const {
     return m_protectedCcontainers.containers.contains(name);
 }
 
-void detail::ContainerController::removeContainerFromOs(std::string const & id) {
+void ContainerController::removeContainerFromOs(std::string const & id) {
     m_manipulator->removeContainerFromOs(id);
 }
 
-void detail::ContainerController::createNewContainer(Config::ContainerType type,
-                                                     std::string const & image) {
+void ContainerController::createNewContainer(Config::ContainerType type,
+                                             std::string const & image) {
     m_manipulator->createNewContainer(type, image);
 }
 
-Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {
+Response PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {
     auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
@@ -185,4 +183,4 @@ Response detail::PlaygroundContainer::runCode(std::vector<std::string> && cmdLin
     return getPlaygroungResponse(result.message);
 }
 
-}  // namespace watchman
+}  // namespace watchman::detail

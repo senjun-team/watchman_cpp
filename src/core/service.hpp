@@ -19,7 +19,7 @@ public:
     Response runPlayground(RunCodeParams const & runCodeParams);
 
 private:
-    detail::ReleasingContainer getReadyContainer(Config::Config::ContainerType type);
+    detail::ReleasingContainer getReadyContainer(Config::ContainerType type);
     detail::ContainerController m_containerController;
 };
 }  // namespace watchman

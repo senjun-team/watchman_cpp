@@ -1,5 +1,5 @@
 #include "answer_common.hpp"
-#include "common/docker_end_answer.hpp"
+#include "common/detail/docker_end_answer.hpp"
 #include "common/logging.hpp"
 
 namespace watchman::detail {
