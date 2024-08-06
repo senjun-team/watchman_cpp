@@ -21,6 +21,10 @@ add_subdirectory(third_party/llhttp-release-v9.1.3)
 add_subdirectory(third_party/expected-lite-0.6.3)
 add_subdirectory(third_party/libunifex-0.4.0)
 
+if (APPLE)
+    add_link_options(-ld_classic) # TODO gcc on mac workaround
+endif ()
+
 
 set(RESTINIO_ASIO_SOURCE "boost")
 add_subdirectory(third_party/restinio-v.0.7.0/dev/restinio)

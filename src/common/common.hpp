@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -9,6 +11,7 @@
 #include <vector>
 
 namespace watchman {
+
 std::string const kFilenameTask = "task";
 std::string const kFilenameTaskTests = "task_tests";
 using ErrorCode = int32_t;
@@ -100,4 +103,16 @@ private:
     std::string const m_operation;
     std::chrono::system_clock::time_point m_start;
 };
+
+namespace detail {
+class BaseContainer;
+
+struct ProtectedContainers {
+    std::mutex mutex;
+    std::condition_variable containerFree;
+    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
+        containers;
+};
+}  // namespace detail
+
 }  // namespace watchman

@@ -1,6 +1,6 @@
 #include "answer_common.hpp"
 
-namespace watchman::internal {
+namespace watchman::detail {
 
 std::vector const kEscapePatterns{kEscapedCodeTestsSeparator, kEscapedUserCodeSeparator,
                                   kEscapedTestCasesError, kEscapedUserSolutionError};
@@ -59,4 +59,4 @@ std::string removeEscapeSequencesTender(std::string const & string) {
 
 bool hasEscapeSequence(std::string const & output) { return output.ends_with(kRNEscapeSequence); }
 
-}  // namespace watchman::internal
+}  // namespace watchman::detail
