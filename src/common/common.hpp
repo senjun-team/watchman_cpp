@@ -1,5 +1,7 @@
 #pragma once
 
+#include "project.hpp"
+
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -26,14 +28,17 @@ enum class Api { Check, Playground };
 
 struct RunCodeParams {
     std::string containerType;
-    std::string sourceRun;
+    std::string sourceRun; // TODO remove it from project request
 
-    // Command-line arguments for interpreter
     std::vector<std::string> cmdLineArgs;
 };
 
 struct RunTaskParams : RunCodeParams {
     std::string sourceTest;
+};
+
+struct RunProjectParams : RunCodeParams {
+    Project project;
 };
 
 struct Response {
@@ -67,32 +72,7 @@ struct CodeFilename {
     std::string filename;
 };
 
-struct File {
-    std::string name;
-    std::string content;
-};
-
-struct Directory {
-    std::string name;
-    std::vector<File> files;
-    std::vector<Directory> directories;
-};
-
-void makeDirectoryStructure(Directory const & directory);
-
-struct PathContent {
-    std::string path;
-    std::string content;
-};
-std::vector<PathContent> getPathsToFiles(Directory const & directory);
-
-struct Project {
-    std::string name;
-    std::vector<PathContent> pathsContents;
-};
-
 std::ostringstream makeTar(std::vector<CodeFilename> && data);
-std::ostringstream makeProjectTar(Project const & project);
 
 class LogDuration {
 public:

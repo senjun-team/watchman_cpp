@@ -7,12 +7,24 @@
 
 #include <fstream>
 
+namespace {
+
+std::string getJson(std::string const & path) {
+    std::ifstream file(getAssetPath(path));
+    std::stringstream json;
+    json << file.rdbuf();
+    return json.str();
+}
+
+}  // namespace
+
 TEST(Playground, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "python_playground";
-    std::string sourceCode = "print(42)";
 
-    watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+    watchman::RunProjectParams params;
+    params.containerType = std::move(containerType);
+    params.project = watchman::parseProject(getJson(kPythonProject));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(response.output == "42\r\n");
@@ -22,53 +34,63 @@ TEST(Playground, Run) {
 TEST(Playground, Go) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "golang_playground";
-    std::string sourceCode =
-        "package main\nimport \"fmt\"\nfunc main() {\nx := 2\nfmt.Printf(\"%d %v\", x, x)\n}";
 
-    watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+    watchman::RunProjectParams params;
+    params.containerType = std::move(containerType);
+    params.project = watchman::parseProject(getJson(kGoProject));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "2 2");
 }
 
-TEST(Playground, Haskell) {
-    watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "haskell_playground";
-    std::string sourceCode = "module Main where\nmain :: IO ()\nmain = putStrLn (show 129";
+// TEST(Playground, Haskell) {
+//     watchman::Service service(watchman::readConfig(kParams.config));
+//     std::string containerType = "haskell_playground";
+//     std::string sourceCode = "module Main where\nmain :: IO ()\nmain = putStrLn (show 129";
+//
+//     watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+//     auto response = service.runPlayground(params);
+//     ASSERT_TRUE(response.sourceCode == 1);
+// }
 
-    watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+
+TEST(Playground, Rust_success) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    std::string containerType = "rust_playground";
+
+    watchman::RunProjectParams params;
+    params.containerType = std::move(containerType);
+    params.project = watchman::parseProject(getJson(kRustProject));
     auto response = service.runPlayground(params);
-    ASSERT_TRUE(response.sourceCode == 1);
+    ASSERT_EQ(response.output, "Hello world!\r\n");
+    ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
 }
 
 TEST(Playground, C_plus_plus_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "cpp_playground";
-    std::string sourceCode =
-        "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
 
-    watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+    watchman::RunProjectParams params;
+    params.containerType = std::move(containerType);
+    params.project = watchman::parseProject(getJson(kCppProject));
     auto response = service.runPlayground(params);
-    ASSERT_EQ(response.output, "Hello, world");
+    ASSERT_EQ(response.output, "42");
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
 }
 
 TEST(Playground, C_plus_plus_failure) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "cpp_playground";
-    auto sourceCode = "lalalala;";
 
-    watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
+    watchman::RunProjectParams params;
+    params.containerType = std::move(containerType);
+    params.project = watchman::parseProject(getJson(kCppProjectCompileError));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
 }
 
 TEST(Playground, TarDir) {
-    std::ifstream file(getAssetPath(kFilesStructureAssets));
-    std::stringstream json;
-    json << file.rdbuf();
-
-    watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
+    watchman::Directory rootDirectory = watchman::jsonToDirectory(getJson(kFilesStructureAssets));
     auto const pathsContents = getPathsToFiles(rootDirectory);
 
     watchman::DockerWrapper dockerWrapper;

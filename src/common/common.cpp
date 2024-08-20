@@ -5,10 +5,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
-#include <filesystem>
 #include <thread>
-
-namespace fs = std::filesystem;
 
 namespace watchman {
 
@@ -114,42 +111,6 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     tar::tar_to_stream_tail(stream);
     return stream;
 }
-
-std::ostringstream makeProjectTar(Project const & project) {
-    std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
-
-    for (auto const & pathContent : project.pathsContents) {
-        tar::tar_to_stream(stream, pathContent.path, pathContent.content.data(),
-                           pathContent.content.size());
-    }
-    tar::tar_to_stream_tail(stream);
-    return stream;
-}
-
-void createFile(File const & file) {
-    std::ofstream osFile(file.name);
-    osFile << file.content;
-    osFile.close();
-}
-
-void recursiveFillAbsolutePaths(Directory const & directory, fs::path const & currentPath,
-                                std::vector<PathContent> & paths) {
-    for (auto & file : directory.files) {
-        paths.push_back({currentPath / file.name, file.content});
-    }
-
-    for (auto & subDirectory : directory.directories) {
-        recursiveFillAbsolutePaths(subDirectory, currentPath / subDirectory.name, paths);
-    }
-}
-
-std::vector<PathContent> getPathsToFiles(Directory const & rootDirectory) {
-    std::vector<PathContent> paths;
-    recursiveFillAbsolutePaths(rootDirectory, rootDirectory.name, paths);
-    return paths;
-}
-
-void fillAbsolutePaths(Directory & rootDirectory) {}
 
 LogDuration::LogDuration(std::string operation)
     : m_operation(std::move(operation))

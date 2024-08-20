@@ -1,8 +1,9 @@
 #include "common/common.hpp"
 #include "common/logging.hpp"
-#include "core/parser.hpp"
 
 #include <rapidjson/document.h>
+
+#include <common/project.hpp>
 
 namespace {
 

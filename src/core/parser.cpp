@@ -1,9 +1,12 @@
 #include "parser.hpp"
 
 #include "common/logging.hpp"
+#include "common/project.hpp"
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
+
+#include <unifex/task.hpp>
 
 namespace watchman {
 
@@ -50,83 +53,126 @@ curl -X 'POST' \
 }'
 */
 
-RunTaskParams parse(std::string const & body, Api api) {
-    // Required json fields
-    std::string const containerType = "container_type";
-    std::string const sourceRun = "source_run";
-    std::string const sourceTest = "source_test";
-
-    // Optional json fields
-    std::string const cmdLineArgs = "cmd_line_args";
-
-    rapidjson::Document document;
-    if (document.Parse(body).HasParseError()) {
-        Log::error("Incoming json has parse error: {}", body);
-        return {};
+class DocumentKeeper {
+public:
+    explicit DocumentKeeper(std::string const & body)
+        : m_body(body) {
+        if (m_document.Parse(m_body).HasParseError()) {
+            Log::error("Incoming json has parse error: {}", m_body);
+            throw std::runtime_error{"Incorrect input json"};
+        }
     }
 
-    auto const hasField = [&document, &body](std::string const & member,
-                                             bool isRequired = true) -> bool {
-        if (!document.HasMember(member)) {
-            if (isRequired) {
-                Log::error("Incoming json has no member \'{}\', json: {}", member, body);
+    std::string getString(std::string const & member) const {
+        return m_document[member].GetString();
+    }
+
+    rapidjson::Value const & getArray(std::string const & member) const {
+        return m_document[member].GetArray();
+    }
+
+    bool hasField(std::string const & member, bool required = true) const {
+        if (!m_document.HasMember(member)) {
+            if (required) {
+                Log::error("Incoming json has no member \'{}\', json: {}", member, m_body);
             }
             return false;
         }
         return true;
-    };
+    }
 
-    auto const isString = [&document, &body](std::string const & member) -> bool {
-        if (!document[member].IsString()) {
-            Log::error("Incoming json has member \'{}\' which is not a string, json: {}", member,
-                       body);
-            return false;
-        }
-        return true;
-    };
+    bool isString(std::string const & member) const { return m_document[member].IsString(); }
 
-    auto const getString = [&document](std::string const & member) -> std::string {
-        return document[member].GetString();
-    };
+    bool isArray(std::string const & member) const { return m_document[member].IsArray(); }
 
-    auto const requiredFieldIsOk = [&hasField, &isString](std::string const & member) -> bool {
-        if (!hasField(member) || !isString(member)) {
-            return false;
-        }
-        return true;
-    };
+    bool requiredFieldIsOk(std::string const & member) const {
+        return hasField(member) && isString(member);
+    }
+
+    bool requiredFieldIsObject(std::string const & member) { return m_document[member].IsObject(); }
+
+    std::string getProject() const { return m_document["project"].GetString(); }
+
+private:
+    std::string const & m_body;
+    rapidjson::Document m_document;
+};
+
+RunCodeParams parseCommon(DocumentKeeper const & document) {
+    // Required json fields
+    std::string const containerType = "container_type";
+    std::string const sourceRun = "source_run";
+
+    // Optional json fields
+    std::string const cmdLineArgs = "cmd_line_args";
 
     // required fields for all handles
     std::vector const requiredFields{containerType, sourceRun};
 
     for (std::string const & requiredField : requiredFields) {
-        if (!requiredFieldIsOk(requiredField)) {
+        if (!document.requiredFieldIsOk(requiredField)) {
             return {};
         }
     }
 
-    RunTaskParams params;
-    // todo change name of container depend on api
-    std::string const suffix = api == Api::Check ? "_check" : "_playground";
-    params.containerType = getString(containerType) + suffix;
-    params.sourceRun = getString(sourceRun);
+    RunCodeParams params;
+    params.containerType =
+        document.getString(containerType);  // add sufix outside depend on hadle _check/_playground
+    params.sourceRun = document.getString(sourceRun);
 
-    if (api == Api::Check) {
-        if (!requiredFieldIsOk(sourceTest)) {
-            return {};
-        }
-        params.sourceTest = getString(sourceTest);
-    }
-
-    if (hasField(cmdLineArgs, false)) {
-        if (!document[cmdLineArgs].IsArray()) {
+    if (document.hasField(cmdLineArgs, false)) {
+        if (!document.isArray(cmdLineArgs)) {
             return {};
         }
 
-        getArray(document[cmdLineArgs].GetArray(), params.cmdLineArgs);
+        getArray(document.getArray(cmdLineArgs), params.cmdLineArgs);
     }
 
     return params;
+}
+
+RunTaskParams parseTask(std::string const & body) {
+    std::string const sourceTest = "source_test";
+
+    DocumentKeeper document(body);
+    if (!document.requiredFieldIsOk(sourceTest)) {
+        return {};
+    }
+
+    RunCodeParams codeParams = parseCommon(document);
+
+    RunTaskParams taskParams;
+    taskParams.containerType = codeParams.containerType + "_check";
+    taskParams.sourceRun = codeParams.sourceRun;
+    taskParams.cmdLineArgs = codeParams.cmdLineArgs;
+    taskParams.sourceTest = document.getString(sourceTest);
+
+    return taskParams;
+}
+
+Project parseProject(std::string const & json) {
+    auto const directory = jsonToDirectory(json);
+    return {directory.name, getPathsToFiles(directory)};
+}
+
+RunProjectParams parsePlayground(std::string const & body) {
+    std::string const project = "project";
+
+    DocumentKeeper document(body);
+    if (!document.requiredFieldIsOk(project)) {
+        return {};
+    }
+
+    RunCodeParams codeParams = parseCommon(document);
+    codeParams.containerType += "_playground";  // todo make it better?
+
+    RunProjectParams projectParams;
+    projectParams.sourceRun = codeParams.sourceRun;
+    projectParams.containerType = codeParams.containerType;
+    projectParams.cmdLineArgs = codeParams.cmdLineArgs;
+    projectParams.project = parseProject(document.getProject());
+
+    return projectParams;
 }
 
 std::string makeJsonCourse(Response && response) {

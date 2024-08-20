@@ -19,20 +19,6 @@ RUN stack new user-code \
     && cp config.yaml .stack/ \
     && cp package.yaml user-code/ \
     && cd user-code \
-    && stack build
-
-USER root
-
-RUN chown root:code_runner /home/code_runner/user-code \ 
-    && rm /home/code_runner/config.yaml \
-    && rm /home/code_runner/package.yaml \
-    && chmod 1775 /home/code_runner/user-code \
-    && chown root:code_runner /home/code_runner/user-code/src \
-    && chmod 1775 /home/code_runner/user-code/src \
-    && chown root:code_runner /home/code_runner/user-code/stack.yaml \
-    && chmod u=rw,g=r,o=r /home/code_runner/user-code/stack.yaml \
-    && chmod -R o-w /usr/local
-
-USER code_runner
+    && stack build --prefetch
 
 ENTRYPOINT ["bash"]

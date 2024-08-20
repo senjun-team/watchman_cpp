@@ -18,3 +18,12 @@ inline fs::path getAssetPath(std::string const & assetName) {
 }
 
 std::string const kFilesStructureAssets = "files_structure.json";
+
+std::string const kCppProject = "cpp_playground.json";
+std::string const kCppProjectCompileError = "cpp_playground_compile_error.json";
+
+std::string const kPythonProject = "python_playground.json";
+
+std::string const kGoProject = "go_playground.json";
+
+std::string const kRustProject = "rust_playground.json";
