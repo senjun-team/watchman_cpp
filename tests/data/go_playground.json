@@ -1,0 +1,18 @@
+{
+  "name": "watchman_go_dir",
+  "children": [
+    {
+      "name": "go.mod",
+      "contents": "module senjun/user/hello\n\ngo 1.21.11"
+    },
+    {
+      "name": "cmd",
+      "children": [
+        {
+          "name": "main.go",
+          "contents": "package main\nimport \"fmt\"\nfunc main() {\nx := 2\nfmt.Printf(\"%d %v\", x, x)\n}"
+        }
+      ]
+    }
+  ]
+}

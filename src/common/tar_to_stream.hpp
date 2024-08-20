@@ -1,6 +1,7 @@
 #pragma once
 // https://github.com/Armchair-Software/tar_to_stream
 
+#include <cstdint>
 #include <cstring>
 #include <string>
 

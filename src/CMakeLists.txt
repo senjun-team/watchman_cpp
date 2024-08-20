@@ -14,6 +14,7 @@ set(CORE_SOURCES
         core/detail/directory_traverser.cpp
         common/common.cpp
         common/logging.cpp
+        common/project.cpp
         common/detail/process_courses.cpp
         common/detail/process_playground.cpp
         common/detail/answer_common.cpp

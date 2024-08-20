@@ -34,7 +34,7 @@ rm -rf /home/code_runner > /dev/null 2>&1
 f="$(basename -- $file)"
 
 # TODO think about cp, should be mv! Now it is forbidden to modify files in /home/code_runner
-cp /home/code_runner/$f /home/code_runner/user-code/src/main.rs
+cp -r /home/code_runner/$f /home/code_runner/user-code
 
 # go to /home/code_runner/user_code for cargo compiling and running
 cd /home/code_runner/user-code

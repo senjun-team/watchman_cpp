@@ -1,0 +1,18 @@
+{
+  "name": "watchman_rust_dir",
+  "children": [
+    {
+      "name": "Cargo.toml",
+      "contents": "[package]\nname = \"proj_rust\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"
+    },
+    {
+      "name": "src",
+      "children": [
+        {
+          "name": "main.rs",
+          "contents": "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n"
+        }
+      ]
+    }
+  ]
+}

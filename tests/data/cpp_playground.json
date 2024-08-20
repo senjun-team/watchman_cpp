@@ -1,0 +1,25 @@
+{
+  "name": "watchman_cpp_dir",
+  "children": [
+    {
+      "name": "README.md",
+      "contents": "Some readme"
+    },
+    {
+      "name": ".gitignore",
+      "contents": "build/*"
+    },
+    {
+      "name": "main.hpp",
+      "contents": "#include<iostream>\nint main();"
+    },
+    {
+      "name": "main.cpp",
+      "contents": "#include\"main.hpp\"\n int main(){std::cout << 42; return 0;}"
+    },
+    {
+      "name": "CMakeLists.txt",
+      "contents": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_experiments)\nset(CMAKE_CXX_STANDARD 23)\nadd_executable(cpp_experiments main.cpp)"
+    }
+  ]
+}

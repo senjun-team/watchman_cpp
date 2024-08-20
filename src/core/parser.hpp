@@ -6,9 +6,10 @@
 
 namespace watchman {
 
-Directory jsonToDirectory(std::string const & json);
 // parse request
-RunTaskParams parse(std::string const & body, Api api);
+RunTaskParams parseTask(std::string const & body);
+RunProjectParams parsePlayground(std::string const & body);
+Project parseProject(std::string const & json);
 
 // create json responses
 std::string makeJsonCourse(Response && response);

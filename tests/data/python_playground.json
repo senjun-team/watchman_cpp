@@ -1,0 +1,13 @@
+{
+  "name": "watchman_python_dir",
+  "children": [
+    {
+      "name": "my_library.py",
+      "contents": "import json"
+    },
+    {
+      "name": "main.py",
+      "contents": "import my_library\nprint(42)"
+    }
+  ]
+}

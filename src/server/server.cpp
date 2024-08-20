@@ -74,7 +74,7 @@ std::string Server::processRequest(std::string_view api, std::string const & bod
 }
 
 std::string Server::processCheck(std::string const & body) {
-    auto const params = parse(body, Api::Check);
+    auto const params = parseTask(body);
     if (params.containerType.empty()) {
         return {};
     }
@@ -83,7 +83,7 @@ std::string Server::processCheck(std::string const & body) {
 }
 
 std::string Server::processPlayground(std::string const & body) {
-    auto const params = parse(body, Api::Playground);
+    auto const params = parsePlayground(body);
     if (params.containerType.empty()) {
         return {};
     }

@@ -59,27 +59,22 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
     return result;
 }
 
-Response Service::runPlayground(RunCodeParams const & runCodeParams) {
-    if (runCodeParams.sourceRun.empty()) {
-        Log::warning("Empty file with code");
-        return {kUserCodeError, "Source code not provided"};
-    }
-
-    if (!m_containerController.containerNameIsValid(runCodeParams.containerType)) {
-        Log::warning("Invalid container type: {}", runCodeParams.containerType);
+Response Service::runPlayground(RunProjectParams const & runProjectParams) {
+    if (!m_containerController.containerNameIsValid(runProjectParams.containerType)) {
+        Log::warning("Invalid container type: {}", runProjectParams.containerType);
         return {};
     }
 
-    auto raiiContainer = getReadyContainer(runCodeParams.containerType);  // here we have got a race
+    auto raiiContainer =
+        getReadyContainer(runProjectParams.containerType);  // here we have got a race
     auto & container = raiiContainer.container;
 
-    std::vector<CodeFilename> data{{runCodeParams.sourceRun, kFilenameTask}};
-    if (!container.prepareCode(makeTar(std::move(data)))) {
-        Log::warning("Couldn't pass tar to container. Source: {}", runCodeParams.sourceRun);
+    if (!container.prepareCode(makeProjectTar(std::move(runProjectParams.project)))) {
+        Log::warning("Couldn't pass tar to container. Source: {}", runProjectParams.sourceRun);
         return {};
     }
 
-    return container.runCode(getArgs(kFilenameTask, runCodeParams.cmdLineArgs));
+    return container.runCode(getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {

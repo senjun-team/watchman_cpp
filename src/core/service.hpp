@@ -16,7 +16,7 @@ public:
     Service & operator=(Service &&) = delete;
 
     Response runTask(RunTaskParams const & runTaskParams);
-    Response runPlayground(RunCodeParams const & runCodeParams);
+    Response runPlayground(RunProjectParams const & runProjectParams);
 
 private:
     detail::ReleasingContainer getReadyContainer(Config::ContainerType type);
