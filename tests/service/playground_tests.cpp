@@ -43,15 +43,16 @@ TEST(Playground, Go) {
     ASSERT_EQ(response.output, "2 2");
 }
 
-// TEST(Playground, Haskell) {
-//     watchman::Service service(watchman::readConfig(kParams.config));
-//     std::string containerType = "haskell_playground";
-//     std::string sourceCode = "module Main where\nmain :: IO ()\nmain = putStrLn (show 129";
-//
-//     watchman::RunCodeParams params{std::move(containerType), std::move(sourceCode), {}};
-//     auto response = service.runPlayground(params);
-//     ASSERT_TRUE(response.sourceCode == 1);
-// }
+TEST(Playground, DISABLED_Haskell_HelloWorld) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    std::string containerType = "haskell_playground";
+
+    watchman::RunProjectParams params;
+    params.containerType = std::move(containerType);
+    params.project = watchman::parseProject(getJson(kHaskellProject));
+    auto response = service.runPlayground(params);
+    ASSERT_EQ(response.output, "Hello world!\r\n");
+}
 
 
 TEST(Playground, Rust_success) {

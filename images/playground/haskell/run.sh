@@ -12,10 +12,11 @@ do
     esac
 done
 
+f="$(basename -- $file)"
 
-cp -r project/app user-code/
-cp -r project/src user-code/
-cp -r project/test user-code/
+cp -r $f/app user-code/
+cp -r $f/src user-code/
+cp -r $f/test user-code/
 
 cd /home/code_runner/user-code/
 
