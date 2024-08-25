@@ -27,3 +27,5 @@ std::string const kPythonProject = "python_playground.json";
 std::string const kGoProject = "go_playground.json";
 
 std::string const kRustProject = "rust_playground.json";
+
+std::string const kHaskellProject = "haskell_playground.json";
