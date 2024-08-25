@@ -70,7 +70,8 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
     auto & container = raiiContainer.container;
 
     if (!container.prepareCode(makeProjectTar(std::move(runProjectParams.project)))) {
-        Log::warning("Couldn't pass tar to container. Source: {}", runProjectParams.sourceRun);
+        Log::warning("Couldn't pass tar to container. Project name: {}",
+                     runProjectParams.project.name);
         return {};
     }
 

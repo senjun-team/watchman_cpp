@@ -13,6 +13,10 @@ namespace watchman {
 size_t constexpr kDockerTimeoutCode = 124;
 size_t constexpr kDockerMemoryKill = 137;
 
+// Required json fields
+std::string const kContainerType = "container_type";
+std::string const kSourceRun = "source_run";
+
 // Reads rapid json array to std::vector
 template<class T>
 void getArray(rapidjson::Value const & src, std::vector<T> & dst) {
@@ -98,16 +102,22 @@ private:
     rapidjson::Document m_document;
 };
 
-RunCodeParams parseCommon(DocumentKeeper const & document) {
-    // Required json fields
-    std::string const containerType = "container_type";
-    std::string const sourceRun = "source_run";
+std::vector<std::string> getRequiredFields(Api api) {
+    switch (api) {
+    case Api::Check: return {kContainerType, kSourceRun};
+    case Api::Playground: return {kContainerType};
+    }
 
+    // never go here
+    return {};
+}
+
+RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
     // Optional json fields
     std::string const cmdLineArgs = "cmd_line_args";
 
     // required fields for all handles
-    std::vector const requiredFields{containerType, sourceRun};
+    std::vector const requiredFields = getRequiredFields(api);
 
     for (std::string const & requiredField : requiredFields) {
         if (!document.requiredFieldIsOk(requiredField)) {
@@ -117,8 +127,7 @@ RunCodeParams parseCommon(DocumentKeeper const & document) {
 
     RunCodeParams params;
     params.containerType =
-        document.getString(containerType);  // add sufix outside depend on hadle _check/_playground
-    params.sourceRun = document.getString(sourceRun);
+        document.getString(kContainerType);  // add sufix outside depend on hadle _check/_playground
 
     if (document.hasField(cmdLineArgs, false)) {
         if (!document.isArray(cmdLineArgs)) {
@@ -139,11 +148,11 @@ RunTaskParams parseTask(std::string const & body) {
         return {};
     }
 
-    RunCodeParams codeParams = parseCommon(document);
+    RunCodeParams codeParams = parseCommon(document, Api::Check);
 
     RunTaskParams taskParams;
     taskParams.containerType = codeParams.containerType + "_check";
-    taskParams.sourceRun = codeParams.sourceRun;
+    taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;
     taskParams.sourceTest = document.getString(sourceTest);
 
@@ -163,11 +172,10 @@ RunProjectParams parsePlayground(std::string const & body) {
         return {};
     }
 
-    RunCodeParams codeParams = parseCommon(document);
+    RunCodeParams codeParams = parseCommon(document, Api::Playground);
     codeParams.containerType += "_playground";  // todo make it better?
 
     RunProjectParams projectParams;
-    projectParams.sourceRun = codeParams.sourceRun;
     projectParams.containerType = codeParams.containerType;
     projectParams.cmdLineArgs = codeParams.cmdLineArgs;
     projectParams.project = parseProject(document.getProject());
