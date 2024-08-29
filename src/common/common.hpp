@@ -28,12 +28,11 @@ enum class Api { Check, Playground };
 
 struct RunCodeParams {
     std::string containerType;
-    std::string sourceRun; // TODO remove it from project request
-
     std::vector<std::string> cmdLineArgs;
 };
 
 struct RunTaskParams : RunCodeParams {
+    std::string sourceRun;
     std::string sourceTest;
 };
 
