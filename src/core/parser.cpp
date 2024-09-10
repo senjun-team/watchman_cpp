@@ -6,6 +6,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
+#include <unifex/execution_policy.hpp>
 #include <unifex/task.hpp>
 
 namespace watchman {
@@ -15,7 +16,11 @@ size_t constexpr kDockerMemoryKill = 137;
 
 // Required json fields
 std::string const kContainerType = "container_type";
+std::string const kCourseId = "course_id";
 std::string const kSourceRun = "source_run";
+std::string const kUserCmdLineArgs = "user_cmd_line_args";
+std::string const kPracticeAction = "action";
+std::string const kProjectId = "project_id";
 
 // Reads rapid json array to std::vector
 template<class T>
@@ -93,9 +98,21 @@ public:
         return hasField(member) && isString(member);
     }
 
+    bool requiredFieldsAreOk(std::vector<std::string> const & fields) const {
+        for (auto const & field : fields) {
+            if (!requiredFieldIsOk(field)) {
+                Log::info("Required field is absnet: {}", field);
+                return false;
+            }
+        }
+        return true;
+    }
+
     bool requiredFieldIsObject(std::string const & member) { return m_document[member].IsObject(); }
 
     std::string getProject() const { return m_document["project"].GetString(); }
+    std::string getPractice() const { return m_document["project_contents"].GetString(); }
+    std::string getPracticeAction() const { return m_document["action"].GetString(); }
 
 private:
     std::string const & m_body;
@@ -106,10 +123,20 @@ std::vector<std::string> getRequiredFields(Api api) {
     switch (api) {
     case Api::Check: return {kContainerType, kSourceRun};
     case Api::Playground: return {kContainerType};
+    case Api::Practice: return {};
     }
 
     // never go here
-    return {};
+    throw std::logic_error{"getRequiredFields logic error"};
+}
+
+std::string getContainerTypeString(Api api) {
+    switch (api) {
+    case Api::Check:
+    case Api::Playground: return kContainerType;
+    case Api::Practice: return kCourseId;
+    }
+    throw std::logic_error{"getContainerTypeString logic error"};
 }
 
 RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
@@ -126,8 +153,8 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
     }
 
     RunCodeParams params;
-    params.containerType =
-        document.getString(kContainerType);  // add sufix outside depend on hadle _check/_playground
+
+    params.containerType = document.getString(getContainerTypeString(api));
 
     if (document.hasField(cmdLineArgs, false)) {
         if (!document.isArray(cmdLineArgs)) {
@@ -164,6 +191,14 @@ Project parseProject(std::string const & json) {
     return {directory.name, getPathsToFiles(directory)};
 }
 
+PracticeAction getPracticeAction(std::string const & action) {
+    if (action == "run") {
+        return PracticeAction::Run;
+    }
+
+    return PracticeAction::Test;
+}
+
 RunProjectParams parsePlayground(std::string const & body) {
     std::string const project = "project";
 
@@ -181,6 +216,25 @@ RunProjectParams parsePlayground(std::string const & body) {
     projectParams.project = parseProject(document.getProject());
 
     return projectParams;
+}
+
+RunPracticeParams parsePractice(std::string const & body) {
+    std::string const project_contents = "project_contents";
+
+    DocumentKeeper document(body);
+    if (!document.requiredFieldsAreOk(
+            {project_contents, kCourseId, kPracticeAction, kUserCmdLineArgs, kProjectId})) {
+        return {};
+    }
+
+    RunPracticeParams params;
+    params.containerType = document.getString(getContainerTypeString(Api::Practice)) + "_practice";
+    params.practice.project = parseProject(document.getPractice());
+    params.practice.action = getPracticeAction(document.getPracticeAction());
+    params.userCmdLineArgs = document.getString(kUserCmdLineArgs);
+    params.pathToMainFile = getMainFile(params.practice.project.pathsContents);
+
+    return params;
 }
 
 std::string makeJsonCourse(Response && response) {
@@ -218,5 +272,16 @@ std::string makeJsonCourse(Response && response) {
 }
 
 std::string makeJsonPlayground(Response && response) { return makeJsonCourse(std::move(response)); }
+
+std::string makeErrorJson(std::string const & message) {
+    rapidjson::StringBuffer stringBuffer;
+    rapidjson::Writer writer(stringBuffer);
+
+    writer.StartObject();
+    writer.Key("output");
+    writer.String(message);
+    writer.EndObject();
+    return stringBuffer.GetString();
+}
 
 }  // namespace watchman

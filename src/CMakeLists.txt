@@ -17,6 +17,7 @@ set(CORE_SOURCES
         common/project.cpp
         common/detail/process_courses.cpp
         common/detail/process_playground.cpp
+        common/detail/process_practice.cpp
         common/detail/answer_common.cpp
         common/detail/containers.cpp
         )

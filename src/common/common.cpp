@@ -15,6 +15,41 @@ size_t getCpuCount() {
     return cpuCount > 0 ? cpuCount : kDefCpuCount;
 }
 
+struct ConfgiHelper {
+    std::unordered_map<Config::ContainerType, Language> & table;
+    std::string key;
+    std::string suffix;
+};
+
+template<typename Ptree>
+void fillTable(Ptree const & root, ConfgiHelper const & configHelper) {
+    auto const & child = root.get_child_optional(configHelper.key);
+    if (!child.has_value()) {
+        Log::error("Required field `{}` is absent", configHelper.key);
+        std::terminate();
+    }
+
+    for (auto const & field : child.value()) {
+        auto imageName = field.second.get_child_optional("image-name");
+        if (!imageName.has_value()) {
+            Log::error("Required field \'image-name\' is absent in {}", field.first);
+            std::terminate();
+        }
+
+        auto const launched = field.second.get_child_optional("launched");
+        if (!launched.has_value()) {
+            Log::error("Required field \'launched\' is absent in {}", field.first);
+            std::terminate();
+        }
+
+        auto const & containerType = field.first;
+
+        configHelper.table.insert({containerType + configHelper.suffix,
+                                   {imageName.value().template get_value<std::string>(),
+                                    launched.value().template get_value<uint32_t>()}});
+    }
+}
+
 template<typename Ptree>
 Config fillConfig(Ptree const & root) {
     Config config;
@@ -31,57 +66,9 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    auto const & courses = root.get_child_optional("courses");
-    if (!courses.has_value()) {
-        Log::error("Required field \'courses\' is absent");
-        std::terminate();
-    }
-
-    for (auto const & course : courses.value()) {
-        auto imageName = course.second.get_child_optional("image-name");
-        if (!imageName.has_value()) {
-            Log::error("Required field \'image-name\' is absent in {}", course.first);
-            std::terminate();
-        }
-
-        auto const launched = course.second.get_child_optional("launched");
-        if (!launched.has_value()) {
-            Log::error("Required field \'launched\' is absent in {}", course.first);
-            std::terminate();
-        }
-
-        auto const & containerType = course.first;
-
-        config.languages.insert({containerType + "_check",
-                                 {imageName.value().template get_value<std::string>(),
-                                  launched.value().template get_value<uint32_t>()}});
-    }
-
-    auto const & playground = root.get_child_optional("playground");
-    if (!playground.has_value()) {
-        Log::error("Required field \'playground\' is absent");
-        std::terminate();
-    }
-
-    for (auto const & language : playground.value()) {
-        auto imageName = language.second.get_child_optional("image-name");
-        if (!imageName.has_value()) {
-            Log::error("Required field \'image-name\' is absent in {}", language.first);
-            std::terminate();
-        }
-
-        auto const launched = language.second.get_child_optional("launched");
-        if (!launched.has_value()) {
-            Log::error("Required field \'launched\' is absent in {}", language.first);
-            std::terminate();
-        }
-
-        auto const & containerType = language.first;
-
-        config.playgrounds.insert({containerType + "_playground",
-                                   {imageName.value().template get_value<std::string>(),
-                                    launched.value().template get_value<uint32_t>()}});
-    }
+    fillTable(root, {config.languages, "courses", "_check"});
+    fillTable(root, {config.playgrounds, "playground", "_playground"});
+    fillTable(root, {config.practices, "practice", "_practice"});
     return config;
 }
 

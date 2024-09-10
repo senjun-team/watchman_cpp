@@ -32,6 +32,7 @@ struct PutArchive {
     std::string containerId;
     std::string path;
     std::string archive;  // in memory tar archive
+    std::string copyUIDGID = "1";
 };
 
 class DockerWrapper {

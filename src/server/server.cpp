@@ -4,7 +4,6 @@
 #include "common/logging.hpp"
 #include "core/parser.hpp"
 
-
 #include <restinio/all.hpp>
 
 namespace watchman {
@@ -13,8 +12,9 @@ std::string const kIpAddress = "0.0.0.0";
 
 constexpr std::string_view kCheck = "/check";
 constexpr std::string_view kPlayground = "/playground";
+constexpr std::string_view kPractice = "/practice";
 
-Api getApi(std::string_view handle) {
+std::optional<Api> getApi(std::string_view handle) {
     if (handle == kCheck) {
         return Api::Check;
     }
@@ -23,9 +23,12 @@ Api getApi(std::string_view handle) {
         return Api::Playground;
     }
 
-    throw std::runtime_error{"Unkonwn api"};
-}
+    if (handle == kPractice) {
+        return Api::Practice;
+    }
 
+    return std::nullopt;
+}
 
 Server::Server(Config && config)
     : m_service(std::move(config)) {}
@@ -58,19 +61,30 @@ void Server::start(size_t threadPoolSize) {
                       }));
 }
 
-std::string Server::processRequest(std::string_view api, std::string const & body) {
-    Log::info("Processing handle {}, body:\n {}", api, body);
+std::string Server::processRequest(std::string_view apiString, std::string const & body) {
+    Log::info("Processing handle {}, body:\n {}", apiString, body);
 
-    try {
-        switch (getApi(api)) {
-        case Api::Check: return processCheck(body);
-        case Api::Playground: return processPlayground(body);
-        }
-    } catch (std::exception const & exception) {
-        Log::error("Wrong api: {}", exception.what());
+    auto api = getApi(apiString);
+    if (!api.has_value()) {
+        auto const errorMesage = fmt::format("Unknowon api: {}", apiString);
+        Log::info(fmt::runtime(errorMesage));
+        return makeErrorJson(errorMesage);
     }
 
-    return std::string{R"({"output": "unknown handle"})"};
+    try {
+        switch (*api) {
+        case Api::Check: return processCheck(body);
+        case Api::Playground: return processPlayground(body);
+        case Api::Practice: return processPractice(body);
+        }
+
+    } catch (std::exception const & exception) {
+        auto const errorMesage =
+            fmt::format("Error while processing handle `{}` {}", apiString, exception.what());
+        Log::info(fmt::runtime(errorMesage));
+        return makeErrorJson(errorMesage);
+    }
+    throw std::logic_error{"process request logic error"};
 }
 
 std::string Server::processCheck(std::string const & body) {
@@ -89,5 +103,14 @@ std::string Server::processPlayground(std::string const & body) {
     }
 
     return makeJsonPlayground(m_service.runPlayground(params));
+}
+
+std::string Server::processPractice(std::string const & body) {
+    auto const params = parsePractice(body);
+    if (params.containerType.empty()) {
+        return {};
+    }
+
+    return makeJsonPlayground(m_service.runPractice(params));
 }
 }  // namespace watchman

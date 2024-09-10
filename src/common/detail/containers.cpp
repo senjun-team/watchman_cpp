@@ -17,6 +17,8 @@ bool BaseContainer::prepareCode(std::ostringstream && stream) {
     params.containerId = id;
     params.path = kUserSourceFile;
     params.archive = std::move(stream.str());
+    params.copyUIDGID = "1";
+
 
     if (!dockerWrapper.putArchive(std::move(params))) {
         Log::error("Couldn't put an archive to container");
@@ -24,6 +26,15 @@ bool BaseContainer::prepareCode(std::ostringstream && stream) {
     }
 
     return true;
+}
+
+Response PracticeContainer::runCode(std::vector<std::string> && dockerCmdLineArgs) {
+    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(dockerCmdLineArgs)});
+    if (!result.success) {
+        return {result.success, result.message};
+    }
+
+    return getPracticeResponse(result.message);
 }
 
 ContainerController::ContainerController(Config && config)
@@ -99,6 +110,7 @@ void ContainerController::killOldContainers(DockerWrapper & dockerWrapper) {
 
     killContainers(m_config.languages);
     killContainers(m_config.playgrounds);
+    killContainers(m_config.practices);
 }
 
 void ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
@@ -123,8 +135,12 @@ void ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
                 std::shared_ptr<BaseContainer> container;
                 if (info.imageName.find("playground") != std::string::npos) {
                     container = std::make_shared<PlaygroundContainer>(std::move(id), type);
-                } else {
+                } else if (info.imageName.find("course") != std::string::npos) {
                     container = std::make_shared<CourseContainer>(std::move(id), type);
+                } else if (info.imageName.find("practice") != std::string::npos) {
+                    container = std::make_shared<PracticeContainer>(std::move(id), type);
+                } else {
+                    throw std::logic_error{"Wrong image name: " + info.imageName};
                 }
 
                 containers.emplace_back(std::move(container));
@@ -138,6 +154,7 @@ void ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
 
     launchContainers(m_config.languages);
     launchContainers(m_config.playgrounds);
+    launchContainers(m_config.practices);
 }
 
 PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
@@ -182,5 +199,8 @@ Response PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {
 
     return getPlaygroungResponse(result.message);
 }
+
+PracticeContainer::PracticeContainer(std::string id, Config::ContainerType type)
+    : BaseContainer(std::move(id), std::move(type)) {}
 
 }  // namespace watchman::detail

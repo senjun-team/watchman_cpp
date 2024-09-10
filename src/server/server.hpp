@@ -17,6 +17,7 @@ private:
     // handles
     std::string processCheck(std::string const & body);
     std::string processPlayground(std::string const & body);
+    std::string processPractice(std::string const & body);
 
     Service m_service;
 };

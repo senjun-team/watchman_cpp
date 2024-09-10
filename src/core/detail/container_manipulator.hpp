@@ -44,8 +44,10 @@ public:
                       std::shared_ptr<BaseContainer> container;
                       if (image.find("playground") != std::string::npos) {
                           container = std::make_shared<PlaygroundContainer>(std::move(id), type);
-                      } else {
+                      } else if (image.find("courses") != std::string::npos) {
                           container = std::make_shared<CourseContainer>(std::move(id), type);
+                      } else {
+                          container = std::make_shared<PracticeContainer>(std::move(id), type);
                       }
 
                       m_protectedContainers.containers.at(type).push_back(container);
