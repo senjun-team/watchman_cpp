@@ -10,6 +10,7 @@ namespace {
 std::string const name = "name";
 std::string const children = "children";
 std::string const contents = "contents";
+std::string const isMainFile = "is_main_file";
 
 bool isFile(auto && child) { return child.HasMember(contents); };
 
@@ -29,7 +30,17 @@ void recursiveDirectoryTraverse(watchman::Directory & directory, auto && documen
     auto const & childrenArray = document[children].GetArray();
     for (auto const & child : childrenArray) {
         if (isFile(child)) {
-            directory.files.push_back({child[name].GetString(), child[contents].GetString()});
+            watchman::File file;
+            file.name = child[name].GetString();
+            std::string content = child[contents].GetString();
+            file.content = content.empty()
+                             ? "\n"
+                             : std::move(content);  // TODO crutch, we can't put empty files to tar
+            if (child.HasMember(isMainFile) && child[isMainFile].GetBool()) {
+                file.isMain = true;
+            }
+
+            directory.files.push_back(std::move(file));
             continue;
         }
 
@@ -46,8 +57,11 @@ namespace watchman {
 Directory jsonToDirectory(std::string const & json) {
     rapidjson::Document document;
     if (document.Parse(json).HasParseError()) {
-        Log::info("Incoming json has parse error: {}", json);
-        return {};
+        Log::info("Json has parse error at offest: {}", document.GetErrorOffset());
+
+        throw std::runtime_error{
+            fmt::format("Project tree has sytax error in the end of string: {}",
+                        std::string_view{json.data(), document.GetErrorOffset()})};
     }
 
     Directory directory;

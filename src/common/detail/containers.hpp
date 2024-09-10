@@ -34,8 +34,12 @@ struct CourseContainer final : BaseContainer {
 
 struct PlaygroundContainer final : BaseContainer {
     PlaygroundContainer(std::string id, Config::ContainerType type);
-
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
+};
+
+struct PracticeContainer final : BaseContainer {
+    PracticeContainer(std::string id, Config::ContainerType type);
+    Response runCode(std::vector<std::string> && dockerCmdLineArgs) override;
 };
 
 class ContainerOSManipulator;

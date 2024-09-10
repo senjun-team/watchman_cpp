@@ -8,6 +8,7 @@ namespace watchman {
 struct File {
     std::string name;
     std::string content;
+    bool isMain = false;
 };
 
 struct Directory {
@@ -19,6 +20,8 @@ struct Directory {
 struct PathContent {
     std::string path;
     std::string content;
+    bool isMain = false;
+    bool isDir = false;
 };
 
 struct Project {
@@ -26,7 +29,16 @@ struct Project {
     std::vector<PathContent> pathsContents;
 };
 
+
+enum class PracticeAction { Run, Test };
+
+struct Practice {
+    Project project;
+    PracticeAction action;
+};
+
 std::vector<PathContent> getPathsToFiles(Directory const & directory);
+std::string getMainFile(std::vector<PathContent> const & pathContents);
 
 std::ostringstream makeProjectTar(Project const & project);
 Directory jsonToDirectory(std::string const & json);

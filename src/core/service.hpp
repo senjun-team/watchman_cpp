@@ -17,6 +17,7 @@ public:
 
     Response runTask(RunTaskParams const & runTaskParams);
     Response runPlayground(RunProjectParams const & runProjectParams);
+    Response runPractice(RunPracticeParams const & params);
 
 private:
     detail::ReleasingContainer getReadyContainer(Config::ContainerType type);

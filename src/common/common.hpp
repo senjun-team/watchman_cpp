@@ -24,11 +24,12 @@ static ErrorCode constexpr kInvalidCode = -1;
 
 bool errorCodeIsUnexpected(ErrorCode code);
 
-enum class Api { Check, Playground };
+enum class Api { Check, Playground, Practice };
 
 struct RunCodeParams {
-    std::string containerType;
-    std::vector<std::string> cmdLineArgs;
+    std::string
+        containerType;  // language with suffix, e.g. python_check, cpp_practice, go_playground
+    std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
 };
 
 struct RunTaskParams : RunCodeParams {
@@ -40,19 +41,27 @@ struct RunProjectParams : RunCodeParams {
     Project project;
 };
 
+struct RunPracticeParams {
+    std::string containerType;
+    std::string userCmdLineArgs;  // args for command line while running code
+    std::string pathToMainFile;
+    Practice practice;
+};
+
 struct Response {
     ErrorCode sourceCode{kInvalidCode};
     std::string output;
     std::optional<std::string> testsOutput;
 };
 
-struct CointainerTypeInfo {
+struct ContainerTypeInfo {
     std::string imageName;
     uint32_t launched{0};
 };
 
-using Language = CointainerTypeInfo;
-using Playground = CointainerTypeInfo;
+using Language = ContainerTypeInfo;
+using Playground = ContainerTypeInfo;
+using PracticeContainer = ContainerTypeInfo;
 
 struct Config {
     using ContainerType = std::string;  // python/rust/go/haskell
@@ -60,6 +69,7 @@ struct Config {
     uint32_t maxContainersAmount{0};
     std::unordered_map<ContainerType, Language> languages;
     std::unordered_map<ContainerType, Playground> playgrounds;
+    std::unordered_map<ContainerType, PracticeContainer> practices;
 };
 
 size_t getCpuCount();

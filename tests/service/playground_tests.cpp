@@ -5,19 +5,6 @@
 #include "core/parser.hpp"
 #include "core/service.hpp"
 
-#include <fstream>
-
-namespace {
-
-std::string getJson(std::string const & path) {
-    std::ifstream file(getAssetPath(path));
-    std::stringstream json;
-    json << file.rdbuf();
-    return json.str();
-}
-
-}  // namespace
-
 TEST(Playground, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string containerType = "python_playground";
@@ -53,7 +40,6 @@ TEST(Playground, DISABLED_Haskell_HelloWorld) {
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "Hello world!\r\n");
 }
-
 
 TEST(Playground, Rust_success) {
     watchman::Service service(watchman::readConfig(kParams.config));

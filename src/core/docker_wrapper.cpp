@@ -119,6 +119,7 @@ bool DockerWrapper::Impl::putArchive(PutArchive && params) {
     dockerParams.containerId = std::move(params.containerId);
     dockerParams.path = std::move(params.path);
     dockerParams.archive = std::move(params.archive);
+    dockerParams.copyUIDGID = std::move(params.copyUIDGID);
 
     auto result = m_docker.putArchive(dockerParams);
     if (!result.success) {

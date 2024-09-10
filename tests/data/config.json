@@ -44,5 +44,11 @@
       "image-name": "senjun_playground_cpp",
       "launched": 1
     }
+  },
+  "practice": {
+    "python": {
+      "image-name": "senjun_practice_python",
+      "launched": 1
+    }
   }
 }

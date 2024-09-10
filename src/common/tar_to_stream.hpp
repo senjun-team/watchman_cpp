@@ -58,7 +58,14 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     std::strncpy(header.gname, gname.c_str(), sizeof(header.gname) - 1);
 
     sprintf(header.size, "%011lo", size);
+
+    // Дима, ты можешь это сделать более изящным в соответствии со своим видением прекрасного.
+    if (data == nullptr) {
+        header.typeflag = '5';
+    }
+
     sprintf(header.mtime, "%011llo", static_cast<long long unsigned int>(mtime));
+
     sprintf(header.uid, "%07o", uid);
     sprintf(header.gid, "%07o", gid);
 
@@ -69,8 +76,12 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     sprintf(header.chksum, "%06o", checksum_value);
 
     auto const padding = size == 512u ? 0 : 512u - static_cast<unsigned int>(size % 512);
-    stream << std::string_view(header.name, sizeof(header)) << std::string_view(data, size)
-           << std::string(padding, '\0');
+
+    stream << std::string_view(header.name, sizeof(header));
+    if (data != nullptr) {
+        stream << std::string_view(data, size);
+        stream << std::string(padding, '\0');
+    }
 }
 
 template<typename T>

@@ -27,6 +27,34 @@ std::vector<std::string> getArgs(std::string const & filename,
     return runArgs;
 }
 
+std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params) {
+    std::string const cmd = "sh";
+    std::string const script = "run.sh";
+    std::vector<std::string> runArgs;
+
+    runArgs.emplace_back(cmd);
+    runArgs.emplace_back(script);
+
+    // see run.sh for python pracitce
+    auto runAction = [&runArgs, &params]() {
+        runArgs.emplace_back(fmt::format("-p {}", params.pathToMainFile));
+        runArgs.emplace_back(fmt::format("-o {}", params.userCmdLineArgs));
+        runArgs.emplace_back(fmt::format("-r"));
+    };
+
+    auto testAction = [&runArgs, &params]() {
+        runArgs.emplace_back(fmt::format("-f {}", params.practice.project.name));
+        runArgs.emplace_back(fmt::format("-t"));
+    };
+
+    switch (params.practice.action) {
+    case PracticeAction::Run: runAction(); break;
+    case PracticeAction::Test: testAction(); break;
+    }
+
+    return runArgs;
+}
+
 Response Service::runTask(RunTaskParams const & runTaskParams) {
     if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
         Log::warning("Empty files with code and test");
@@ -76,6 +104,27 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
     }
 
     return container.runCode(getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
+}
+
+Response Service::runPractice(RunPracticeParams const & params) {
+    if (!m_containerController.containerNameIsValid(params.containerType)) {
+        Log::warning("Invalid container type: {}", params.containerType);
+        return {};
+    }
+
+    auto raiiContainer = getReadyContainer(params.containerType);  // here we have got a race
+    auto & container = raiiContainer.container;
+    // here I want to process two cases
+    // 1) just compile and run souce file
+
+    if (!container.prepareCode(makeProjectTar(params.practice.project))) {
+        Log::warning("Couldn't pass tar to container. Project name: {}",
+                     params.practice.project.name);
+        return {};
+    }
+
+    auto dockerCmdArgs = getPracticeDockerArgs(params);
+    return container.runCode(std::move(dockerCmdArgs));
 }
 
 detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
