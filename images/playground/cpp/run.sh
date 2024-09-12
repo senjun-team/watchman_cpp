@@ -15,8 +15,6 @@ done
 
 f="$(basename -- $project)"
 
-# clear previous container use
-rm -rf /home/code_runner > /dev/null 2>&1
 
 cmake -B /home/code_runner/build /home/code_runner/$f > /dev/null 2>&1
 cmake --build /home/code_runner/build > /dev/null 2>&1

@@ -7,7 +7,7 @@ do
     case "${flag}" in
         c) color=${OPTARG};;
         j) jobs=${OPTARG};;
-        f) file=${OPTARG};;
+        f) project=${OPTARG};;
         v) task_type=${OPTARG};;
     esac
 done
@@ -27,17 +27,8 @@ then
     cargo_run_opts="${cargo_run_opts} --jobs ${jobs}"
 fi
 
-# clear previous container use
-rm -rf /home/code_runner > /dev/null 2>&1
 
-# run user code
-f="$(basename -- $file)"
-
-# TODO think about cp, should be mv! Now it is forbidden to modify files in /home/code_runner
-cp -r /home/code_runner/$f /home/code_runner/user-code
-
-# go to /home/code_runner/user_code for cargo compiling and running
-cd /home/code_runner/user-code
+cd /home/code_runner/project
 
 if ! ( timeout 10s cargo clean --quiet && cargo run --release --quiet --offline $cargo_run_opts ); then
    echo user_solution_error_f936a25e

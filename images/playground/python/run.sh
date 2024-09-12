@@ -6,7 +6,6 @@ do
         f) project=${OPTARG};;
     esac
 done
-rm -rf /home/code_runner > /dev/null 2>&1
 
 f="$(basename -- $project)"
 
