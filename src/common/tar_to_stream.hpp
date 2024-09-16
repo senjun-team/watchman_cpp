@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <algorithm>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -49,13 +50,13 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         char padding[12] = {};  // 500    padding to reach 512 block size
     } header;                   // 512
 
+
     filemode.insert(filemode.begin(), 7 - filemode.length(), '0');  // zero-pad the file mode
 
-    std::strncpy(header.name, filename.c_str(),
-                 sizeof(header.name) - 1);  // leave one char for the final null
-    std::strncpy(header.mode, filemode.c_str(), sizeof(header.mode) - 1);
-    std::strncpy(header.uname, uname.c_str(), sizeof(header.uname) - 1);
-    std::strncpy(header.gname, gname.c_str(), sizeof(header.gname) - 1);
+    std::copy(filename.begin(), filename.begin() + sizeof(header.name) - 1, header.name);
+    std::copy(filemode.begin(), filemode.begin() + sizeof(header.mode) - 1, header.mode);
+    std::copy(uname.begin(), uname.begin() + sizeof(header.uname) - 1, header.uname);
+    std::copy(gname.begin(), gname.begin() + sizeof(header.gname) - 1, header.gname);
 
     sprintf(header.size, "%011lo", size);
 
