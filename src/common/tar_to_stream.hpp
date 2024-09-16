@@ -1,10 +1,12 @@
 #pragma once
 // https://github.com/Armchair-Software/tar_to_stream
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <iomanip>
+#include <sstream>
 #include <string>
-#include <algorithm>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -50,7 +52,6 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         char padding[12] = {};  // 500    padding to reach 512 block size
     } header;                   // 512
 
-
     filemode.insert(filemode.begin(), 7 - filemode.length(), '0');  // zero-pad the file mode
 
     std::copy(filename.begin(), filename.begin() + sizeof(header.name) - 1, header.name);
@@ -58,23 +59,49 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     std::copy(uname.begin(), uname.begin() + sizeof(header.uname) - 1, header.uname);
     std::copy(gname.begin(), gname.begin() + sizeof(header.gname) - 1, header.gname);
 
-    sprintf(header.size, "%011lo", size);
-
     // Дима, ты можешь это сделать более изящным в соответствии со своим видением прекрасного.
     if (data == nullptr) {
         header.typeflag = '5';
     }
 
-    sprintf(header.mtime, "%011llo", static_cast<long long unsigned int>(mtime));
+    if (size != 0) {
+        // Use a stringstream to convert the size to an octal string
+        std::stringstream ss;
+        ss << std::oct << std::setw(sizeof(header.size) - 1) << std::setfill('0') << size;
+        ss >> header.size;
 
-    sprintf(header.uid, "%07o", uid);
-    sprintf(header.gid, "%07o", gid);
+        // We don't need to worry about mtime and checksum, as they are not used by tar.
+        // However, we will add them here in case you need to use them for something else.
 
-    unsigned int checksum_value = 0;
-    for (unsigned int i = 0; i != sizeof(header); ++i) {
-        checksum_value += reinterpret_cast<uint8_t *>(&header)[i];
+        // Use a stringstream to convert the modification time to an octal string
+        std::stringstream ss_mtime;
+        ss_mtime << std::oct << std::setw(sizeof(header.mtime) - 1) << std::setfill('0') << mtime;
+        ss_mtime >> header.mtime;
+
+        std::stringstream ss_uid;
+        ss_uid << std::oct << std::setw(sizeof(header.uid) - 1) << std::setfill('0') << uid;
+        ss_uid >> header.uid;
+
+        std::stringstream ss_gid;
+        ss_gid << std::oct << std::setw(sizeof(header.gid) - 1) << std::setfill('0') << gid;
+        ss_gid >> header.gid;
+
+        // Calculate the checksum, as it is used by tar
+        unsigned int checksum_value = 0;
+        for (uint32_t i = 0; i != sizeof(header); ++i) {
+            checksum_value += reinterpret_cast<uint8_t *>(&header)[i];
+        }
+
+        std::stringstream ss_chksum;
+        ss_chksum << std::oct << std::setw(sizeof(header.chksum) - 2) << std::setfill('0')
+                  << checksum_value;
+        ss_chksum >> header.chksum;
+    } else {
+        // If the size is 0, then we need to fill in a size of 00000000000
+        for (uint32_t i = 0; i < sizeof(header.size); ++i) {
+            header.size[i] = '0';
+        }
     }
-    sprintf(header.chksum, "%06o", checksum_value);
 
     auto const padding = size == 512u ? 0 : 512u - static_cast<unsigned int>(size % 512);
 
