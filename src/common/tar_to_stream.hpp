@@ -2,6 +2,7 @@
 // https://github.com/Armchair-Software/tar_to_stream
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <iomanip>
@@ -25,58 +26,68 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
                    std::string const & uname = "root",    /// file owner username
                    std::string const & gname = "root") {  /// file owner group name
     /// Read a "file" in memory, and write it as a TAR archive to the stream
-    struct {                  // offset
-        char name[100] = {};  //   0    filename
-        char mode[8] = {};    // 100    file mode: 0000644 etc
-        char uid[8] =
+    struct TarHeader {
+        // offset
+        std::array<char, 100> name = {};  //   0    filename
+        std::array<char, 8> mode = {};    // 100    file mode: 0000644 etc
+        std::array<char, 8> uid =
             {};  // 108    user id, ascii representation of octal value: "0001750" (for UID 1000)
-        char gid[8] =
+        std::array<char, 8> gid =
             {};  // 116    group id, ascii representation of octal value: "0001750" (for GID 1000)
-        char size[12] = {};              // 124    file size, ascii representation of octal value
-        char mtime[12] = "00000000000";  // 136    modification time, seconds since epoch
-        char chksum[8] = {' ', ' ', ' ', ' ', ' ',
-                          ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
-                                           // ' '.  Checksum is the octal sum of all bytes in the
-                                           // header, with chksum field set to 8 spaces.
-        char typeflag = '0';               // 156    '0'
-        char linkname[100] = {};           // 157    null bytes when not a link
-        char magic[6] = {
+        std::array<char, 12> size = {};  // 124    file size, ascii representation of octal value
+        std::array<char, 12> mtime = {
+            "00000000000"};  // 136    modification time, seconds since epoch
+        std::array<char, 8> chksum = {
+            ' ', ' ', ' ', ' ',
+            ' ', ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
+        // ' '.  Checksum is the octal sum of all bytes in the
+        // header, with chksum field set to 8 spaces.
+        char typeflag = '0';                  // 156    '0'
+        std::array<char, 100> linkname = {};  // 157    null bytes when not a link
+        std::array<char, 6> magic = {
             'u', 's', 't',
-            'a', 'r', ' '};     // 257    format: Unix Standard TAR: "ustar ", not null-terminated
-        char version[2] = " ";  // 263    " "
-        char uname[32] = {};    // 265    user name
-        char gname[32] = {};    // 297    group name
-        char devmajor[8] = {};  // 329    null bytes
-        char devminor[8] = {};  // 337    null bytes
-        char prefix[155] = {};  // 345    null bytes
-        char padding[12] = {};  // 500    padding to reach 512 block size
-    } header;                   // 512
+            'a', 'r', ' '};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
+        std::array<char, 2> version = {" "};  // 263    " "
+        std::array<char, 32> uname = {};      // 265    user name
+        std::array<char, 32> gname = {};      // 297    group name
+        std::array<char, 8> devmajor = {};    // 329    null bytes
+        std::array<char, 8> devminor = {};    // 337    null bytes
+        std::array<char, 155> prefix = {};    // 345    null bytes
+        std::array<char, 12> padding = {};    // 500    padding to reach 512 block size
+    };
+    TarHeader header;
 
     filemode.insert(filemode.begin(), 7 - filemode.size(), '0');  // zero-pad the file mode
 
-    std::copy(filename.begin(), filename.begin() + sizeof(header.name) - 1, header.name);
-    std::copy(filemode.begin(), filemode.begin() + sizeof(header.mode) - 1, header.mode);
-    std::copy(uname.begin(), uname.begin() + sizeof(header.uname) - 1, header.uname);
-    std::copy(gname.begin(), gname.begin() + sizeof(header.gname) - 1, header.gname);
+    std::copy(filename.begin(), filename.begin() + sizeof(header.name) - 1, header.name.begin());
+    std::copy(filemode.begin(), filemode.begin() + sizeof(header.mode) - 1, header.mode.begin());
+    std::copy(uname.begin(), uname.begin() + sizeof(header.uname) - 1, header.uname.begin());
+    std::copy(gname.begin(), gname.begin() + sizeof(header.gname) - 1, header.gname.begin());
 
     // Дима, ты можешь это сделать более изящным в соответствии со своим видением прекрасного.
     if (data == nullptr) {
         header.typeflag = '5';
     }
 
-    auto const getStringStream = [](auto && value, uint32_t size) -> std::stringstream {
+    auto const getStringStream = [](auto && value, uint32_t size) -> std::string {
         std::stringstream ss;
         // use convertion to octal intentionally
         ss << std::oct << std::setw(static_cast<int>(size)) << std::setfill('0') << value;
-        return ss;
+        return ss.str();
+    };
+
+    auto fillElement = [](std::string const & from, auto & elem) -> void {
+        for (size_t i = 0, size = from.size(); i < size; ++i) {
+            elem[i] = from[i];
+        }
     };
 
     if (size != 0) {
         // Use a stringstream to convert the size to an octal string
-        getStringStream(size, sizeof(header.size) - 1) >> header.size;
-        getStringStream(mtime, sizeof(header.mtime) - 1) >> header.mtime;
-        getStringStream(uid, sizeof(header.uid) - 1) >> header.uid;
-        getStringStream(gid, sizeof(header.gid) - 1) >> header.gid;
+        fillElement(getStringStream(size, sizeof(header.size) - 1), header.size);
+        fillElement(getStringStream(mtime, sizeof(header.mtime) - 1), header.mtime);
+        fillElement(getStringStream(uid, sizeof(header.uid) - 1), header.uid);
+        fillElement(getStringStream(gid, sizeof(header.gid) - 1), header.gid);
 
         // Calculate the checksum, as it is used by tar
         uint32_t checksum_value = 0;
@@ -84,7 +95,7 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
             checksum_value += reinterpret_cast<uint8_t *>(&header)[i];
         }
 
-        getStringStream(checksum_value, sizeof(header.chksum) - 2) >> header.chksum;
+        fillElement(getStringStream(checksum_value, sizeof(header.chksum) - 2), header.chksum);
     } else {
         // If the size is 0, then we need to fill in a size of 00000000000
         for (uint32_t i = 0; i < sizeof(header.size); ++i) {
@@ -92,17 +103,13 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         }
     }
 
-    auto const padding = size == 512u ? 0 : 512u - static_cast<unsigned int>(size % 512);
-
-    stream << std::string_view(header.name, sizeof(header));
-    if (data != nullptr) {
-        stream << std::string_view(data, size);
-        stream << std::string(padding, '\0');
-    }
+    auto const padding = size == 512u ? 0 : 512u - static_cast<uint32_t>(size % 512);
+    stream << std::string(header.name.data(), sizeof(header)) << std::string(data, size)
+           << std::string(padding, '\0');
 }
 
 template<typename T>
-void tar_to_stream_tail(T & stream, unsigned int tail_length = 512u * 2u) {
+void tar_to_stream_tail(T & stream, uint32_t tail_length = 512u * 2u) {
     /// TAR archives expect a tail of null bytes at the end - min of 512 * 2, but implementations
     /// often add more
     stream << std::string(tail_length, '\0');
