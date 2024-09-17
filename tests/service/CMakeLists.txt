@@ -3,5 +3,6 @@ set(TESTS
         playground_tests
         courses_tests
         practice_tests
+        tar_tests
         )
 add_tests(service "${TESTS}")
