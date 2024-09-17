@@ -14,6 +14,36 @@
 
 namespace tar {
 
+/// Read a "file" in memory, and write it as a TAR archive to the stream
+struct TarHeader {
+    // offset
+    std::array<char, 100> name = {};  //   0    filename
+    std::array<char, 8> mode = {};    // 100    file mode: 0000644 etc
+    std::array<char, 8> uid =
+        {};  // 108    user id, ascii representation of octal value: "0001750" (for UID 1000)
+    std::array<char, 8> gid =
+        {};  // 116    group id, ascii representation of octal value: "0001750" (for GID 1000)
+    std::array<char, 12> size = {};  // 124    file size, ascii representation of octal value
+    std::array<char, 12> mtime = {"00000000000"};  // 136    modification time, seconds since epoch
+    std::array<char, 8> chksum = {
+        ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
+    // ' '.  Checksum is the octal sum of all bytes in the
+    // header, with chksum field set to 8 spaces.
+    char typeflag = '0';                  // 156    '0'
+    std::array<char, 100> linkname = {};  // 157    null bytes when not a link
+    std::array<char, 6> magic = {
+        'u', 's', 't',
+        'a', 'r', ' '};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
+    std::array<char, 2> version = {" "};  // 263    " "
+    std::array<char, 32> uname = {};      // 265    user name
+    std::array<char, 32> gname = {};      // 297    group name
+    std::array<char, 8> devmajor = {};    // 329    null bytes
+    std::array<char, 8> devminor = {};    // 337    null bytes
+    std::array<char, 155> prefix = {};    // 345    null bytes
+    std::array<char, 12> padding = {};    // 500    padding to reach 512 block size
+};
+
 template<typename T>
 void tar_to_stream(T & stream,                    /// stream to write to, e.g. ostream or ofstream
                    std::string const & filename,  /// name of the file to write
@@ -25,36 +55,6 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
                    uint32_t gid = 0u,             /// file owner group ID
                    std::string const & uname = "root",    /// file owner username
                    std::string const & gname = "root") {  /// file owner group name
-    /// Read a "file" in memory, and write it as a TAR archive to the stream
-    struct TarHeader {
-        // offset
-        std::array<char, 100> name = {};  //   0    filename
-        std::array<char, 8> mode = {};    // 100    file mode: 0000644 etc
-        std::array<char, 8> uid =
-            {};  // 108    user id, ascii representation of octal value: "0001750" (for UID 1000)
-        std::array<char, 8> gid =
-            {};  // 116    group id, ascii representation of octal value: "0001750" (for GID 1000)
-        std::array<char, 12> size = {};  // 124    file size, ascii representation of octal value
-        std::array<char, 12> mtime = {
-            "00000000000"};  // 136    modification time, seconds since epoch
-        std::array<char, 8> chksum = {
-            ' ', ' ', ' ', ' ',
-            ' ', ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
-        // ' '.  Checksum is the octal sum of all bytes in the
-        // header, with chksum field set to 8 spaces.
-        char typeflag = '0';                  // 156    '0'
-        std::array<char, 100> linkname = {};  // 157    null bytes when not a link
-        std::array<char, 6> magic = {
-            'u', 's', 't',
-            'a', 'r', ' '};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
-        std::array<char, 2> version = {" "};  // 263    " "
-        std::array<char, 32> uname = {};      // 265    user name
-        std::array<char, 32> gname = {};      // 297    group name
-        std::array<char, 8> devmajor = {};    // 329    null bytes
-        std::array<char, 8> devminor = {};    // 337    null bytes
-        std::array<char, 155> prefix = {};    // 345    null bytes
-        std::array<char, 12> padding = {};    // 500    padding to reach 512 block size
-    };
     TarHeader header;
 
     filemode.insert(filemode.begin(), 7 - filemode.size(), '0');  // zero-pad the file mode
@@ -103,8 +103,8 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         }
     }
 
-    auto const padding = size == 512u ? 0 : 512u - static_cast<uint32_t>(size % 512);
-    stream << std::string(header.name.data(), sizeof(header)) << std::string(data, size)
+    uint32_t const padding = size == 512 ? 0 : 512 - static_cast<uint32_t>(size % 512);
+    stream << std::string_view(header.name.data(), sizeof(header)) << std::string_view(data, size)
            << std::string(padding, '\0');
 }
 
