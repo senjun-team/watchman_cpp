@@ -51,13 +51,14 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
                    uint64_t size,                 /// size of the data
                    uint64_t mtime = 0,            /// file modification time, in seconds since epoch
                    std::string filemode = "644",  /// file mode
-                   uint32_t uid = 0u,             /// file owner user ID
-                   uint32_t gid = 0u,             /// file owner group ID
+                   uint32_t uid = 0,              /// file owner user ID
+                   uint32_t gid = 0,              /// file owner group ID
                    std::string const & uname = "root",    /// file owner username
                    std::string const & gname = "root") {  /// file owner group name
     TarHeader header;
 
-    filemode.insert(filemode.begin(), 7 - filemode.size(), '0');  // zero-pad the file mode
+    uint32_t const fileModePadding = 7 - filemode.size();
+    filemode.insert(filemode.begin(), fileModePadding , '0');  // zero-pad the file mode
 
     std::copy(filename.begin(), filename.begin() + sizeof(header.name) - 1, header.name.begin());
     std::copy(filemode.begin(), filemode.begin() + sizeof(header.mode) - 1, header.mode.begin());
@@ -90,17 +91,15 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         fillElement(getStringStream(gid, sizeof(header.gid) - 1), header.gid);
 
         // Calculate the checksum, as it is used by tar
-        uint32_t checksum_value = 0;
+        uint32_t checksumValue = 0;
         for (uint32_t i = 0; i != sizeof(header); ++i) {
-            checksum_value += reinterpret_cast<uint8_t *>(&header)[i];
+            checksumValue += reinterpret_cast<uint8_t *>(&header)[i];
         }
 
-        fillElement(getStringStream(checksum_value, sizeof(header.chksum) - 2), header.chksum);
+        fillElement(getStringStream(checksumValue, sizeof(header.chksum) - 2), header.chksum);
     } else {
         // If the size is 0, then we need to fill in a size of 00000000000
-        for (uint32_t i = 0; i < sizeof(header.size); ++i) {
-            header.size[i] = '0';
-        }
+        header.size.fill(0);
     }
 
     uint32_t const padding = size == 512 ? 0 : 512 - static_cast<uint32_t>(size % 512);
@@ -109,10 +108,10 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
 }
 
 template<typename T>
-void tar_to_stream_tail(T & stream, uint32_t tail_length = 512u * 2u) {
+void tar_to_stream_tail(T & stream, uint32_t tailLength = 512u * 2u) {
     /// TAR archives expect a tail of null bytes at the end - min of 512 * 2, but implementations
     /// often add more
-    stream << std::string(tail_length, '\0');
+    stream << std::string(tailLength, '\0');
 }
 }  // namespace tar
 
