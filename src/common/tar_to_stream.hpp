@@ -30,18 +30,18 @@ struct TarHeader {
         ' ', ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
     // ' '.  Checksum is the octal sum of all bytes in the
     // header, with chksum field set to 8 spaces.
-    char typeflag = '\0';                 // 156    '0'
+    char typeflag = '0';                 // 156    '0'
     std::array<char, 100> linkname = {};  // 157    null bytes when not a link
     std::array<char, 6> magic = {
         'u', 's', 't',
         'a', 'r', ' '};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
-    std::array<char, 2> version = {" "};  // 263    " "
-    std::array<char, 32> uname = {};      // 265    user name
-    std::array<char, 32> gname = {};      // 297    group name
-    std::array<char, 8> devmajor = {};    // 329    null bytes
-    std::array<char, 8> devminor = {};    // 337    null bytes
-    std::array<char, 155> prefix = {};    // 345    null bytes
-    std::array<char, 12> padding = {};    // 500    padding to reach 512 block size
+    std::array<char, 2> version = {};   // 263    " "
+    std::array<char, 32> uname = {};    // 265    user name
+    std::array<char, 32> gname = {};    // 297    group name
+    std::array<char, 8> devmajor = {};  // 329    null bytes
+    std::array<char, 8> devminor = {};  // 337    null bytes
+    std::array<char, 155> prefix = {};  // 345    null bytes
+    std::array<char, 12> padding = {};  // 500    padding to reach 512 block size
 };
 
 template<typename T>
