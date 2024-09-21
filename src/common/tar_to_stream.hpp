@@ -23,25 +23,23 @@ struct TarHeader {
         {};  // 108    user id, ascii representation of octal value: "0001750" (for UID 1000)
     std::array<char, 8> gid =
         {};  // 116    group id, ascii representation of octal value: "0001750" (for GID 1000)
-    std::array<char, 12> size = {};  // 124    file size, ascii representation of octal value
-    std::array<char, 12> mtime = {"00000000000"};  // 136    modification time, seconds since epoch
-    std::array<char, 8> chksum = {
-        ' ', ' ', ' ', ' ',
-        ' ', ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
+    std::array<char, 12> size = {};   // 124    file size, ascii representation of octal value
+    std::array<char, 12> mtime = {};  // 136    modification time, seconds since epoch
+    std::array<char, 8> chksum = {};  // 148    checksum: six octal bytes followed by null and
     // ' '.  Checksum is the octal sum of all bytes in the
     // header, with chksum field set to 8 spaces.
-    char typeflag = '0';                  // 156    '0'
+    char typeflag = '\0';                 // 156    '0'
     std::array<char, 100> linkname = {};  // 157    null bytes when not a link
     std::array<char, 6> magic = {
         'u', 's', 't',
-        'a', 'r', ' '};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
-    std::array<char, 2> version = {" "};  // 263    " "
-    std::array<char, 32> uname = {};      // 265    user name
-    std::array<char, 32> gname = {};      // 297    group name
-    std::array<char, 8> devmajor = {};    // 329    null bytes
-    std::array<char, 8> devminor = {};    // 337    null bytes
-    std::array<char, 155> prefix = {};    // 345    null bytes
-    std::array<char, 12> padding = {};    // 500    padding to reach 512 block size
+        'a', 'r', '\0'};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
+    std::array<char, 2> version = {};   // 263    " "
+    std::array<char, 32> uname = {};    // 265    user name
+    std::array<char, 32> gname = {};    // 297    group name
+    std::array<char, 8> devmajor = {};  // 329    null bytes
+    std::array<char, 8> devminor = {};  // 337    null bytes
+    std::array<char, 155> prefix = {};  // 345    null bytes
+    std::array<char, 12> padding = {};  // 500    padding to reach 512 block size
 };
 
 template<typename T>
@@ -58,12 +56,20 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     TarHeader header;
 
     uint32_t const fileModePadding = 7 - filemode.size();
-    filemode.insert(filemode.begin(), fileModePadding , '0');  // zero-pad the file mode
+    filemode.insert(filemode.begin(), fileModePadding, '0');  // zero-pad the file mode
 
-    std::copy(filename.begin(), filename.begin() + sizeof(header.name) - 1, header.name.begin());
-    std::copy(filemode.begin(), filemode.begin() + sizeof(header.mode) - 1, header.mode.begin());
-    std::copy(uname.begin(), uname.begin() + sizeof(header.uname) - 1, header.uname.begin());
-    std::copy(gname.begin(), gname.begin() + sizeof(header.gname) - 1, header.gname.begin());
+    std::copy(filename.begin(),
+              filename.begin() + std::min(filename.size(), sizeof(header.name) - 1),
+              header.name.begin());
+
+    std::copy(filemode.begin(),
+              filemode.begin() + std::min(filemode.size(), sizeof(header.mode) - 1),
+              header.mode.begin());
+
+    std::copy(uname.begin(), uname.begin() + std::min(uname.size(), sizeof(header.uname) - 1),
+              header.uname.begin());
+    std::copy(gname.begin(), gname.begin() + std::min(gname.size(), sizeof(header.gname) - 1),
+              header.gname.begin());
 
     // Дима, ты можешь это сделать более изящным в соответствии со своим видением прекрасного.
     if (data == nullptr) {
@@ -73,7 +79,7 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     auto const getStringStream = [](auto && value, uint32_t size) -> std::string {
         std::stringstream ss;
         // use convertion to octal intentionally
-        ss << std::oct << std::setw(static_cast<int>(size)) << std::setfill('0') << value;
+        ss << std::oct << std::setw(static_cast<int>(size)) << std::setfill('\0') << value;
         return ss.str();
     };
 
@@ -111,7 +117,7 @@ template<typename T>
 void tar_to_stream_tail(T & stream, uint32_t tailLength = 512u * 2u) {
     /// TAR archives expect a tail of null bytes at the end - min of 512 * 2, but implementations
     /// often add more
-    stream << std::string(tailLength, '\0');
+    // stream << std::string(tailLength, '\0');
 }
 }  // namespace tar
 
