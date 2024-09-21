@@ -15,13 +15,14 @@ done
 
 f="$(basename -- $project)"
 
-
-cmake -B /home/code_runner/build /home/code_runner/$f > /dev/null 2>&1
-cmake --build /home/code_runner/build > /dev/null 2>&1
+if ! ( timeout 5s cmake -B /home/code_runner/build /home/code_runner/$f > /dev/null ); then
+   echo user_solution_error_f936a25e
+   exit
+fi
 
 executable="cpp_experiments"
 
-if ! ( timeout 10s /home/code_runner/build/$executable ); then
+if ! ( timeout 10s cmake --build /home/code_runner/build && /home/code_runner/build/$executable ); then
    echo user_solution_error_f936a25e
    exit
 fi
