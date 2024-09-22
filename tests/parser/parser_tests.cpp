@@ -55,7 +55,7 @@ TEST(Parser, FillPaths) {
 
     watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
     auto paths = getPathsToFiles(rootDirectory);
-    ASSERT_EQ(paths.size(), 9);
+    ASSERT_EQ(paths.size(), 12);
 }
 
 TEST(Parser, DISABLED_TarDir) {
