@@ -18,7 +18,7 @@ jobs:
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
-      run: cmake -S . -B build
+      run: cmake -S . -B build -DBUILD_TESTING=1
     - name: build_project
       run: cmake --build build
     - name: run_tests
