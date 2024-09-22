@@ -1,0 +1,23 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: setup_project
+      run: git submodule update --init --recursive
+    - name: configure_project
+      run: cmake -S . -B build
+    - name: build_project
+      run: cmake --build build
+    - name: run_tests
+      run: cd build && ctest --output-on-failure
