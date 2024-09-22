@@ -15,14 +15,16 @@ done
 
 f="$(basename -- $project)"
 
-if ! ( timeout 5s cmake -B /home/code_runner/build /home/code_runner/$f > /dev/null ); then
+if ! ( timeout 5s cmake -B /home/code_runner/build /home/code_runner/$f > ./configure.txt ); then
+   echo "$(cat configure.txt)"
    echo user_solution_error_f936a25e
    exit
 fi
 
 executable="cpp_experiments"
 
-if ! ( timeout 10s cmake --build /home/code_runner/build && /home/code_runner/build/$executable ); then
+if ! ( timeout 10s cmake --build /home/code_runner/build > ./build.txt && /home/code_runner/build/$executable ); then
+   echo "$(cat build.txt)"
    echo user_solution_error_f936a25e
    exit
 fi
