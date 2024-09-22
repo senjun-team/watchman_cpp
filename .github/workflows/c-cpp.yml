@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install_requirements
-      run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev
+      run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev libgtest-dev
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
