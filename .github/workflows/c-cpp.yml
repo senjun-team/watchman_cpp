@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install_requirements
-      run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev libgtest-dev docker.io iputils-ping
+      run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev libgtest-dev iputils-ping
     - name: test_docker
       run: docker version && docker info && ping -c 3 docker
     - name: setup_project
