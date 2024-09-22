@@ -28,7 +28,8 @@ then
 fi
 
 
-cd /home/code_runner/project
+p="$(basename -- $project)"
+cd /home/code_runner/$p
 
 if ! ( timeout 10s cargo clean --quiet && cargo run --release --quiet --offline $cargo_run_opts ); then
    echo user_solution_error_f936a25e
