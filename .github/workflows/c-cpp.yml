@@ -10,11 +10,21 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged --shm-size=2g
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+        ports:
+          - 2375:2375
 
     steps:
     - uses: actions/checkout@v4
     - name: install_requirements
-      run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev libgtest-dev
+      run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev libgtest-dev docker.io iputils-ping
+    - name: test_docker
+      run: docker version && docker info && ping -c 3 docker
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
