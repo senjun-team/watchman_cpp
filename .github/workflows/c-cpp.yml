@@ -24,7 +24,7 @@ jobs:
     - name: test_docker
       run: docker version && docker info
     - name: build_images
-      run: cd images/courses/cpp && sh build_image.sh && cd ../golang && sh build_image.sh && cd ../haskell && sh build_image.sh && cd ../python && sh build_image.sh && cd ../rust && sh build_image.sh && cd ../../playground && cd cpp && sh build_image.sh && cd ../golang && sh build_image.sh && cd ../haskell && sh build_image.sh && cd ../python && sh build_image.sh && cd ../rust && sh build_image.sh && cd ../../practice/cpp && sh build_image.sh
+      run: cd images/courses/cpp && sh build_image.sh && cd ../golang && sh build_image.sh && cd ../haskell && sh build_image.sh && cd ../python && sh build_image.sh && cd ../rust && sh build_image.sh && cd ../../playground && cd cpp && sh build_image.sh && cd ../golang && sh build_image.sh && cd ../haskell && sh build_image.sh && cd ../python && sh build_image.sh && cd ../rust && sh build_image.sh && cd ../../practice/python && sh build_image.sh
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
