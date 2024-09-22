@@ -22,7 +22,7 @@ jobs:
     - name: install_requirements
       run: sudo apt update && sudo apt install libboost-all-dev libcurl4-gnutls-dev libfmt-dev libgtest-dev iputils-ping
     - name: test_docker
-      run: docker version && docker info && ping -c 3 docker
+      run: docker version && docker info
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
