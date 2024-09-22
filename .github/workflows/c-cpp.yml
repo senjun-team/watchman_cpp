@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: install_requirements
+      run: sudo apt update && sudo apt install libboost-all-dev curl-dev libfmt-dev
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
