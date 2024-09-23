@@ -11,7 +11,7 @@ TEST(TarHeader, BasicConstruction) {
     EXPECT_EQ(header.gid.size(), 8);
     EXPECT_EQ(header.size.size(), 12);
     EXPECT_EQ(header.mtime.size(), 12);
-    EXPECT_EQ(header.chksum.size(), 8);
+    EXPECT_EQ(header.checksum.size(), 8);
     EXPECT_EQ(header.typeflag, '0');
     EXPECT_EQ(header.linkname.size(), 100);
     EXPECT_EQ(header.magic.size(), 6);
