@@ -1,6 +1,9 @@
 #pragma once
 // https://github.com/Armchair-Software/tar_to_stream
 
+// Tar format
+// https://man.freebsd.org/cgi/man.cgi?query=tar&sektion=5&format=html
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -25,13 +28,10 @@ struct TarHeader {
         {};  // 116    group id, ascii representation of octal value: "0001750" (for GID 1000)
     std::array<char, 12> size = {};   // 124    file size, ascii representation of octal value
     std::array<char, 12> mtime = {};  // 136    modification time, seconds since epoch
-    std::array<char, 8> chksum = {
-        ' ', ' ', ' ', ' ',
-        ' ', ' ', ' ', ' '};  // 148    checksum: six octal bytes followed by null and
-    // ' '.  Checksum is the octal sum of all bytes in the
-    // header, with chksum field set to 8 spaces.
-    char typeflag = '0';                 // 156    '0'
-    std::array<char, 100> linkname = {};  // 157    null bytes when not a link
+    std::array<char, 8> checksum = {' ', ' ', ' ', ' ',
+                                    ' ', ' ', ' ', ' '};  // 148 chksum field set to 8 spaces.
+    char typeflag = '0';                                  // 156    '0' is a regular file
+    std::array<char, 100> linkname = {};                  // 157    null bytes when not a link
     std::array<char, 6> magic = {
         'u', 's', 't',
         'a', 'r', ' '};  // 257    format: Unix Standard TAR: "ustar ", not null-terminated
@@ -57,25 +57,21 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
                    std::string const & gname = "root") {  /// file owner group name
     TarHeader header;
 
-    uint32_t const fileModePadding = 7 - filemode.size();
-    filemode.insert(filemode.begin(), fileModePadding, '0');  // zero-pad the file mode
+    uint32_t const fileModePadding = sizeof(header.mode) - 1 - filemode.size();
+    constexpr auto kNullCharacter = '0';
+    filemode.insert(filemode.begin(), fileModePadding, kNullCharacter);  // zero-pad the file mode
 
-    std::copy(filename.begin(),
-              filename.begin() + std::min(filename.size(), sizeof(header.name) - 1),
-              header.name.begin());
+    auto copyToHeaderField = [](auto const & from, auto & to) -> void {
+        std::copy(from.begin(), from.begin() + std::min(from.size(), sizeof(to) - 1), to.begin());
+    };
 
-    std::copy(filemode.begin(),
-              filemode.begin() + std::min(filemode.size(), sizeof(header.mode) - 1),
-              header.mode.begin());
+    copyToHeaderField(filename, header.name);
+    copyToHeaderField(filemode, header.mode);
+    copyToHeaderField(uname, header.uname);
+    copyToHeaderField(gname, header.gname);
 
-    std::copy(uname.begin(), uname.begin() + std::min(uname.size(), sizeof(header.uname) - 1),
-              header.uname.begin());
-    std::copy(gname.begin(), gname.begin() + std::min(gname.size(), sizeof(header.gname) - 1),
-              header.gname.begin());
-
-    // Дима, ты можешь это сделать более изящным в соответствии со своим видением прекрасного.
     if (data == nullptr) {
-        header.typeflag = '5';
+        header.typeflag = '5';  // directory
     }
 
     auto const getStringStream = [](auto && value, uint32_t size) -> std::string {
@@ -103,7 +99,8 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         checksumValue += reinterpret_cast<uint8_t *>(&header)[i];
     }
 
-    fillElement(getStringStream(checksumValue, sizeof(header.chksum) - 2), header.chksum);
+    fillElement(getStringStream(checksumValue, sizeof(header.checksum) - 2), header.checksum);
+
     uint32_t const padding = size == 512 ? 0 : 512 - static_cast<uint32_t>(size % 512);
     stream << std::string_view(header.name.data(), sizeof(header));
     if (data != nullptr) {
