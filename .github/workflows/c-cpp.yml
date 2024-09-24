@@ -30,6 +30,6 @@ jobs:
     - name: configure_project
       run: cmake -S . -B build -DBUILD_TESTING=1
     - name: build_project
-      run: cmake --build build
+      run: cmake --build build -- -j4
     - name: run_tests
       run: cd build && ctest --output-on-failure
