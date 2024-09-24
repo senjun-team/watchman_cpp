@@ -91,7 +91,8 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     for (auto const & element : data) {
         if (!element.code.empty() && element.filename == kFilenameTask
             || element.filename == kFilenameTaskTests) {
-            tar::tar_to_stream(stream, element.filename, element.code.data(), element.code.size());
+            tar::tar_to_stream(stream,
+                               {element.filename, element.code, tar::FileType::RegularFile});
         }
     }
 

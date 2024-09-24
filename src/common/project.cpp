@@ -45,11 +45,15 @@ std::ostringstream makeProjectTar(Project const & project) {
     std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
 
     for (auto const & pathContent : project.pathsContents) {
-        tar::tar_to_stream(
-            stream, pathContent.path, pathContent.isDir ? nullptr : pathContent.content.data(),
-            pathContent.isDir ? 0 : pathContent.content.size(), 0,
-            pathContent.isDir ? tar::Filemode::ReadWrite : tar::Filemode::ReadWriteExecute, 1000,
-            1000, "code_runner", "code_runner");
+        if (pathContent.isDir) {
+            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
+                                        tar::FileType::Directory, tar::Filemode::ReadWrite, 0, 1000,
+                                        1000, "code_runner", "code_runner"});
+        } else {
+            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
+                                        tar::FileType::RegularFile, tar::Filemode::ReadWriteExecute,
+                                        0, 1000, 1000, "code_runner", "code_runner"});
+        }
     }
     tar::tar_to_stream_tail(stream);
     return stream;

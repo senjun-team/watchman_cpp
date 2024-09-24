@@ -58,7 +58,7 @@ TEST(Parser, FillPaths) {
     ASSERT_EQ(paths.size(), 12);
 }
 
-TEST(Parser, DISABLED_TarDir) {
+TEST(Parser, TarDir) {
     std::ifstream file(getAssetPath(kFilesStructureAssets));
     std::stringstream json;
     json << file.rdbuf();
@@ -69,8 +69,14 @@ TEST(Parser, DISABLED_TarDir) {
     std::ofstream stream("my_tarball", std::ios::binary | std::ios::trunc);
 
     for (auto const & pathContent : pathsContents) {
-        tar::tar_to_stream(stream, pathContent.path, pathContent.content.data(),
-                           pathContent.content.size());
+        if (pathContent.isDir) {
+            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
+                                        tar::FileType::Directory, tar::Filemode::ReadWrite});
+        } else {
+            tar::tar_to_stream(stream,
+                               {pathContent.path, pathContent.content, tar::FileType::RegularFile,
+                                tar::Filemode::ReadWriteExecute});
+        }
     }
     tar::tar_to_stream_tail(stream);
 

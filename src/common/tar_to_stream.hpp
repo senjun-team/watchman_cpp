@@ -4,12 +4,9 @@
 // Tar format
 // https://man.freebsd.org/cgi/man.cgi?query=tar&sektion=5&format=html
 
-#include <boost/asio/error.hpp>
-
 #include <algorithm>
 #include <array>
 #include <cstdint>
-#include <cstring>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -19,7 +16,17 @@
 
 namespace tar {
 
-enum class Filemode { ReadWriteExecute, ReadWrite };
+enum class Filemode {
+    ReadWriteExecute,
+    ReadWrite
+    // etc ...
+};
+
+enum class FileType {
+    RegularFile,
+    Directory
+    // etc ...
+};
 
 inline std::string fileModeToString(Filemode mode) {
     switch (mode) {
@@ -31,6 +38,29 @@ inline std::string fileModeToString(Filemode mode) {
         "Unknown filemode: " + std::to_string(static_cast<uint32_t>(mode));
     throw std::logic_error(errorMessage);
 }
+
+inline char fileTypeToChar(FileType fileType) {
+    switch (fileType) {
+    case FileType::RegularFile: return '0';
+    case FileType::Directory: return '5';
+    }
+
+    std::string const errorMessage =
+        "Unknown filetype: " + std::to_string(static_cast<uint32_t>(fileType));
+    throw std::logic_error(errorMessage);
+}
+
+struct TarInfo {
+    std::string const & filename;  /// name of the file to write in tar
+    std::string const & data;      /// pointer to the data in this archive segment
+    FileType fileType = FileType::RegularFile;
+    Filemode filemode = Filemode::ReadWriteExecute;  /// file mode
+    uint64_t mtime = 0;          /// file modification time, in seconds since epoch
+    uint32_t uid = 0;            /// file owner user ID
+    uint32_t gid = 0;            /// file owner group ID
+    std::string uname = "root";  /// file owner username
+    std::string gname = "root";  /// file owner group name
+};
 
 /// Read a "file" in memory, and write it as a TAR archive to the stream
 struct TarHeader {
@@ -60,19 +90,11 @@ struct TarHeader {
 };
 
 template<typename T>
-void tar_to_stream(T & stream,                    /// stream to write to, e.g. ostream or ofstream
-                   std::string const & filename,  /// name of the file to write
-                   char const * data,             /// pointer to the data in this archive segment
-                   uint64_t size,                 /// size of the data
-                   uint64_t mtime = 0,            /// file modification time, in seconds since epoch
-                   Filemode filemode = Filemode::ReadWriteExecute,  /// file mode
-                   uint32_t uid = 0,                                /// file owner user ID
-                   uint32_t gid = 0,                                /// file owner group ID
-                   std::string const & uname = "root",              /// file owner username
-                   std::string const & gname = "root") {            /// file owner group name
+void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream or ofstream
+                   TarInfo const & info) {  /// file owner group name
     TarHeader header;
 
-    auto strFilemode = fileModeToString(filemode);
+    auto strFilemode = fileModeToString(info.filemode);
     uint32_t const fileModePadding = sizeof(header.mode) - 1 - strFilemode.size();
     constexpr auto kNullCharacter = '0';
     strFilemode.insert(strFilemode.begin(), fileModePadding,
@@ -82,14 +104,12 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
         std::copy(from.begin(), from.begin() + std::min(from.size(), sizeof(to) - 1), to.begin());
     };
 
-    copyToHeaderField(filename, header.name);
+    copyToHeaderField(info.filename, header.name);
     copyToHeaderField(strFilemode, header.mode);
-    copyToHeaderField(uname, header.uname);
-    copyToHeaderField(gname, header.gname);
+    copyToHeaderField(info.uname, header.uname);
+    copyToHeaderField(info.gname, header.gname);
 
-    if (data == nullptr) {
-        header.typeflag = '5';  // directory
-    }
+    header.typeflag = fileTypeToChar(info.fileType);
 
     auto const getStringStream = [](auto && value, uint32_t size) -> std::string {
         std::stringstream ss;
@@ -105,23 +125,27 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
     };
 
     // Use a stringstream to convert the size to an octal string
-    fillElement(getStringStream(size, sizeof(header.size) - 1), header.size);
-    fillElement(getStringStream(mtime, sizeof(header.mtime) - 1), header.mtime);
-    fillElement(getStringStream(uid, sizeof(header.uid) - 1), header.uid);
-    fillElement(getStringStream(gid, sizeof(header.gid) - 1), header.gid);
+    fillElement(getStringStream(info.data.size(), sizeof(header.size) - 1), header.size);
+    fillElement(getStringStream(info.mtime, sizeof(header.mtime) - 1), header.mtime);
+    fillElement(getStringStream(info.uid, sizeof(header.uid) - 1), header.uid);
+    fillElement(getStringStream(info.gid, sizeof(header.gid) - 1), header.gid);
 
     // Calculate the checksum, as it is used by tar
     uint32_t checksumValue = 0;
-    for (uint32_t i = 0; i != sizeof(header); ++i) {
+    constexpr auto kTarHeaderSize = sizeof(TarHeader);
+    for (uint32_t i = 0; i != kTarHeaderSize; ++i) {
         checksumValue += reinterpret_cast<uint8_t *>(&header)[i];
     }
 
     fillElement(getStringStream(checksumValue, sizeof(header.checksum) - 2), header.checksum);
 
-    uint32_t const padding = size == 512 ? 0 : 512 - static_cast<uint32_t>(size % 512);
-    stream << std::string_view(header.name.data(), sizeof(header));
-    if (data != nullptr) {
-        stream << std::string_view(data, size) << std::string(padding, '\0');
+    stream << std::string_view(header.name.data(), kTarHeaderSize);
+    if (info.fileType == FileType::RegularFile) {
+        uint32_t const padding =
+            info.data.size() == kTarHeaderSize
+                ? 0
+                : kTarHeaderSize - static_cast<uint32_t>(info.data.size() % kTarHeaderSize);
+        stream << std::string_view(info.data) << std::string(padding, '\0');
     }
 }
 
