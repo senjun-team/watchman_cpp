@@ -14,7 +14,6 @@ void recursiveFillAbsolutePaths(Directory const & directory, fs::path const & cu
     paths.push_back({currentPath.string() + "/", ""});
     paths.back().isDir = true;
 
-
     for (auto & file : directory.files) {
         paths.push_back({currentPath / file.name, file.content});
         if (file.isMain) {
@@ -46,16 +45,11 @@ std::ostringstream makeProjectTar(Project const & project) {
     std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
 
     for (auto const & pathContent : project.pathsContents) {
-        tar::tar_to_stream(stream,
-                           pathContent.path,
-                           pathContent.isDir ? nullptr : pathContent.content.data(),
-                           pathContent.isDir ? 0 : pathContent.content.size(),
-                           0,
-                           pathContent.isDir ? "755" : "644",
-                           1000,
-                           1000,
-                           "code_runner",
-                           "code_runner");
+        tar::tar_to_stream(
+            stream, pathContent.path, pathContent.isDir ? nullptr : pathContent.content.data(),
+            pathContent.isDir ? 0 : pathContent.content.size(), 0,
+            pathContent.isDir ? tar::Filemode::ReadWrite : tar::Filemode::ReadWriteExecute, 1000,
+            1000, "code_runner", "code_runner");
     }
     tar::tar_to_stream_tail(stream);
     return stream;

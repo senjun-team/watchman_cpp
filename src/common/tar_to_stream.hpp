@@ -4,6 +4,8 @@
 // Tar format
 // https://man.freebsd.org/cgi/man.cgi?query=tar&sektion=5&format=html
 
+#include <boost/asio/error.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -16,6 +18,19 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 namespace tar {
+
+enum class Filemode { ReadWriteExecute, ReadWrite };
+
+inline std::string fileModeToString(Filemode mode) {
+    switch (mode) {
+    case Filemode::ReadWriteExecute: return std::string{"644"};
+    case Filemode::ReadWrite: return std::string{"755"};
+    }
+
+    std::string const errorMessage =
+        "Unknown filemode: " + std::to_string(static_cast<uint32_t>(mode));
+    throw std::logic_error(errorMessage);
+}
 
 /// Read a "file" in memory, and write it as a TAR archive to the stream
 struct TarHeader {
@@ -50,23 +65,25 @@ void tar_to_stream(T & stream,                    /// stream to write to, e.g. o
                    char const * data,             /// pointer to the data in this archive segment
                    uint64_t size,                 /// size of the data
                    uint64_t mtime = 0,            /// file modification time, in seconds since epoch
-                   std::string filemode = "644",  /// file mode
-                   uint32_t uid = 0,              /// file owner user ID
-                   uint32_t gid = 0,              /// file owner group ID
-                   std::string const & uname = "root",    /// file owner username
-                   std::string const & gname = "root") {  /// file owner group name
+                   Filemode filemode = Filemode::ReadWriteExecute,  /// file mode
+                   uint32_t uid = 0,                                /// file owner user ID
+                   uint32_t gid = 0,                                /// file owner group ID
+                   std::string const & uname = "root",              /// file owner username
+                   std::string const & gname = "root") {            /// file owner group name
     TarHeader header;
 
-    uint32_t const fileModePadding = sizeof(header.mode) - 1 - filemode.size();
+    auto strFilemode = fileModeToString(filemode);
+    uint32_t const fileModePadding = sizeof(header.mode) - 1 - strFilemode.size();
     constexpr auto kNullCharacter = '0';
-    filemode.insert(filemode.begin(), fileModePadding, kNullCharacter);  // zero-pad the file mode
+    strFilemode.insert(strFilemode.begin(), fileModePadding,
+                       kNullCharacter);  // zero-pad the file mode
 
     auto copyToHeaderField = [](auto const & from, auto & to) -> void {
         std::copy(from.begin(), from.begin() + std::min(from.size(), sizeof(to) - 1), to.begin());
     };
 
     copyToHeaderField(filename, header.name);
-    copyToHeaderField(filemode, header.mode);
+    copyToHeaderField(strFilemode, header.mode);
     copyToHeaderField(uname, header.uname);
     copyToHeaderField(gname, header.gname);
 
