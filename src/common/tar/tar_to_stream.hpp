@@ -4,8 +4,9 @@
 // Tar format
 // https://man.freebsd.org/cgi/man.cgi?query=tar&sektion=5&format=html
 
-#include "consts.hpp"
-#include "conversions.hpp"
+#include "detail/consts.hpp"
+#include "detail/conversions.hpp"
+#include "detail/utils.hpp"
 
 #include <cstdint>
 #include <string>
@@ -16,8 +17,8 @@
 namespace tar {
 
 template<typename T>
-void tar_to_stream(T & stream,                      /// stream to write to, e.g. ostream or ofstream
-                   detail::TarInfo const & info) {  /// file owner group name
+void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream or ofstream
+                   TarInfo const & info) {  /// file owner group name
     detail::TarHeader header;
 
     auto strFilemode = detail::fileModeToString(info.filemode);
