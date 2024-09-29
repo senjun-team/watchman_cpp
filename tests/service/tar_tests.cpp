@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "common/tar_to_stream.hpp"
+#include "common/tar/tar_to_stream.hpp"
 
 using namespace tar;
 

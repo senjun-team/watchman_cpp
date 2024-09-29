@@ -1,7 +1,6 @@
 #include "project.hpp"
 
-#include "common/logging.hpp"
-#include "tar_to_stream.hpp"
+#include "tar/tar_to_stream.hpp"
 
 #include <filesystem>
 #include <sstream>

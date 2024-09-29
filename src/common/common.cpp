@@ -1,7 +1,7 @@
 #include "common.hpp"
 
 #include "logging.hpp"
-#include "tar_to_stream.hpp"
+#include "tar/tar_to_stream.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 

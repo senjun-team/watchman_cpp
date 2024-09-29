@@ -2,10 +2,8 @@
 
 #include "../service/common.hpp"
 #include "core/parser.hpp"
-#include "core/service.hpp"
 
-#include <common/tar_to_stream.hpp>
-#include <filesystem>
+#include <common/tar/tar_to_stream.hpp>
 #include <fstream>
 
 TEST(Parser, emptyTestString) {
