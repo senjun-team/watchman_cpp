@@ -57,7 +57,7 @@ void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream
                 ? 0
                 : detail::kTarHeaderSize
                       - static_cast<uint32_t>(info.data.size() % detail::kTarHeaderSize);
-        stream << std::string_view(info.data) << std::string(padding, detail::kNullTerminator);
+        stream << info.data << std::string(padding, detail::kNullTerminator);
     }
 }
 
