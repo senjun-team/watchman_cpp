@@ -4,7 +4,7 @@
 using namespace tar;
 
 TEST(TarHeader, BasicConstruction) {
-    TarHeader header;
+    detail::TarHeader header;
     EXPECT_EQ(header.name.size(), 100);
     EXPECT_EQ(header.mode.size(), 8);
     EXPECT_EQ(header.uid.size(), 8);
