@@ -2,7 +2,7 @@
 
 namespace tar {
 enum class Filemode {
-    ReadWriteExecute,
+    ReadWriteExecute, // for directiories
     ReadWrite
     // etc ...
 };
@@ -14,10 +14,10 @@ enum class FileType {
 };
 
 struct TarInfo {
-    std::string const & filename;  /// name of the file to write in tar
-    std::string const & data;      /// pointer to the data in this archive segment
+    std::string const & archiveName;  /// name of the file to write in tar
+    std::string const & data;         /// data for writing
     FileType fileType = FileType::RegularFile;
-    Filemode filemode = Filemode::ReadWriteExecute;  /// file mode
+    Filemode filemode = Filemode::ReadWriteExecute;
     uint64_t mtime = 0;          /// file modification time, in seconds since epoch
     uint32_t uid = 0;            /// file owner user ID
     uint32_t gid = 0;            /// file owner group ID

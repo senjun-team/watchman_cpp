@@ -1,4 +1,7 @@
 #include "../tar_info.hpp"
+#include "common/tar/tar_to_stream.hpp"
+#include "consts.hpp"
+
 #include <stdexcept>
 
 namespace tar::detail {
@@ -24,4 +27,26 @@ inline char fileTypeToChar(FileType fileType) {
         "Unknown filetype: " + std::to_string(static_cast<uint32_t>(fileType));
     throw std::logic_error(errorMessage);
 }
+
+auto const getStringFilemode = [](Filemode filemode) -> std::string {
+    auto strFilemode = detail::fileModeToString(filemode);
+    uint32_t const fileModePadding = sizeof(TarHeader::mode) - 1 - strFilemode.size();
+    strFilemode.insert(strFilemode.begin(), fileModePadding,
+                       detail::kNullCharacter);  // zero-pad the file mode
+    return strFilemode;
+};
+
+template <typename T>
+void fillStream(T & stream, TarInfo const & info, TarHeader const & header) {
+    stream << std::string_view(header.name.data(), detail::kTarHeaderSize);
+    if (info.fileType == FileType::RegularFile) {
+        uint32_t const padding =
+            info.data.size() == detail::kTarHeaderSize
+                ? 0
+                : detail::kTarHeaderSize
+                      - static_cast<uint32_t>(info.data.size() % detail::kTarHeaderSize);
+        stream << info.data << std::string(padding, detail::kNullTerminator);
+    }
+}
+
 }  // namespace tar::detail
