@@ -22,18 +22,20 @@ void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream
     auto const strFilemode = detail::getStringFilemode(info.filemode);
 
     detail::TarHeader header;
-    detail::toHeaderFromString(info.archiveName, header.name);
-    detail::toHeaderFromString(strFilemode, header.mode);
-    detail::toHeaderFromString(info.uname, header.uname);
-    detail::toHeaderFromString(info.gname, header.gname);
+    detail::toArrayFromString(info.archiveName, header.name);
+    detail::toArrayFromString(strFilemode, header.mode);
+    detail::toArrayFromString(info.uname, header.uname);
+    detail::toArrayFromString(info.gname, header.gname);
 
     header.typeflag = detail::fileTypeToChar(info.fileType);
 
     // Use a stringstream to convert the size to an octal string
-    detail::toHeaderFromArray(detail::getString(info.data.size(), sizeof(header.size) - 1), header.size);
-    detail::toHeaderFromArray(detail::getString(info.mtime, sizeof(header.mtime) - 1), header.mtime);
-    detail::toHeaderFromArray(detail::getString(info.uid, sizeof(header.uid) - 1), header.uid);
-    detail::toHeaderFromArray(detail::getString(info.gid, sizeof(header.gid) - 1), header.gid);
+    detail::toArrayFromString(detail::getString(info.data.size(), sizeof(header.size) - 1),
+                              header.size);
+    detail::toArrayFromString(detail::getString(info.mtime, sizeof(header.mtime) - 1),
+                              header.mtime);
+    detail::toArrayFromString(detail::getString(info.uid, sizeof(header.uid) - 1), header.uid);
+    detail::toArrayFromString(detail::getString(info.gid, sizeof(header.gid) - 1), header.gid);
 
     // Calculate the checksum, as it is used by tar
     uint32_t checksumValue = 0;
@@ -41,8 +43,8 @@ void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream
         checksumValue += reinterpret_cast<uint8_t *>(&header)[i];
     }
 
-    detail::toHeaderFromArray(detail::getString(checksumValue, sizeof(header.checksum) - 2),
-                        header.checksum);
+    detail::toArrayFromString(detail::getString(checksumValue, sizeof(header.checksum) - 2),
+                              header.checksum);
     detail::fillStream(stream, info, header);
 }
 
