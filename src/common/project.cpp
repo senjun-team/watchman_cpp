@@ -40,7 +40,7 @@ std::string getMainFile(std::vector<PathContent> const & pathContents) {
     throw std::logic_error{"There's no main file"};
 }
 
-std::ostringstream makeProjectTar(Project const & project) {
+std::string makeProjectTar(Project const & project) {
     std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
 
     for (auto const & pathContent : project.pathsContents) {
@@ -55,7 +55,7 @@ std::ostringstream makeProjectTar(Project const & project) {
         }
     }
     tar::tar_to_stream_tail(stream);
-    return stream;
+    return stream.str();
 }
 
 }  // namespace watchman

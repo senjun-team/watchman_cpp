@@ -86,6 +86,6 @@ TEST(Playground, TarDir) {
     std::string const pathInContainer = "/home/code_runner";
 
     bool const success = dockerWrapper.putArchive(
-        {id, pathInContainer, watchman::makeProjectTar({rootDirectory.name, pathsContents}).str()});
+        {id, pathInContainer, watchman::makeProjectTar({rootDirectory.name, pathsContents})});
     ASSERT_TRUE(success);
 }

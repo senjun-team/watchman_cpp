@@ -85,7 +85,7 @@ Config readConfig(std::string_view configPath) {
     }
 }
 
-std::ostringstream makeTar(std::vector<CodeFilename> && data) {
+std::string makeTar(std::vector<CodeFilename> && data) {
     std::ostringstream stream(std::ios::binary | std::ios::trunc);
 
     for (auto const & element : data) {
@@ -97,7 +97,7 @@ std::ostringstream makeTar(std::vector<CodeFilename> && data) {
     }
 
     tar::tar_to_stream_tail(stream);
-    return stream;
+    return stream.str();
 }
 
 LogDuration::LogDuration(std::string operation)

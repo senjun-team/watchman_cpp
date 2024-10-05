@@ -12,13 +12,12 @@ BaseContainer::BaseContainer(std::string id, Config::ContainerType type)
     : id(std::move(id))
     , type(std::move(type)) {}
 
-bool BaseContainer::prepareCode(std::ostringstream && stream) {
+bool BaseContainer::prepareCode(std::string && tarString) {
     PutArchive params;
     params.containerId = id;
     params.path = kUserSourceFile;
-    params.archive = std::move(stream.str());
+    params.archive = std::move(tarString);
     params.copyUIDGID = "1";
-
 
     if (!dockerWrapper.putArchive(std::move(params))) {
         Log::error("Couldn't put an archive to container");
