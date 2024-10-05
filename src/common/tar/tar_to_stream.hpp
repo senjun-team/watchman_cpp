@@ -38,13 +38,10 @@ void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream
     detail::toArrayFromString(detail::getString(info.gid, sizeof(header.gid) - 1), header.gid);
 
     // Calculate the checksum, as it is used by tar
-    uint32_t checksumValue = 0;
-    for (uint32_t i = 0; i != detail::kTarHeaderSize; ++i) {
-        checksumValue += reinterpret_cast<uint8_t *>(&header)[i];
-    }
 
-    detail::toArrayFromString(detail::getString(checksumValue, sizeof(header.checksum) - 2),
-                              header.checksum);
+    detail::toArrayFromString(
+        detail::getString(detail::calculateChecksum(header), sizeof(header.checksum) - 2),
+        header.checksum);
     detail::fillStream(stream, info, header);
 }
 

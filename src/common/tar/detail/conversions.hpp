@@ -1,5 +1,7 @@
+#pragma once
+
+// TODO remove cd ".."
 #include "../tar_info.hpp"
-#include "common/tar/tar_to_stream.hpp"
 #include "consts.hpp"
 
 #include <stdexcept>
@@ -36,9 +38,10 @@ auto const getStringFilemode = [](Filemode filemode) -> std::string {
     return strFilemode;
 };
 
-template <typename T>
+template<typename T>
 void fillStream(T & stream, TarInfo const & info, TarHeader const & header) {
     stream << std::string_view(header.name.data(), detail::kTarHeaderSize);
+    // TODO add other types?
     if (info.fileType == FileType::RegularFile) {
         uint32_t const padding =
             info.data.size() == detail::kTarHeaderSize
