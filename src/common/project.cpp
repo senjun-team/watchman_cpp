@@ -1,7 +1,6 @@
 #include "project.hpp"
 
-#include "common/logging.hpp"
-#include "tar_to_stream.hpp"
+#include "tar/tar_to_stream.hpp"
 
 #include <filesystem>
 #include <sstream>
@@ -13,7 +12,6 @@ void recursiveFillAbsolutePaths(Directory const & directory, fs::path const & cu
                                 std::vector<PathContent> & paths) {
     paths.push_back({currentPath.string() + "/", ""});
     paths.back().isDir = true;
-
 
     for (auto & file : directory.files) {
         paths.push_back({currentPath / file.name, file.content});
@@ -42,23 +40,22 @@ std::string getMainFile(std::vector<PathContent> const & pathContents) {
     throw std::logic_error{"There's no main file"};
 }
 
-std::ostringstream makeProjectTar(Project const & project) {
+std::string makeProjectTar(Project const & project) {
     std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
 
     for (auto const & pathContent : project.pathsContents) {
-        tar::tar_to_stream(stream,
-                           pathContent.path,
-                           pathContent.isDir ? nullptr : pathContent.content.data(),
-                           pathContent.isDir ? 0 : pathContent.content.size(),
-                           0,
-                           pathContent.isDir ? "755" : "644",
-                           1000,
-                           1000,
-                           "code_runner",
-                           "code_runner");
+        if (pathContent.isDir) {
+            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
+                                        tar::FileType::Directory, tar::Filemode::ReadWrite, 0, 1000,
+                                        1000, "code_runner", "code_runner"});
+        } else {
+            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
+                                        tar::FileType::RegularFile, tar::Filemode::ReadWriteExecute,
+                                        0, 1000, 1000, "code_runner", "code_runner"});
+        }
     }
     tar::tar_to_stream_tail(stream);
-    return stream;
+    return stream.str();
 }
 
 }  // namespace watchman

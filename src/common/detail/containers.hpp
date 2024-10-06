@@ -24,7 +24,7 @@ struct BaseContainer : ContainerInterface {
     BaseContainer(std::string id, Config::ContainerType type);
 
     // Creates in-memory tar and passes it to docker
-    bool prepareCode(std::ostringstream && stream);
+    bool prepareCode(std::string && tarString);
 };
 
 struct CourseContainer final : BaseContainer {

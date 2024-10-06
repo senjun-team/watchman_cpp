@@ -29,7 +29,6 @@ struct Project {
     std::vector<PathContent> pathsContents;
 };
 
-
 enum class PracticeAction { Run, Test };
 
 struct Practice {
@@ -40,7 +39,7 @@ struct Practice {
 std::vector<PathContent> getPathsToFiles(Directory const & directory);
 std::string getMainFile(std::vector<PathContent> const & pathContents);
 
-std::ostringstream makeProjectTar(Project const & project);
+std::string makeProjectTar(Project const & project);
 Directory jsonToDirectory(std::string const & json);
 
 }  // namespace watchman

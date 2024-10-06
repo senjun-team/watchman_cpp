@@ -6,7 +6,6 @@
 
 #include <cstdio>
 #include <fstream>
-#include <sstream>
 
 using namespace watchman;
 
@@ -18,7 +17,7 @@ namespace {
 std::string makeCourseTar(std::string code, std::string tests) {
     std::vector<CodeFilename> temp{{std::move(code), kFilenameTask},
                                    {std::move(tests), kFilenameTaskTests}};
-    return makeTar(std::move(temp)).str();
+    return makeTar(std::move(temp));
 }
 }  // namespace
 
