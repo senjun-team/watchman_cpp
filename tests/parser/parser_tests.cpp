@@ -3,7 +3,7 @@
 #include "../service/common.hpp"
 #include "core/parser.hpp"
 
-#include <common/tar/tar_to_stream.hpp>
+#include <common/tar/tar_creator.hpp>
 #include <fstream>
 
 TEST(Parser, emptyTestString) {
@@ -64,19 +64,22 @@ TEST(Parser, TarDir) {
     watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
     auto pathsContents = getPathsToFiles(rootDirectory);
 
-    std::ofstream stream("my_tarball", std::ios::binary | std::ios::trunc);
-
-    for (auto const & pathContent : pathsContents) {
-        if (pathContent.isDir) {
-            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
-                                        tar::FileType::Directory, tar::Filemode::ReadWrite});
-        } else {
-            tar::tar_to_stream(stream,
-                               {pathContent.path, pathContent.content, tar::FileType::RegularFile,
-                                tar::Filemode::ReadWriteExecute});
+    std::string resultTar;
+    {
+        tar::Creator creator(resultTar);
+        for (auto const & pathContent : pathsContents) {
+            if (pathContent.isDir) {
+                creator.addFile({pathContent.path, pathContent.content, tar::FileType::Directory,
+                                 tar::Filemode::ReadWrite});
+            } else {
+                creator.addFile({pathContent.path, pathContent.content, tar::FileType::RegularFile,
+                                 tar::Filemode::ReadWriteExecute});
+            }
         }
     }
-    tar::tar_to_stream_tail(stream);
-
+    {
+        std::ofstream tar("my_tarball.tar");
+        tar << resultTar;
+    }
     ASSERT_TRUE(true);
 }

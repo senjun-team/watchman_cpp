@@ -5,8 +5,8 @@
 // Tar format
 // https://man.freebsd.org/cgi/man.cgi?query=tar&sektion=5&format=html
 
-#include "detail/conversions.hpp"
-#include "detail/utils.hpp"
+#include "conversions.hpp"
+#include "utils.hpp"
 
 #include <cstdint>
 #include <string>
@@ -14,7 +14,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-namespace tar {
+namespace tar::detail {
 
 // create in memory tar structure
 template<typename T>
