@@ -1,7 +1,10 @@
 #pragma once
+
+#include "common/tar/detail/header.hpp"
 #include "consts.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <iomanip>
 #include <sstream>
@@ -11,7 +14,7 @@ namespace tar::detail {
 auto const getString = [](auto && value, uint32_t size) -> std::string {
     std::stringstream ss;
     // use convertion to octal intentionally
-    ss << std::oct << std::setw(static_cast<int>(size)) << std::setfill('0') << value;
+    ss << std::oct << std::setw(static_cast<int>(size)) << std::setfill(kNullCharacter) << value;
     return ss.str();
 };
 
@@ -22,7 +25,8 @@ auto const toArrayFromString = [](auto const & from, auto & toArray) -> void {
 
 inline uint32_t calculateChecksum(TarHeader const & header) {
     uint32_t checksumValue = 0;
-    uint8_t const * const firstBytePointer = reinterpret_cast<uint8_t const * const>(&header);
+    std::array<uint8_t, sizeof(TarHeader)> const & firstBytePointer =
+        *reinterpret_cast<std::array<uint8_t, sizeof(TarHeader)> const *>(&header);
 
     for (uint32_t i = 0; i != detail::kTarHeaderSize; ++i) {
         checksumValue += firstBytePointer[i];

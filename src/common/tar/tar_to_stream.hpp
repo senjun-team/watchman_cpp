@@ -1,4 +1,5 @@
 #pragma once
+
 // https://github.com/Armchair-Software/tar_to_stream
 
 // Tar format
@@ -18,7 +19,7 @@ namespace tar {
 // create in memory tar structure
 template<typename T>
 void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream or ofstream
-                   TarInfo const & info) {  /// file owner group name
+                   FileInfo const & info) {  /// file owner group name
 
     auto const strFilemode = detail::getStringFilemode(info.filemode);
 

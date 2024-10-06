@@ -39,7 +39,7 @@ auto const getStringFilemode = [](Filemode filemode) -> std::string {
 };
 
 template<typename T>
-void fillStream(T & stream, TarInfo const & info, TarHeader const & header) {
+void fillStream(T & stream, FileInfo const & info, TarHeader const & header) {
     stream << std::string_view(header.name.data(), detail::kTarHeaderSize);
     // TODO add other types?
     if (info.fileType == FileType::RegularFile) {
