@@ -81,7 +81,7 @@ struct CodeFilename {
     std::string filename;
 };
 
-std::ostringstream makeTar(std::vector<CodeFilename> && data);
+std::string makeTar(std::vector<CodeFilename> && data);
 
 class LogDuration {
 public:

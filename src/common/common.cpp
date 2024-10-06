@@ -1,7 +1,7 @@
 #include "common.hpp"
 
 #include "logging.hpp"
-#include "tar_to_stream.hpp"
+#include "tar/tar_to_stream.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 
@@ -85,18 +85,19 @@ Config readConfig(std::string_view configPath) {
     }
 }
 
-std::ostringstream makeTar(std::vector<CodeFilename> && data) {
+std::string makeTar(std::vector<CodeFilename> && data) {
     std::ostringstream stream(std::ios::binary | std::ios::trunc);
 
     for (auto const & element : data) {
         if (!element.code.empty() && element.filename == kFilenameTask
             || element.filename == kFilenameTaskTests) {
-            tar::tar_to_stream(stream, element.filename, element.code.data(), element.code.size());
+            tar::tar_to_stream(stream,
+                               {element.filename, element.code, tar::FileType::RegularFile});
         }
     }
 
     tar::tar_to_stream_tail(stream);
-    return stream;
+    return stream.str();
 }
 
 LogDuration::LogDuration(std::string operation)
