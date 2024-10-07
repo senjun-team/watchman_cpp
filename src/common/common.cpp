@@ -5,6 +5,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
+#include <sstream>
 #include <thread>
 
 namespace watchman {
@@ -88,7 +89,7 @@ Config readConfig(std::string_view configPath) {
 std::string makeTar(std::vector<CodeFilename> && data) {
     std::string stringTar;
     {
-        tar::Creator creator(stringTar);
+        tar::Creator<std::ostringstream> creator(stringTar);
 
         for (auto const & element : data) {
             if (!element.code.empty() && element.filename == kFilenameTask

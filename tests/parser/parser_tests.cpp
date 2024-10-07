@@ -5,6 +5,7 @@
 
 #include <common/tar/tar_creator.hpp>
 #include <fstream>
+#include <sstream>
 
 TEST(Parser, emptyTestString) {
     watchman::Response response;
@@ -64,9 +65,9 @@ TEST(Parser, TarDir) {
     watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
     auto pathsContents = getPathsToFiles(rootDirectory);
 
-    std::string resultTar;
     {
-        tar::Creator creator(resultTar);
+        std::string tarName = "my_tarball.tar";
+        tar::Creator<std::ofstream> creator(tarName);
         for (auto const & pathContent : pathsContents) {
             if (pathContent.isDir) {
                 creator.addFile({pathContent.path, pathContent.content, tar::FileType::Directory,
@@ -76,10 +77,6 @@ TEST(Parser, TarDir) {
                                  tar::Filemode::ReadWriteExecute});
             }
         }
-    }
-    {
-        std::ofstream tar("my_tarball.tar");
-        tar << resultTar;
     }
     ASSERT_TRUE(true);
 }

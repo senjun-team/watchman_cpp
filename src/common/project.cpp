@@ -3,6 +3,7 @@
 #include "tar/tar_creator.hpp"
 
 #include <filesystem>
+#include <sstream>
 
 namespace fs = std::filesystem;
 namespace watchman {
@@ -43,7 +44,7 @@ std::string makeProjectTar(Project const & project) {
     std::string resultTar;
 
     {
-        tar::Creator creator(resultTar);
+        tar::Creator<std::ostringstream> creator(resultTar);
         for (auto const & pathContent : project.pathsContents) {
             if (pathContent.isDir) {
                 creator.addFile({pathContent.path, pathContent.content, tar::FileType::Directory,
