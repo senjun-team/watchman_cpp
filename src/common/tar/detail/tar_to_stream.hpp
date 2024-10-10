@@ -23,7 +23,7 @@ void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream
 
     auto const strFilemode = detail::getStringFilemode(info.filemode);
 
-    detail::TarHeader header;
+    detail::Header header;
     detail::toArrayFromString(info.archiveName, header.name);
     detail::toArrayFromString(strFilemode, header.mode);
     detail::toArrayFromString(info.uname, header.uname);

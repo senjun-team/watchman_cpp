@@ -5,7 +5,7 @@
 namespace tar::detail {
 
 /// Read a "file" in memory, and write it as a TAR archive to the stream
-struct TarHeader {
+struct Header {
     // offset
     std::array<char, 100> name = {};  //   0    filename
     std::array<char, 8> mode = {};    // 100    file mode: 0000644 etc

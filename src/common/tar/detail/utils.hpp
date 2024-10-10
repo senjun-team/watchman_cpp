@@ -23,10 +23,10 @@ auto const toArrayFromString = [](auto const & from, auto & toArray) -> void {
               toArray.begin());
 };
 
-inline uint32_t calculateChecksum(TarHeader const & header) {
+inline uint32_t calculateChecksum(Header const & header) {
     uint32_t checksumValue = 0;
-    std::array<uint8_t, sizeof(TarHeader)> const & firstBytePointer =
-        *reinterpret_cast<std::array<uint8_t, sizeof(TarHeader)> const *>(&header);
+    std::array<uint8_t, sizeof(Header)> const & firstBytePointer =
+        *reinterpret_cast<std::array<uint8_t, sizeof(Header)> const *>(&header);
 
     for (uint32_t i = 0; i != detail::kTarHeaderSize; ++i) {
         checksumValue += firstBytePointer[i];
