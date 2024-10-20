@@ -1,4 +1,6 @@
 #pragma once
+
+#include <cstdint>
 #include <string>
 
 namespace tar {
@@ -14,7 +16,7 @@ enum class FileType {
     // etc ...
 };
 
-struct TarInfo {
+struct FileInfo {
     std::string const & archiveName;  /// name of the file to write in tar
     std::string const & data;         /// data for writing
     FileType fileType = FileType::RegularFile;

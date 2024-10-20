@@ -1,10 +1,11 @@
 #include "common.hpp"
 
 #include "logging.hpp"
-#include "tar/tar_to_stream.hpp"
+#include "tar/tar_creator.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 
+#include <sstream>
 #include <thread>
 
 namespace watchman {
@@ -86,18 +87,18 @@ Config readConfig(std::string_view configPath) {
 }
 
 std::string makeTar(std::vector<CodeFilename> && data) {
-    std::ostringstream stream(std::ios::binary | std::ios::trunc);
+    std::string stringTar;
+    {
+        tar::Creator<std::ostringstream> creator(stringTar);
 
-    for (auto const & element : data) {
-        if (!element.code.empty() && element.filename == kFilenameTask
-            || element.filename == kFilenameTaskTests) {
-            tar::tar_to_stream(stream,
-                               {element.filename, element.code, tar::FileType::RegularFile});
+        for (auto const & element : data) {
+            if (!element.code.empty() && element.filename == kFilenameTask
+                || element.filename == kFilenameTaskTests) {
+                creator.addFile({element.filename, element.code, tar::FileType::RegularFile});
+            }
         }
     }
-
-    tar::tar_to_stream_tail(stream);
-    return stream.str();
+    return stringTar;
 }
 
 LogDuration::LogDuration(std::string operation)

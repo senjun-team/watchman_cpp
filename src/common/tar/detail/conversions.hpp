@@ -32,14 +32,14 @@ inline char fileTypeToChar(FileType fileType) {
 
 auto const getStringFilemode = [](Filemode filemode) -> std::string {
     auto strFilemode = detail::fileModeToString(filemode);
-    uint32_t const fileModePadding = sizeof(TarHeader::mode) - 1 - strFilemode.size();
+    uint32_t const fileModePadding = sizeof(Header::mode) - 1 - strFilemode.size();
     strFilemode.insert(strFilemode.begin(), fileModePadding,
                        detail::kNullCharacter);  // zero-pad the file mode
     return strFilemode;
 };
 
 template<typename T>
-void fillStream(T & stream, TarInfo const & info, TarHeader const & header) {
+void fillStream(T & stream, FileInfo const & info, Header const & header) {
     stream << std::string_view(header.name.data(), detail::kTarHeaderSize);
     // TODO add other types?
     if (info.fileType == FileType::RegularFile) {

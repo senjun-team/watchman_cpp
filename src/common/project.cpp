@@ -1,6 +1,6 @@
 #include "project.hpp"
 
-#include "tar/tar_to_stream.hpp"
+#include "tar/tar_creator.hpp"
 
 #include <filesystem>
 #include <sstream>
@@ -41,21 +41,24 @@ std::string getMainFile(std::vector<PathContent> const & pathContents) {
 }
 
 std::string makeProjectTar(Project const & project) {
-    std::ostringstream stream(project.name, std::ios::binary | std::ios::trunc);
+    std::string resultTar;
 
-    for (auto const & pathContent : project.pathsContents) {
-        if (pathContent.isDir) {
-            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
-                                        tar::FileType::Directory, tar::Filemode::ReadWrite, 0, 1000,
-                                        1000, "code_runner", "code_runner"});
-        } else {
-            tar::tar_to_stream(stream, {pathContent.path, pathContent.content,
-                                        tar::FileType::RegularFile, tar::Filemode::ReadWriteExecute,
-                                        0, 1000, 1000, "code_runner", "code_runner"});
+    {
+        tar::Creator<std::ostringstream> creator(resultTar);
+        for (auto const & pathContent : project.pathsContents) {
+            if (pathContent.isDir) {
+                creator.addFile({pathContent.path, pathContent.content, tar::FileType::Directory,
+                                 tar::Filemode::ReadWrite, 0, 1000, 1000, "code_runner",
+                                 "code_runner"});
+            } else {
+                creator.addFile({pathContent.path, pathContent.content, tar::FileType::RegularFile,
+                                 tar::Filemode::ReadWriteExecute, 0, 1000, 1000, "code_runner",
+                                 "code_runner"});
+            }
         }
     }
-    tar::tar_to_stream_tail(stream);
-    return stream.str();
+
+    return resultTar;
 }
 
 }  // namespace watchman

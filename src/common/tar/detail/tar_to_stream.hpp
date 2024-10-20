@@ -1,11 +1,12 @@
 #pragma once
+
 // https://github.com/Armchair-Software/tar_to_stream
 
 // Tar format
 // https://man.freebsd.org/cgi/man.cgi?query=tar&sektion=5&format=html
 
-#include "detail/conversions.hpp"
-#include "detail/utils.hpp"
+#include "conversions.hpp"
+#include "utils.hpp"
 
 #include <cstdint>
 #include <string>
@@ -13,16 +14,16 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-namespace tar {
+namespace tar::detail {
 
 // create in memory tar structure
 template<typename T>
 void tar_to_stream(T & stream,              /// stream to write to, e.g. ostream or ofstream
-                   TarInfo const & info) {  /// file owner group name
+                   FileInfo const & info) {  /// file owner group name
 
     auto const strFilemode = detail::getStringFilemode(info.filemode);
 
-    detail::TarHeader header;
+    detail::Header header;
     detail::toArrayFromString(info.archiveName, header.name);
     detail::toArrayFromString(strFilemode, header.mode);
     detail::toArrayFromString(info.uname, header.uname);

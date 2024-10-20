@@ -12,3 +12,4 @@ CMakeSettings.json
 out/*
 .vscode/*
 .cache/*
+*.rpm
