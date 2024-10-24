@@ -4,4 +4,4 @@
     branch = master
 [submodule "third_party/structarus"]
 	path = third_party/structarus
-	url = git@github.com:senjun-team/structarus.git
+	url = https://github.com/senjun-team/structarus
