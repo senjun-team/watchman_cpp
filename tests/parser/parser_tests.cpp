@@ -3,9 +3,9 @@
 #include "../service/common.hpp"
 #include "core/parser.hpp"
 
-#include <common/tar/tar_creator.hpp>
 #include <fstream>
 #include <sstream>
+#include <structarus/tar_creator.hpp>
 
 TEST(Parser, emptyTestString) {
     watchman::Response response;
