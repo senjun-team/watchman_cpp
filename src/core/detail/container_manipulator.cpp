@@ -6,7 +6,7 @@
 
 namespace watchman::detail {
 
-std::unique_ptr<BaseContainer>
+std::unique_ptr<BaseContainerLauncher>
 ContainerOSManipulator::createContainer(std::string const & type, std::string const & imageName) {
     RunContainer params;
 
@@ -22,13 +22,13 @@ ContainerOSManipulator::createContainer(std::string const & type, std::string co
 
     Log::info("Launch container: {}, id: {}", imageName, id);
 
-    std::unique_ptr<BaseContainer> container;
+    std::unique_ptr<BaseContainerLauncher> container;
     if (imageName.find("playground") != std::string::npos) {
-        container = std::make_unique<PlaygroundContainer>(std::move(id), type);
+        container = std::make_unique<PlaygroundContainerLauncher>(std::move(id), type);
     } else if (imageName.find("course") != std::string::npos) {
-        container = std::make_unique<CourseContainer>(std::move(id), type);
+        container = std::make_unique<CourseContainerLauncher>(std::move(id), type);
     } else if (imageName.find("practice") != std::string::npos) {
-        container = std::make_unique<PracticeContainer>(std::move(id), type);
+        container = std::make_unique<PracticeContainerLauncher>(std::move(id), type);
     } else {
         throw std::logic_error{"Wrong image name: " + imageName};
     }
@@ -91,7 +91,7 @@ void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
 void ContainerOSManipulator::syncLaunchNewContainers(Config const & config) {
     auto const launchContainers = [this](auto && containerTypes) {
         for (auto const & [type, info] : containerTypes) {
-            std::vector<std::unique_ptr<BaseContainer>> containers;
+            std::vector<std::unique_ptr<BaseContainerLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
                 auto container = createContainer(type, info.imageName);
                 containers.emplace_back(std::move(container));

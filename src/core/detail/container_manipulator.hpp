@@ -20,7 +20,7 @@ private:
     void syncKillRunningContainers(Config const & config);
     void syncLaunchNewContainers(Config const & config);
 
-    std::unique_ptr<BaseContainer> createContainer(std::string const & containerType,
+    std::unique_ptr<BaseContainerLauncher> createContainer(std::string const & containerType,
                                                    std::string const & imageName);
     void killContainer(std::string const & id);
 

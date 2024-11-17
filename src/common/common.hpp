@@ -93,12 +93,12 @@ private:
 };
 
 namespace detail {
-class BaseContainer;
+struct BaseContainerLauncher;
 
 struct ProtectedContainers {
     std::mutex mutex;
     std::condition_variable containerFree;
-    std::unordered_map<Config::ContainerType, std::vector<std::unique_ptr<BaseContainer>>>
+    std::unordered_map<Config::ContainerType, std::vector<std::unique_ptr<BaseContainerLauncher>>>
         containers;
 };
 }  // namespace detail

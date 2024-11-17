@@ -8,41 +8,42 @@
 
 namespace watchman::detail {
 
-class ContainerInterface {
+class ContainerLauncherInterface {
 public:
-    virtual ~ContainerInterface() = default;
+    virtual ~ContainerLauncherInterface() = default;
 
     virtual Response runCode(std::vector<std::string> && cmdLineArgs) = 0;
 };
 
-struct BaseContainer : ContainerInterface {
+struct BaseContainerLauncher : ContainerLauncherInterface {
     DockerWrapper dockerWrapper;
     std::string id;
     Config::ContainerType type;
     bool isReserved{false};
 
-    BaseContainer(std::string id, Config::ContainerType type);
+    BaseContainerLauncher(std::string id, Config::ContainerType type);
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string && tarString);
 };
 
-struct CourseContainer final : BaseContainer {
-    CourseContainer(std::string id, Config::ContainerType type);
+struct CourseContainerLauncher final : BaseContainerLauncher {
+    CourseContainerLauncher(std::string id, Config::ContainerType type);
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
 };
 
-struct PlaygroundContainer final : BaseContainer {
-    PlaygroundContainer(std::string id, Config::ContainerType type);
+struct PlaygroundContainerLauncher final : BaseContainerLauncher {
+    PlaygroundContainerLauncher(std::string id, Config::ContainerType type);
     Response runCode(std::vector<std::string> && cmdLineArgs) override;
 };
 
-struct PracticeContainer final : BaseContainer {
-    PracticeContainer(std::string id, Config::ContainerType type);
+struct PracticeContainerLauncher final : BaseContainerLauncher {
+    PracticeContainerLauncher(std::string id, Config::ContainerType type);
     Response runCode(std::vector<std::string> && dockerCmdLineArgs) override;
 };
 
 class ContainerOSManipulator;
+
 class ContainerController {
 public:
     explicit ContainerController(Config && config);
@@ -53,21 +54,21 @@ public:
     ContainerController & operator=(ContainerController const & other) = delete;
     ContainerController & operator=(ContainerController && other) = delete;
 
-    BaseContainer & getReadyContainer(Config::ContainerType const & type);
-    void containerReleased(BaseContainer & container);
+    BaseContainerLauncher & getReadyContainer(Config::ContainerType const & type);
+    void containerReleased(BaseContainerLauncher & container);
     bool containerNameIsValid(const std::string & name) const;
 
+private:
     void removeContainerFromOs(std::string const & id);
     void createNewContainer(Config::ContainerType type, std::string const & image);
 
-private:
     ProtectedContainers m_protectedContainers;
     std::unique_ptr<ContainerOSManipulator> m_manipulator;
 };
 
 class ReleasingContainer {
 public:
-    ReleasingContainer(BaseContainer & container, std::function<void()> deleter);
+    ReleasingContainer(BaseContainerLauncher & container, std::function<void()> deleter);
     ~ReleasingContainer();
 
     ReleasingContainer(ReleasingContainer const &) = delete;
@@ -75,7 +76,7 @@ public:
     ReleasingContainer & operator=(ReleasingContainer const &) = delete;
     ReleasingContainer & operator=(ReleasingContainer &&) = delete;
 
-    BaseContainer & container;
+    BaseContainerLauncher & container;
 
 private:
     std::function<void()> m_releaser;
