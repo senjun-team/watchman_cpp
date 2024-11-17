@@ -37,7 +37,7 @@ Response PracticeContainer::runCode(std::vector<std::string> && dockerCmdLineArg
 }
 
 ContainerController::ContainerController(Config && config)
-    : m_manipulator(std::make_unique<ContainerOSManipulator>(m_protectedCcontainers))
+    : m_manipulator(std::make_unique<ContainerOSManipulator>(m_protectedContainers))
     , m_config(std::move(config)) {
     Log::info("Service launched");
 
@@ -49,12 +49,12 @@ ContainerController::ContainerController(Config && config)
 BaseContainer & ContainerController::getReadyContainer(Config::ContainerType const & type) {
     // lock for any container type
     // todo think of separating containers into different queues
-    std::unique_lock lock(m_protectedCcontainers.mutex);
+    std::unique_lock lock(m_protectedContainers.mutex);
 
-    auto & containers = m_protectedCcontainers.containers.at(type);
+    auto & containers = m_protectedContainers.containers.at(type);
     size_t indexProperContainer;  // there's no need for initialization
 
-    m_protectedCcontainers.containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
+    m_protectedContainers.containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
         for (size_t index = 0, size = containers.size(); index < size; ++index) {
             if (!containers[index]->isReserved) {
                 indexProperContainer = index;
@@ -73,9 +73,9 @@ void ContainerController::containerReleased(BaseContainer & container) {
     std::string const image = container.dockerWrapper.getImage(id);
     Config::ContainerType const type = container.type;
     {
-        std::scoped_lock const lock(m_protectedCcontainers.mutex);
+        std::scoped_lock const lock(m_protectedContainers.mutex);
 
-        auto & containers = m_protectedCcontainers.containers.at(container.type);
+        auto & containers = m_protectedContainers.containers.at(container.type);
 
         containers.erase(
             std::remove_if(containers.begin(), containers.end(),
@@ -146,7 +146,7 @@ void ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
             }
 
             if (!containers.empty()) {
-                m_protectedCcontainers.containers.emplace(type, std::move(containers));
+                m_protectedContainers.containers.emplace(type, std::move(containers));
             }
         }
     };
@@ -178,7 +178,7 @@ ReleasingContainer::ReleasingContainer(BaseContainer & container, std::function<
 ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
 bool ContainerController::containerNameIsValid(const std::string & name) const {
-    return m_protectedCcontainers.containers.contains(name);
+    return m_protectedContainers.containers.contains(name);
 }
 
 void ContainerController::removeContainerFromOs(std::string const & id) {
