@@ -67,6 +67,7 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
+    // TODO remove suffixes, make it more intellectual
     fillTable(root, {config.languages, "courses", "_check"});
     fillTable(root, {config.playgrounds, "playground", "_playground"});
     fillTable(root, {config.practices, "practice", "_practice"});

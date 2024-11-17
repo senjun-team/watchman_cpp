@@ -37,13 +37,9 @@ Response PracticeContainer::runCode(std::vector<std::string> && dockerCmdLineArg
 }
 
 ContainerController::ContainerController(Config && config)
-    : m_manipulator(std::make_unique<ContainerOSManipulator>(m_protectedContainers))
-    , m_config(std::move(config)) {
+    : m_manipulator(
+          std::make_unique<ContainerOSManipulator>(std::move(config), m_protectedContainers)) {
     Log::info("Service launched");
-
-    DockerWrapper dockerWrapper;
-    killOldContainers(dockerWrapper);
-    launchNewContainers(dockerWrapper);
 }
 
 BaseContainer & ContainerController::getReadyContainer(Config::ContainerType const & type) {
@@ -88,74 +84,6 @@ void ContainerController::containerReleased(BaseContainer & container) {
 
 ContainerController::~ContainerController() = default;
 
-void ContainerController::killOldContainers(DockerWrapper & dockerWrapper) {
-    auto const workingContainers = dockerWrapper.getAllContainers();
-
-    // todo think about naming, containerTypes is awful
-    auto const killContainers = [this, &dockerWrapper, &workingContainers](auto && containerTypes) {
-        for (auto const & [_, info] : containerTypes) {
-            for (auto const & container : workingContainers) {
-                if (container.image.find(info.imageName) != std::string::npos) {
-                    if (dockerWrapper.isRunning(container.id)) {
-                        dockerWrapper.killContainer(container.id);
-                    }
-
-                    Log::info("Remove container type: {}, id: {}", info.imageName, container.id);
-                    dockerWrapper.removeContainer(container.id);
-                }
-            }
-        }
-    };
-
-    killContainers(m_config.languages);
-    killContainers(m_config.playgrounds);
-    killContainers(m_config.practices);
-}
-
-void ContainerController::launchNewContainers(DockerWrapper & dockerWrapper) {
-    auto const launchContainers = [this, &dockerWrapper](auto && containerTypes) {
-        for (auto const & [type, info] : containerTypes) {
-            std::vector<std::shared_ptr<BaseContainer>> containers;
-            for (size_t index = 0; index < info.launched; ++index) {
-                RunContainer params;
-
-                params.image = info.imageName;
-                params.tty = true;
-                params.memory = 300'000'000;
-
-                std::string id = dockerWrapper.run(std::move(params));
-                if (id.empty()) {
-                    Log::warning("Internal error: can't run container of type {}", type);
-                    continue;
-                }
-
-                Log::info("Launch container: {}, id: {}", info.imageName, id);
-
-                std::shared_ptr<BaseContainer> container;
-                if (info.imageName.find("playground") != std::string::npos) {
-                    container = std::make_shared<PlaygroundContainer>(std::move(id), type);
-                } else if (info.imageName.find("course") != std::string::npos) {
-                    container = std::make_shared<CourseContainer>(std::move(id), type);
-                } else if (info.imageName.find("practice") != std::string::npos) {
-                    container = std::make_shared<PracticeContainer>(std::move(id), type);
-                } else {
-                    throw std::logic_error{"Wrong image name: " + info.imageName};
-                }
-
-                containers.emplace_back(std::move(container));
-            }
-
-            if (!containers.empty()) {
-                m_protectedContainers.containers.emplace(type, std::move(containers));
-            }
-        }
-    };
-
-    launchContainers(m_config.languages);
-    launchContainers(m_config.playgrounds);
-    launchContainers(m_config.practices);
-}
-
 PlaygroundContainer::PlaygroundContainer(std::string id, Config::ContainerType type)
     : BaseContainer(std::move(id), type) {}
 
@@ -182,12 +110,12 @@ bool ContainerController::containerNameIsValid(const std::string & name) const {
 }
 
 void ContainerController::removeContainerFromOs(std::string const & id) {
-    m_manipulator->removeContainerFromOs(id);
+    m_manipulator->asyncRemoveContainerFromOs(id);
 }
 
 void ContainerController::createNewContainer(Config::ContainerType type,
                                              std::string const & image) {
-    m_manipulator->createNewContainer(type, image);
+    m_manipulator->asyncCreateNewContainer(type, image);
 }
 
 Response PlaygroundContainer::runCode(std::vector<std::string> && cmdLineArgs) {

@@ -11,13 +11,15 @@ namespace watchman::detail {
 
 class ContainerOSManipulator {
 public:
-    ContainerOSManipulator(ProtectedContainers & protectedContainers);
+    ContainerOSManipulator(Config && config, ProtectedContainers & protectedContainers);
 
-    void removeContainerFromOs(std::string const & id);
-
-    void createNewContainer(Config::ContainerType type, std::string const & image);
+    void asyncRemoveContainerFromOs(std::string const & id);
+    void asyncCreateNewContainer(Config::ContainerType type, std::string const & image);
 
 private:
+    void syncKillRunningContainers(Config const & config);
+    void syncLaunchNewContainers(Config const & config);
+
     ProtectedContainers & m_protectedContainers;
 
     unifex::single_thread_context m_containerKillerAliver;
