@@ -6,7 +6,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -99,7 +98,7 @@ class BaseContainer;
 struct ProtectedContainers {
     std::mutex mutex;
     std::condition_variable containerFree;
-    std::unordered_map<Config::ContainerType, std::vector<std::shared_ptr<BaseContainer>>>
+    std::unordered_map<Config::ContainerType, std::vector<std::unique_ptr<BaseContainer>>>
         containers;
 };
 }  // namespace detail

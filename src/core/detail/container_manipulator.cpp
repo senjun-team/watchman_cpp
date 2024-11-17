@@ -6,7 +6,7 @@
 
 namespace watchman::detail {
 
-std::shared_ptr<BaseContainer>
+std::unique_ptr<BaseContainer>
 ContainerOSManipulator::createContainer(std::string const & type, std::string const & imageName) {
     RunContainer params;
 
@@ -22,13 +22,13 @@ ContainerOSManipulator::createContainer(std::string const & type, std::string co
 
     Log::info("Launch container: {}, id: {}", imageName, id);
 
-    std::shared_ptr<BaseContainer> container;
+    std::unique_ptr<BaseContainer> container;
     if (imageName.find("playground") != std::string::npos) {
-        container = std::make_shared<PlaygroundContainer>(std::move(id), type);
+        container = std::make_unique<PlaygroundContainer>(std::move(id), type);
     } else if (imageName.find("course") != std::string::npos) {
-        container = std::make_shared<CourseContainer>(std::move(id), type);
+        container = std::make_unique<CourseContainer>(std::move(id), type);
     } else if (imageName.find("practice") != std::string::npos) {
-        container = std::make_shared<PracticeContainer>(std::move(id), type);
+        container = std::make_unique<PracticeContainer>(std::move(id), type);
     } else {
         throw std::logic_error{"Wrong image name: " + imageName};
     }
@@ -59,9 +59,9 @@ void ContainerOSManipulator::asyncRemoveContainerFromOs(std::string const & id) 
 void ContainerOSManipulator::asyncCreateNewContainer(Config::ContainerType type,
                                                      std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
+        auto container = createContainer(type, image);
         {
             std::scoped_lock lock(m_protectedContainers.mutex);
-            auto container = createContainer(type, image);
             m_protectedContainers.containers.at(type).push_back(std::move(container));
         }
         m_protectedContainers.containerFree.notify_all();
@@ -91,7 +91,7 @@ void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
 void ContainerOSManipulator::syncLaunchNewContainers(Config const & config) {
     auto const launchContainers = [this](auto && containerTypes) {
         for (auto const & [type, info] : containerTypes) {
-            std::vector<std::shared_ptr<BaseContainer>> containers;
+            std::vector<std::unique_ptr<BaseContainer>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
                 auto container = createContainer(type, info.imageName);
                 containers.emplace_back(std::move(container));
