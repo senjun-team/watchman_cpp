@@ -61,13 +61,8 @@ public:
     void createNewContainer(Config::ContainerType type, std::string const & image);
 
 private:
-    ProtectedContainers m_protectedCcontainers;
+    ProtectedContainers m_protectedContainers;
     std::unique_ptr<ContainerOSManipulator> m_manipulator;
-
-    Config m_config;
-
-    void killOldContainers(DockerWrapper & dockerWrapper);
-    void launchNewContainers(DockerWrapper & dockerWrapper);
 };
 
 class ReleasingContainer {

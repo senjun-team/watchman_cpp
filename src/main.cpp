@@ -2,7 +2,6 @@
 #include "server/server.hpp"
 
 #include <filesystem>
-#include <string>
 
 namespace {
 

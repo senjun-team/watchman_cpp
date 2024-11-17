@@ -12,6 +12,7 @@ set(CORE_SOURCES
         core/docker_wrapper.cpp
         core/parser.cpp
         core/detail/directory_traverser.cpp
+        core/detail/container_manipulator.cpp
         common/common.cpp
         common/logging.cpp
         common/project.cpp
