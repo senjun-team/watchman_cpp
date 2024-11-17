@@ -20,9 +20,13 @@ private:
     void syncKillRunningContainers(Config const & config);
     void syncLaunchNewContainers(Config const & config);
 
+    std::shared_ptr<BaseContainer> createContainer(std::string const & containerType,
+                                                   std::string const & imageName);
+    void killContainer(std::string const & id);
+
     ProtectedContainers & m_protectedContainers;
 
-    unifex::single_thread_context m_containerKillerAliver;
+    unifex::single_thread_context m_containersContext;
     DockerWrapper m_dockerWrapper;
 };
 

@@ -6,6 +6,44 @@
 
 namespace watchman::detail {
 
+std::shared_ptr<BaseContainer>
+ContainerOSManipulator::createContainer(std::string const & type, std::string const & imageName) {
+    RunContainer params;
+
+    params.image = imageName;
+    params.tty = true;
+    params.memory = 300'000'000;
+
+    std::string id = m_dockerWrapper.run(std::move(params));
+    if (id.empty()) {
+        Log::warning("Internal error: can't run container of type {}", type);
+        return nullptr;
+    }
+
+    Log::info("Launch container: {}, id: {}", imageName, id);
+
+    std::shared_ptr<BaseContainer> container;
+    if (imageName.find("playground") != std::string::npos) {
+        container = std::make_shared<PlaygroundContainer>(std::move(id), type);
+    } else if (imageName.find("course") != std::string::npos) {
+        container = std::make_shared<CourseContainer>(std::move(id), type);
+    } else if (imageName.find("practice") != std::string::npos) {
+        container = std::make_shared<PracticeContainer>(std::move(id), type);
+    } else {
+        throw std::logic_error{"Wrong image name: " + imageName};
+    }
+
+    return container;
+}
+
+void ContainerOSManipulator::killContainer(std::string const & id) {
+    if (m_dockerWrapper.isRunning(id)) {
+        m_dockerWrapper.killContainer(id);
+    }
+
+    m_dockerWrapper.removeContainer(id);
+}
+
 ContainerOSManipulator::ContainerOSManipulator(Config && config,
                                                ProtectedContainers & protectedContainers)
     : m_protectedContainers(protectedContainers) {
@@ -14,41 +52,17 @@ ContainerOSManipulator::ContainerOSManipulator(Config && config,
 }
 
 void ContainerOSManipulator::asyncRemoveContainerFromOs(std::string const & id) {
-    unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, &id] {
-        m_dockerWrapper.killContainer(id);
-        m_dockerWrapper.removeContainer(id);
-    }) | unifex::sync_wait();
+    unifex::schedule(m_containersContext.get_scheduler())
+        | unifex::then([this, &id] { killContainer(id); }) | unifex::sync_wait();
 }
 
 void ContainerOSManipulator::asyncCreateNewContainer(Config::ContainerType type,
                                                      std::string const & image) {
-    unifex::schedule(m_containerKillerAliver.get_scheduler()) | unifex::then([this, type, image] {
+    unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         {
             std::scoped_lock lock(m_protectedContainers.mutex);
-            RunContainer params;
-
-            params.image = image;
-            params.tty = true;
-            params.memory = 300'000'000;
-
-            std::string id = m_dockerWrapper.run(std::move(params));
-            if (id.empty()) {
-                Log::warning("Internal error: can't run container of type {}", type);
-                return;
-            }
-
-            Log::info("Launch container: {}, id: {}", image, id);
-
-            std::shared_ptr<BaseContainer> container;
-            if (image.find("playground") != std::string::npos) {
-                container = std::make_shared<PlaygroundContainer>(std::move(id), type);
-            } else if (image.find("courses") != std::string::npos) {
-                container = std::make_shared<CourseContainer>(std::move(id), type);
-            } else {
-                container = std::make_shared<PracticeContainer>(std::move(id), type);
-            }
-
-            m_protectedContainers.containers.at(type).push_back(container);
+            auto container = createContainer(type, image);
+            m_protectedContainers.containers.at(type).push_back(std::move(container));
         }
         m_protectedContainers.containerFree.notify_all();
     }) | unifex::sync_wait();
@@ -62,12 +76,8 @@ void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
         for (auto const & [_, info] : containerTypes) {
             for (auto const & container : workingContainers) {
                 if (container.image.find(info.imageName) != std::string::npos) {
-                    if (m_dockerWrapper.isRunning(container.id)) {
-                        m_dockerWrapper.killContainer(container.id);
-                    }
-
                     Log::info("Remove container type: {}, id: {}", info.imageName, container.id);
-                    m_dockerWrapper.removeContainer(container.id);
+                    killContainer(container.id);
                 }
             }
         }
@@ -83,31 +93,7 @@ void ContainerOSManipulator::syncLaunchNewContainers(Config const & config) {
         for (auto const & [type, info] : containerTypes) {
             std::vector<std::shared_ptr<BaseContainer>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
-                RunContainer params;
-
-                params.image = info.imageName;
-                params.tty = true;
-                params.memory = 300'000'000;
-
-                std::string id = m_dockerWrapper.run(std::move(params));
-                if (id.empty()) {
-                    Log::warning("Internal error: can't run container of type {}", type);
-                    continue;
-                }
-
-                Log::info("Launch container: {}, id: {}", info.imageName, id);
-
-                std::shared_ptr<BaseContainer> container;
-                if (info.imageName.find("playground") != std::string::npos) {
-                    container = std::make_shared<PlaygroundContainer>(std::move(id), type);
-                } else if (info.imageName.find("course") != std::string::npos) {
-                    container = std::make_shared<CourseContainer>(std::move(id), type);
-                } else if (info.imageName.find("practice") != std::string::npos) {
-                    container = std::make_shared<PracticeContainer>(std::move(id), type);
-                } else {
-                    throw std::logic_error{"Wrong image name: " + info.imageName};
-                }
-
+                auto container = createContainer(type, info.imageName);
                 containers.emplace_back(std::move(container));
             }
 
