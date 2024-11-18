@@ -6,7 +6,7 @@
 
 namespace watchman::detail {
 
-std::unique_ptr<BaseContainerLauncher>
+std::unique_ptr<BaseCodeLauncher>
 ContainerOSManipulator::createContainer(std::string const & type, std::string const & imageName) {
     RunContainer params;
 
@@ -22,13 +22,13 @@ ContainerOSManipulator::createContainer(std::string const & type, std::string co
 
     Log::info("Launch container: {}, id: {}", imageName, id);
 
-    std::unique_ptr<BaseContainerLauncher> container;
+    std::unique_ptr<BaseCodeLauncher> container;
     if (imageName.find("playground") != std::string::npos) {
-        container = std::make_unique<PlaygroundContainerLauncher>(std::move(id), type);
+        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), type);
     } else if (imageName.find("course") != std::string::npos) {
-        container = std::make_unique<CourseContainerLauncher>(std::move(id), type);
+        container = std::make_unique<CourseCodeLauncher>(std::move(id), type);
     } else if (imageName.find("practice") != std::string::npos) {
-        container = std::make_unique<PracticeContainerLauncher>(std::move(id), type);
+        container = std::make_unique<PracticeCodeLauncher>(std::move(id), type);
     } else {
         throw std::logic_error{"Wrong image name: " + imageName};
     }
@@ -56,13 +56,13 @@ void ContainerOSManipulator::asyncRemoveContainerFromOs(std::string const & id) 
         | unifex::then([this, &id] { killContainer(id); }) | unifex::sync_wait();
 }
 
-void ContainerOSManipulator::asyncCreateNewContainer(Config::ContainerType type,
+void ContainerOSManipulator::asyncCreateNewContainer(Config::CodeLauncherType type,
                                                      std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         auto container = createContainer(type, image);
         {
             std::scoped_lock lock(m_protectedContainers.mutex);
-            m_protectedContainers.containers.at(type).push_back(std::move(container));
+            m_protectedContainers.codeLaunchers.at(type).push_back(std::move(container));
         }
         m_protectedContainers.containerFree.notify_all();
     }) | unifex::sync_wait();
@@ -91,14 +91,14 @@ void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
 void ContainerOSManipulator::syncLaunchNewContainers(Config const & config) {
     auto const launchContainers = [this](auto && containerTypes) {
         for (auto const & [type, info] : containerTypes) {
-            std::vector<std::unique_ptr<BaseContainerLauncher>> containers;
+            std::list<std::unique_ptr<BaseCodeLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
                 auto container = createContainer(type, info.imageName);
                 containers.emplace_back(std::move(container));
             }
 
             if (!containers.empty()) {
-                m_protectedContainers.containers.emplace(type, std::move(containers));
+                m_protectedContainers.codeLaunchers.emplace(type, std::move(containers));
             }
         }
     };

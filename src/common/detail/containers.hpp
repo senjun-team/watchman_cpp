@@ -8,59 +8,68 @@
 
 namespace watchman::detail {
 
-class ContainerLauncherInterface {
+class CodeLauncherInterface {
 public:
-    virtual ~ContainerLauncherInterface() = default;
+    virtual ~CodeLauncherInterface() = default;
 
-    virtual Response runCode(std::vector<std::string> && cmdLineArgs) = 0;
+    virtual Response runCode(std::string && inMemoryTarWithSources,
+                             std::vector<std::string> && cmdLineArgs) = 0;
 };
 
-struct BaseContainerLauncher : ContainerLauncherInterface {
-    DockerWrapper dockerWrapper;
-    std::string id;
-    Config::ContainerType type;
-    bool isReserved{false};
+struct LauncherRestartInfo {
+    std::string containerId;
+    std::string image;
+    std::string containerType;
+};
 
-    BaseContainerLauncher(std::string id, Config::ContainerType type);
+struct BaseCodeLauncher : CodeLauncherInterface {
+    DockerWrapper dockerWrapper;
+    std::string containerId;
+    Config::CodeLauncherType type;
+
+    BaseCodeLauncher(std::string id, Config::CodeLauncherType type);
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string && tarString);
 };
 
-struct CourseContainerLauncher final : BaseContainerLauncher {
-    CourseContainerLauncher(std::string id, Config::ContainerType type);
-    Response runCode(std::vector<std::string> && cmdLineArgs) override;
+struct CourseCodeLauncher final : BaseCodeLauncher {
+    CourseCodeLauncher(std::string id, Config::CodeLauncherType type);
+    Response runCode(std::string && inMemoryTarWithSources,
+                     std::vector<std::string> && cmdLineArgs) override;
 };
 
-struct PlaygroundContainerLauncher final : BaseContainerLauncher {
-    PlaygroundContainerLauncher(std::string id, Config::ContainerType type);
-    Response runCode(std::vector<std::string> && cmdLineArgs) override;
+struct PlaygroundCodeLauncher final : BaseCodeLauncher {
+    PlaygroundCodeLauncher(std::string id, Config::CodeLauncherType type);
+    Response runCode(std::string && inMemoryTarWithSources,
+                     std::vector<std::string> && cmdLineArgs) override;
 };
 
-struct PracticeContainerLauncher final : BaseContainerLauncher {
-    PracticeContainerLauncher(std::string id, Config::ContainerType type);
-    Response runCode(std::vector<std::string> && dockerCmdLineArgs) override;
+struct PracticeCodeLauncher final : BaseCodeLauncher {
+    PracticeCodeLauncher(std::string id, Config::CodeLauncherType type);
+    Response runCode(std::string && inMemoryTarWithSources,
+                     std::vector<std::string> && dockerCmdLineArgs) override;
 };
 
 class ContainerOSManipulator;
 
-class ContainerController {
+class CodeLauncherController {
 public:
-    explicit ContainerController(Config && config);
-    ~ContainerController();
+    explicit CodeLauncherController(Config && config);
+    ~CodeLauncherController();
 
-    ContainerController(ContainerController const & other) = delete;
-    ContainerController(ContainerController && other) = delete;
-    ContainerController & operator=(ContainerController const & other) = delete;
-    ContainerController & operator=(ContainerController && other) = delete;
+    CodeLauncherController(CodeLauncherController const & other) = delete;
+    CodeLauncherController(CodeLauncherController && other) = delete;
+    CodeLauncherController & operator=(CodeLauncherController const & other) = delete;
+    CodeLauncherController & operator=(CodeLauncherController && other) = delete;
 
-    BaseContainerLauncher & getReadyContainer(Config::ContainerType const & type);
-    void containerReleased(BaseContainerLauncher & container);
-    bool containerNameIsValid(const std::string & name) const;
+    std::unique_ptr<BaseCodeLauncher> getReadyCodeLauncher(Config::CodeLauncherType const & type);
+    void restartCodeLauncher(LauncherRestartInfo const & restartInfo);
+    bool launcherTypeIsValid(std::string const & name) const;
 
 private:
     void removeContainerFromOs(std::string const & id);
-    void createNewContainer(Config::ContainerType type, std::string const & image);
+    void createNewContainer(Config::CodeLauncherType type, std::string const & image);
 
     ProtectedContainers m_protectedContainers;
     std::unique_ptr<ContainerOSManipulator> m_manipulator;
@@ -68,7 +77,7 @@ private:
 
 class ReleasingContainer {
 public:
-    ReleasingContainer(BaseContainerLauncher & container, std::function<void()> deleter);
+    ReleasingContainer(std::unique_ptr<BaseCodeLauncher> launcher, std::function<void()> deleter);
     ~ReleasingContainer();
 
     ReleasingContainer(ReleasingContainer const &) = delete;
@@ -76,7 +85,7 @@ public:
     ReleasingContainer & operator=(ReleasingContainer const &) = delete;
     ReleasingContainer & operator=(ReleasingContainer &&) = delete;
 
-    BaseContainerLauncher & container;
+    std::unique_ptr<BaseCodeLauncher> codeLauncher;
 
 private:
     std::function<void()> m_releaser;

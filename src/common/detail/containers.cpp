@@ -8,13 +8,13 @@ namespace watchman::detail {
 
 static std::string const kUserSourceFile = "/home/code_runner";
 
-BaseContainerLauncher::BaseContainerLauncher(std::string id, Config::ContainerType type)
-    : id(std::move(id))
+BaseCodeLauncher::BaseCodeLauncher(std::string id, Config::CodeLauncherType type)
+    : containerId(std::move(id))
     , type(std::move(type)) {}
 
-bool BaseContainerLauncher::prepareCode(std::string && tarString) {
+bool BaseCodeLauncher::prepareCode(std::string && tarString) {
     PutArchive params;
-    params.containerId = id;
+    params.containerId = containerId;
     params.path = kUserSourceFile;
     params.archive = std::move(tarString);
     params.copyUIDGID = "1";
@@ -27,8 +27,14 @@ bool BaseContainerLauncher::prepareCode(std::string && tarString) {
     return true;
 }
 
-Response PracticeContainerLauncher::runCode(std::vector<std::string> && dockerCmdLineArgs) {
-    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(dockerCmdLineArgs)});
+Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
+                                       std::vector<std::string> && dockerCmdLineArgs) {
+    if (!prepareCode(std::move(inMemoryTarWithSources))) {
+        return {};
+    }
+
+    auto result =
+        dockerWrapper.exec({.containerId = containerId, .cmd = std::move(dockerCmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
     }
@@ -36,59 +42,58 @@ Response PracticeContainerLauncher::runCode(std::vector<std::string> && dockerCm
     return getPracticeResponse(result.message);
 }
 
-ContainerController::ContainerController(Config && config)
+CodeLauncherController::CodeLauncherController(Config && config)
     : m_manipulator(
           std::make_unique<ContainerOSManipulator>(std::move(config), m_protectedContainers)) {
     Log::info("Service launched");
 }
 
-BaseContainerLauncher & ContainerController::getReadyContainer(Config::ContainerType const & type) {
+std::unique_ptr<BaseCodeLauncher>
+CodeLauncherController::getReadyCodeLauncher(Config::CodeLauncherType const & type) {
     // lock for any container type
     // todo think of separating containers into different queues
     std::unique_lock lock(m_protectedContainers.mutex);
 
-    auto & containers = m_protectedContainers.containers.at(type);
-    size_t indexProperContainer;  // there's no need for initialization
+    auto & specificCodeLaunchers = m_protectedContainers.codeLaunchers.at(type);
 
-    m_protectedContainers.containerFree.wait(lock, [&containers, &indexProperContainer]() -> bool {
-        for (size_t index = 0, size = containers.size(); index < size; ++index) {
-            if (!containers[index]->isReserved) {
-                indexProperContainer = index;
-                containers[index]->isReserved = true;
-                return true;
-            }
-        }
-        return false;
-    });
+    m_protectedContainers.containerFree.wait(
+        lock, [&specificCodeLaunchers]() -> bool { return !specificCodeLaunchers.empty(); });
 
-    return *containers.at(indexProperContainer);
+    auto launcher = std::move(specificCodeLaunchers.back());
+    specificCodeLaunchers.pop_back();
+
+    return launcher;
 }
 
-void ContainerController::containerReleased(BaseContainerLauncher & container) {
-    std::string const id = container.id;
-    std::string const image = container.dockerWrapper.getImage(id);
-    Config::ContainerType const type = container.type;
+void CodeLauncherController::restartCodeLauncher(LauncherRestartInfo const & restartInfo) {
+    std::string const id = restartInfo.containerId;
+    std::string const image = restartInfo.image;
     {
         std::scoped_lock const lock(m_protectedContainers.mutex);
 
-        auto & containers = m_protectedContainers.containers.at(container.type);
+        auto & containers = m_protectedContainers.codeLaunchers.at(restartInfo.containerType);
 
-        containers.erase(
-            std::remove_if(containers.begin(), containers.end(),
-                           [&container](auto const & c) { return c->id == container.id; }),
-            containers.end());
+        containers.erase(std::remove_if(containers.begin(), containers.end(),
+                                        [id = restartInfo.containerId](auto const & c) {
+                                            return c->containerId == id;
+                                        }),
+                         containers.end());
     }
     removeContainerFromOs(id);
-    createNewContainer(type, image);
+    createNewContainer(restartInfo.containerType, image);
 }
 
-ContainerController::~ContainerController() = default;
+CodeLauncherController::~CodeLauncherController() = default;
 
-PlaygroundContainerLauncher::PlaygroundContainerLauncher(std::string id, Config::ContainerType type)
-    : BaseContainerLauncher(std::move(id), type) {}
+PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, Config::CodeLauncherType type)
+    : BaseCodeLauncher(std::move(id), type) {}
 
-Response CourseContainerLauncher::runCode(std::vector<std::string> && cmdLineArgs) {
-    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
+Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
+                                     std::vector<std::string> && cmdLineArgs) {
+    if (!prepareCode(std::move(inMemoryTarWithSources))) {
+        return {};
+    }
+    auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
     }
@@ -96,30 +101,36 @@ Response CourseContainerLauncher::runCode(std::vector<std::string> && cmdLineArg
     return getCourseResponse(result.message);
 }
 
-CourseContainerLauncher::CourseContainerLauncher(std::string id, Config::ContainerType type)
-    : BaseContainerLauncher(std::move(id), type) {}
+CourseCodeLauncher::CourseCodeLauncher(std::string id, Config::CodeLauncherType type)
+    : BaseCodeLauncher(std::move(id), type) {}
 
-ReleasingContainer::ReleasingContainer(BaseContainerLauncher & container, std::function<void()> deleter)
-    : container(container)
+ReleasingContainer::ReleasingContainer(std::unique_ptr<BaseCodeLauncher> container,
+                                       std::function<void()> deleter)
+    : codeLauncher(std::move(container))
     , m_releaser(std::move(deleter)) {}
 
 ReleasingContainer::~ReleasingContainer() { m_releaser(); }
 
-bool ContainerController::containerNameIsValid(const std::string & name) const {
-    return m_protectedContainers.containers.contains(name);
+bool CodeLauncherController::launcherTypeIsValid(std::string const & name) const {
+    return m_protectedContainers.codeLaunchers.contains(name);
 }
 
-void ContainerController::removeContainerFromOs(std::string const & id) {
+void CodeLauncherController::removeContainerFromOs(std::string const & id) {
     m_manipulator->asyncRemoveContainerFromOs(id);
 }
 
-void ContainerController::createNewContainer(Config::ContainerType type,
-                                             std::string const & image) {
+void CodeLauncherController::createNewContainer(Config::CodeLauncherType type,
+                                                std::string const & image) {
     m_manipulator->asyncCreateNewContainer(type, image);
 }
 
-Response PlaygroundContainerLauncher::runCode(std::vector<std::string> && cmdLineArgs) {
-    auto result = dockerWrapper.exec({.containerId = id, .cmd = std::move(cmdLineArgs)});
+Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
+                                         std::vector<std::string> && cmdLineArgs) {
+    if (!prepareCode(std::move(inMemoryTarWithSources))) {
+        return {};
+    }
+
+    auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
     if (!result.success) {
         return {result.success, result.message};
     }
@@ -127,7 +138,7 @@ Response PlaygroundContainerLauncher::runCode(std::vector<std::string> && cmdLin
     return getPlaygroungResponse(result.message);
 }
 
-PracticeContainerLauncher::PracticeContainerLauncher(std::string id, Config::ContainerType type)
-    : BaseContainerLauncher(std::move(id), std::move(type)) {}
+PracticeCodeLauncher::PracticeCodeLauncher(std::string id, Config::CodeLauncherType type)
+    : BaseCodeLauncher(std::move(id), std::move(type)) {}
 
 }  // namespace watchman::detail

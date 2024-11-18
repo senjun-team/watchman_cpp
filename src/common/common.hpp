@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
+#include <list>
 
 namespace watchman {
 
@@ -63,12 +63,12 @@ using Playground = ContainerTypeInfo;
 using PracticeContainer = ContainerTypeInfo;
 
 struct Config {
-    using ContainerType = std::string;  // python/rust/go/haskell
+    using CodeLauncherType = std::string;  // python/rust/go/haskell
     std::optional<size_t> threadPoolSize;
     uint32_t maxContainersAmount{0};
-    std::unordered_map<ContainerType, Language> languages;
-    std::unordered_map<ContainerType, Playground> playgrounds;
-    std::unordered_map<ContainerType, PracticeContainer> practices;
+    std::unordered_map<CodeLauncherType, Language> languages;
+    std::unordered_map<CodeLauncherType, Playground> playgrounds;
+    std::unordered_map<CodeLauncherType, PracticeContainer> practices;
 };
 
 size_t getCpuCount();
@@ -93,13 +93,13 @@ private:
 };
 
 namespace detail {
-struct BaseContainerLauncher;
+struct BaseCodeLauncher;
 
 struct ProtectedContainers {
     std::mutex mutex;
     std::condition_variable containerFree;
-    std::unordered_map<Config::ContainerType, std::vector<std::unique_ptr<BaseContainerLauncher>>>
-        containers;
+    std::unordered_map<Config::CodeLauncherType, std::list<std::unique_ptr<BaseCodeLauncher>>>
+        codeLaunchers;
 };
 }  // namespace detail
 

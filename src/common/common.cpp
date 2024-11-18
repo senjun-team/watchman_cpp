@@ -17,7 +17,7 @@ size_t getCpuCount() {
 }
 
 struct ConfgiHelper {
-    std::unordered_map<Config::ContainerType, Language> & table;
+    std::unordered_map<Config::CodeLauncherType, Language> & table;
     std::string key;
     std::string suffix;
 };

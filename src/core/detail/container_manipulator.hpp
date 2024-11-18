@@ -14,13 +14,13 @@ public:
     ContainerOSManipulator(Config && config, ProtectedContainers & protectedContainers);
 
     void asyncRemoveContainerFromOs(std::string const & id);
-    void asyncCreateNewContainer(Config::ContainerType type, std::string const & image);
+    void asyncCreateNewContainer(Config::CodeLauncherType type, std::string const & image);
 
 private:
     void syncKillRunningContainers(Config const & config);
     void syncLaunchNewContainers(Config const & config);
 
-    std::unique_ptr<BaseContainerLauncher> createContainer(std::string const & containerType,
+    std::unique_ptr<BaseCodeLauncher> createContainer(std::string const & containerType,
                                                    std::string const & imageName);
     void killContainer(std::string const & id);
 
