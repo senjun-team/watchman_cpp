@@ -45,7 +45,7 @@ void ContainerOSManipulator::killContainer(std::string const & id) {
 }
 
 ContainerOSManipulator::ContainerOSManipulator(Config && config,
-                                               ProtectedContainers & protectedContainers)
+                                               ProtectedLaunchers & protectedContainers)
     : m_protectedContainers(protectedContainers) {
     syncKillRunningContainers(config);
     syncLaunchNewContainers(config);

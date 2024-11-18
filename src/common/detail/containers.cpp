@@ -27,6 +27,10 @@ bool BaseCodeLauncher::prepareCode(std::string && tarString) {
     return true;
 }
 
+LauncherRestartInfo BaseCodeLauncher::getRestartInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), type};
+}
+
 Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                        std::vector<std::string> && dockerCmdLineArgs) {
     if (!prepareCode(std::move(inMemoryTarWithSources))) {
@@ -44,19 +48,19 @@ Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
 
 CodeLauncherController::CodeLauncherController(Config && config)
     : m_manipulator(
-          std::make_unique<ContainerOSManipulator>(std::move(config), m_protectedContainers)) {
+          std::make_unique<ContainerOSManipulator>(std::move(config), m_protectedLaunchers)) {
     Log::info("Service launched");
 }
 
 std::unique_ptr<BaseCodeLauncher>
-CodeLauncherController::getReadyCodeLauncher(Config::CodeLauncherType const & type) {
+CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
     // lock for any container type
     // todo think of separating containers into different queues
-    std::unique_lock lock(m_protectedContainers.mutex);
+    std::unique_lock lock(m_protectedLaunchers.mutex);
 
-    auto & specificCodeLaunchers = m_protectedContainers.codeLaunchers.at(type);
+    auto & specificCodeLaunchers = m_protectedLaunchers.codeLaunchers.at(type);
 
-    m_protectedContainers.containerFree.wait(
+    m_protectedLaunchers.containerFree.wait(
         lock, [&specificCodeLaunchers]() -> bool { return !specificCodeLaunchers.empty(); });
 
     auto launcher = std::move(specificCodeLaunchers.back());
@@ -69,9 +73,9 @@ void CodeLauncherController::restartCodeLauncher(LauncherRestartInfo const & res
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
     {
-        std::scoped_lock const lock(m_protectedContainers.mutex);
+        std::scoped_lock const lock(m_protectedLaunchers.mutex);
 
-        auto & containers = m_protectedContainers.codeLaunchers.at(restartInfo.containerType);
+        auto & containers = m_protectedLaunchers.codeLaunchers.at(restartInfo.containerType);
 
         containers.erase(std::remove_if(containers.begin(), containers.end(),
                                         [id = restartInfo.containerId](auto const & c) {
@@ -104,15 +108,15 @@ Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
 CourseCodeLauncher::CourseCodeLauncher(std::string id, Config::CodeLauncherType type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-ReleasingContainer::ReleasingContainer(std::unique_ptr<BaseCodeLauncher> container,
+RestartingLauncher::RestartingLauncher(std::unique_ptr<BaseCodeLauncher> container,
                                        std::function<void()> deleter)
     : codeLauncher(std::move(container))
     , m_releaser(std::move(deleter)) {}
 
-ReleasingContainer::~ReleasingContainer() { m_releaser(); }
+RestartingLauncher::~RestartingLauncher() { m_releaser(); }
 
 bool CodeLauncherController::launcherTypeIsValid(std::string const & name) const {
-    return m_protectedContainers.codeLaunchers.contains(name);
+    return m_protectedLaunchers.codeLaunchers.contains(name);
 }
 
 void CodeLauncherController::removeContainerFromOs(std::string const & id) {

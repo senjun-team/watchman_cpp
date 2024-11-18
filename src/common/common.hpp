@@ -4,12 +4,12 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <list>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <list>
 
 namespace watchman {
 
@@ -95,7 +95,7 @@ private:
 namespace detail {
 struct BaseCodeLauncher;
 
-struct ProtectedContainers {
+struct ProtectedLaunchers {
     std::mutex mutex;
     std::condition_variable containerFree;
     std::unordered_map<Config::CodeLauncherType, std::list<std::unique_ptr<BaseCodeLauncher>>>

@@ -31,6 +31,7 @@ struct BaseCodeLauncher : CodeLauncherInterface {
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string && tarString);
+    LauncherRestartInfo getRestartInfo() const;
 };
 
 struct CourseCodeLauncher final : BaseCodeLauncher {
@@ -63,7 +64,7 @@ public:
     CodeLauncherController & operator=(CodeLauncherController const & other) = delete;
     CodeLauncherController & operator=(CodeLauncherController && other) = delete;
 
-    std::unique_ptr<BaseCodeLauncher> getReadyCodeLauncher(Config::CodeLauncherType const & type);
+    std::unique_ptr<BaseCodeLauncher> getCodeLauncher(Config::CodeLauncherType const & type);
     void restartCodeLauncher(LauncherRestartInfo const & restartInfo);
     bool launcherTypeIsValid(std::string const & name) const;
 
@@ -71,19 +72,19 @@ private:
     void removeContainerFromOs(std::string const & id);
     void createNewContainer(Config::CodeLauncherType type, std::string const & image);
 
-    ProtectedContainers m_protectedContainers;
+    ProtectedLaunchers m_protectedLaunchers;
     std::unique_ptr<ContainerOSManipulator> m_manipulator;
 };
 
-class ReleasingContainer {
+class RestartingLauncher {
 public:
-    ReleasingContainer(std::unique_ptr<BaseCodeLauncher> launcher, std::function<void()> deleter);
-    ~ReleasingContainer();
+    RestartingLauncher(std::unique_ptr<BaseCodeLauncher> launcher, std::function<void()> deleter);
+    ~RestartingLauncher();
 
-    ReleasingContainer(ReleasingContainer const &) = delete;
-    ReleasingContainer(ReleasingContainer &&) = delete;
-    ReleasingContainer & operator=(ReleasingContainer const &) = delete;
-    ReleasingContainer & operator=(ReleasingContainer &&) = delete;
+    RestartingLauncher(RestartingLauncher const &) = delete;
+    RestartingLauncher(RestartingLauncher &&) = delete;
+    RestartingLauncher & operator=(RestartingLauncher const &) = delete;
+    RestartingLauncher & operator=(RestartingLauncher &&) = delete;
 
     std::unique_ptr<BaseCodeLauncher> codeLauncher;
 

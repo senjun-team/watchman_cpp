@@ -11,7 +11,7 @@ namespace watchman::detail {
 
 class ContainerOSManipulator {
 public:
-    ContainerOSManipulator(Config && config, ProtectedContainers & protectedContainers);
+    ContainerOSManipulator(Config && config, ProtectedLaunchers & protectedContainers);
 
     void asyncRemoveContainerFromOs(std::string const & id);
     void asyncCreateNewContainer(Config::CodeLauncherType type, std::string const & image);
@@ -24,7 +24,7 @@ private:
                                                    std::string const & imageName);
     void killContainer(std::string const & id);
 
-    ProtectedContainers & m_protectedContainers;
+    ProtectedLaunchers & m_protectedContainers;
 
     unifex::single_thread_context m_containersContext;
     DockerWrapper m_dockerWrapper;

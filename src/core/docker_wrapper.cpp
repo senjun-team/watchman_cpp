@@ -154,7 +154,7 @@ std::vector<Container> DockerWrapper::getAllContainers() { return m_impl->getAll
 
 bool DockerWrapper::isRunning(std::string const & id) { return m_impl->isRunning(id); }
 
-std::string DockerWrapper::getImage(std::string const & id) { return m_impl->getImage(id); }
+std::string DockerWrapper::getImage(std::string const & id) const { return m_impl->getImage(id); }
 
 bool DockerWrapper::killContainer(std::string const & id) { return m_impl->killContainer(id); }
 
