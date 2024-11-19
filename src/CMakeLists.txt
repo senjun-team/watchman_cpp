@@ -16,9 +16,10 @@ set(CORE_SOURCES
         common/common.cpp
         common/logging.cpp
         common/project.cpp
-        common/detail/process_courses.cpp
-        common/detail/process_playground.cpp
-        common/detail/process_practice.cpp
+        core/code_launcher/detail/process_courses.cpp
+        core/code_launcher/detail/process_playground.cpp
+        core/code_launcher/detail/process_practice.cpp
+        core/code_launcher/detail/code_launchers.cpp
         common/detail/answer_common.cpp
         common/detail/containers.cpp
         )
@@ -46,8 +47,6 @@ set(SERVER_HEADERS
 set(SERVER_SOURCES
         main.cpp
         server/server.cpp
-        common/detail/process_playground.cpp
-        common/detail/answer_common.hpp
         common/detail/answer_common.cpp
 )
 

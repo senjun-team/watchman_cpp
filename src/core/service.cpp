@@ -68,18 +68,15 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
                 std::string{}};
     }
 
-    auto restartingCodeLauncher =
-        getCodeLauncher(runTaskParams.containerType);  // here we have got a race
-    auto & codeLauncher = restartingCodeLauncher.codeLauncher;
-
+    auto codeLauncher = getCodeLauncher(runTaskParams.containerType);  // here we have got a race
     std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
                                    {runTaskParams.sourceTest, kFilenameTaskTests}};
 
-    auto result = codeLauncher->runCode(makeTar(std::move(data)),
-                                        getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+    auto result = codeLauncher.runCode(makeTar(std::move(data)),
+                                       getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
-        Log::error("Error return code {} from container {} type of {}", result.sourceCode,
-                   codeLauncher->containerId, codeLauncher->type);
+        Log::error("Error return code {} from container type of {}", result.sourceCode,
+                   runTaskParams.containerType);
     }
     return result;
 }
@@ -90,10 +87,8 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
         return {};
     }
 
-    auto restartingCodeLauncher =
-        getCodeLauncher(runProjectParams.containerType);  // here we have got a race
-    auto & codeLauncher = restartingCodeLauncher.codeLauncher;
-    return codeLauncher->runCode(
+    auto codeLauncher = getCodeLauncher(runProjectParams.containerType);  // here we have got a race
+    return codeLauncher.runCode(
         makeProjectTar(std::move(runProjectParams.project)),
         getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
@@ -104,12 +99,10 @@ Response Service::runPractice(RunPracticeParams const & params) {
         return {};
     }
 
-    auto restartingCodeLauncher =
-        getCodeLauncher(params.containerType);  // here we have got a race
-    auto & codeLauncher = restartingCodeLauncher.codeLauncher;
+    auto codeLauncher = getCodeLauncher(params.containerType);  // here we have got a race
     auto dockerCmdArgs = getPracticeDockerArgs(params);
 
-    return codeLauncher->runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
+    return codeLauncher.runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
 }
 
 detail::RestartingLauncher Service::getCodeLauncher(Config::CodeLauncherType type) {
