@@ -40,7 +40,6 @@ struct RunPracticeParams {
 
 size_t getCpuCount();
 
-Config readConfig(std::string_view configPath);
 
 struct CodeFilename {
     std::string code;

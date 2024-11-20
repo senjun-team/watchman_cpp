@@ -23,4 +23,6 @@ struct Config {
     std::unordered_map<CodeLauncherType, PracticeContainer> practices;
 };
 
+Config readConfig(std::string_view configPath);
+
 }  // namespace watchman
