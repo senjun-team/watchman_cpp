@@ -16,13 +16,16 @@ using PracticeContainer = ContainerTypeInfo;
 
 struct Config {
     using CodeLauncherType = std::string;  // python/rust/go/haskell
-    std::optional<size_t> threadPoolSize;
+    std::size_t threadPoolSize;
     uint32_t maxContainersAmount{0};
     std::unordered_map<CodeLauncherType, Language> languages;
     std::unordered_map<CodeLauncherType, Playground> playgrounds;
     std::unordered_map<CodeLauncherType, PracticeContainer> practices;
 };
 
+std::optional<Config> getConfig();
+
+// for tests
 Config readConfig(std::string_view configPath);
 
 }  // namespace watchman

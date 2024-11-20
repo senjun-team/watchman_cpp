@@ -1,16 +1,37 @@
 #include "common/config.hpp"
 
+#include "common/common.hpp"
 #include "common/logging.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 
 namespace watchman {
 
+std::string_view constexpr kConfig = "watchman_cpp_config.json";
+std::string_view constexpr kEtcConfig = "/etc/watchman_cpp_config.json";
+
 struct ConfgiHelper {
     std::unordered_map<Config::CodeLauncherType, Language> & table;
     std::string key;
     std::string suffix;
 };
+
+std::string_view findConfig() {
+    bool const existsNearBinary = std::filesystem::exists(kConfig);
+    if (existsNearBinary) {
+        watchman::Log::info("Config {} found near the binary", kConfig);
+        return kConfig;
+    }
+
+    bool existsAtEtc = std::filesystem::exists(kEtcConfig);
+    if (existsAtEtc) {
+        watchman::Log::info("Config {} found at {}", kConfig, kEtcConfig);
+        return kEtcConfig;
+    }
+
+    watchman::Log::error("{} not found at /etc or near the binary", kConfig);
+    return {};
+}
 
 template<typename Ptree>
 void fillTable(Ptree const & root, ConfgiHelper const & configHelper) {
@@ -46,8 +67,10 @@ Config fillConfig(Ptree const & root) {
     Config config;
 
     auto const & threadPoolSize = root.get_child_optional("thread-pool-size");
-    if (threadPoolSize.has_value()) {
-        config.threadPoolSize = threadPoolSize.value().template get_value<size_t>();
+    config.threadPoolSize = threadPoolSize.value().template get_value<size_t>();
+
+    if (config.threadPoolSize == 0) {
+        config.threadPoolSize = getCpuCount();
     }
 
     auto const & maxContainersAmount = root.get_child_optional("max-containers-amount");
@@ -76,4 +99,15 @@ Config readConfig(std::string_view configPath) {
         std::terminate();
     }
 }
+
+std::optional<Config> getConfig() {
+    auto const path = findConfig();
+    if (path.empty()) {
+        return std::nullopt;
+    }
+
+    auto config = readConfig(path);
+    return config;
+}
+
 }  // namespace watchman
