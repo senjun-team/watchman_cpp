@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/detail/containers.hpp"
+#include "core/code_launcher/code_launcher_interface.hpp"
 
 namespace watchman {
 
@@ -20,7 +21,7 @@ public:
     Response runPractice(RunPracticeParams const & params);
 
 private:
-    detail::RestartingCodeLauncher getCodeLauncher(Config::CodeLauncherType type);
+    std::unique_ptr<CodeLauncherInterface> getCodeLauncher(Config::CodeLauncherType type);
     detail::CodeLauncherController m_codeLauncherController;
 };
 }  // namespace watchman

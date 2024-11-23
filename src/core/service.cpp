@@ -3,6 +3,7 @@
 #include "common/detail/containers.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
+#include "core/code_launcher/code_launcher_interface.hpp"
 
 namespace watchman {
 
@@ -72,8 +73,8 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
     std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
                                    {runTaskParams.sourceTest, kFilenameTaskTests}};
 
-    auto result = codeLauncher.runCode(makeTar(std::move(data)),
-                                       getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+    auto result = codeLauncher->runCode(makeTar(std::move(data)),
+                                        getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
         Log::error("Error return code {} from container type of {}", result.sourceCode,
                    runTaskParams.containerType);
@@ -88,7 +89,7 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
     }
 
     auto codeLauncher = getCodeLauncher(runProjectParams.containerType);  // here we have got a race
-    return codeLauncher.runCode(
+    return codeLauncher->runCode(
         makeProjectTar(std::move(runProjectParams.project)),
         getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
@@ -102,16 +103,19 @@ Response Service::runPractice(RunPracticeParams const & params) {
     auto codeLauncher = getCodeLauncher(params.containerType);  // here we have got a race
     auto dockerCmdArgs = getPracticeDockerArgs(params);
 
-    return codeLauncher.runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
+    return codeLauncher->runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
 }
 
-detail::RestartingCodeLauncher Service::getCodeLauncher(Config::CodeLauncherType type) {
+std::unique_ptr<CodeLauncherInterface> Service::getCodeLauncher(Config::CodeLauncherType type) {
     auto codeLauncher = m_codeLauncherController.getCodeLauncher(type);
     auto codeLauncherInfo = codeLauncher->getInfo();
 
-    return {std::move(codeLauncher), [this, codeLauncherInfo = std::move(codeLauncherInfo)]() {
-                m_codeLauncherController.restartCodeLauncher(codeLauncherInfo);
-            }};
+    auto ptr = std::make_unique<detail::RestartingCodeLauncher>(
+        std::move(codeLauncher), [this, codeLauncherInfo = std::move(codeLauncherInfo)]() {
+            m_codeLauncherController.restartCodeLauncher(codeLauncherInfo);
+        });
+
+    return ptr;
 }
 
 }  // namespace watchman

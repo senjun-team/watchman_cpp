@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/common.hpp"
+#include "core/code_launcher/code_launcher_interface.hpp"
 #include "core/code_launcher/code_launchers.hpp"
 
 #include <functional>
@@ -32,10 +33,10 @@ private:
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 
-class RestartingCodeLauncher {
+class RestartingCodeLauncher : public CodeLauncherInterface {
 public:
     RestartingCodeLauncher(std::unique_ptr<CodeLauncherInterface> launcher,
-                       std::function<void()> deleter);
+                           std::function<void()> deleter);
     ~RestartingCodeLauncher();
 
     RestartingCodeLauncher(RestartingCodeLauncher const &) = delete;
@@ -44,7 +45,10 @@ public:
     RestartingCodeLauncher & operator=(RestartingCodeLauncher &&) = delete;
 
     Response runCode(std::string && inMemoryTarWithSources,
-                     std::vector<std::string> && cmdLineArgs);
+                     std::vector<std::string> && cmdLineArgs) override;
+
+    
+    CodeLauncherInfo getInfo() const override;
 
 private:
     std::unique_ptr<CodeLauncherInterface> m_codeLauncher;
