@@ -6,12 +6,6 @@
 
 namespace watchman {
 
-struct LauncherRestartInfo {
-    std::string containerId;
-    std::string image;
-    std::string containerType;
-};
-
 struct BaseCodeLauncher : CodeLauncherInterface {
     DockerWrapper dockerWrapper;
     std::string containerId;
@@ -21,7 +15,7 @@ struct BaseCodeLauncher : CodeLauncherInterface {
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string && tarString);
-    LauncherRestartInfo getRestartInfo() const;
+    CodeLauncherInfo getInfo() const override;
 };
 
 struct CourseCodeLauncher final : BaseCodeLauncher {

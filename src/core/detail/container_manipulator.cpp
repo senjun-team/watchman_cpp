@@ -4,39 +4,42 @@
 #include "common/detail/containers.hpp"
 #include "common/logging.hpp"
 
+#include <unifex/sync_wait.hpp>
+#include <unifex/then.hpp>
+
 namespace watchman::detail {
 
 std::unique_ptr<BaseCodeLauncher>
-ContainerOSManipulator::createContainer(std::string const & type, std::string const & imageName) {
+CodeLauncherOSManipulator::createCodeLauncher(CodeLauncherInfo const & info) {
     RunContainer params;
 
-    params.image = imageName;
+    params.image = info.image;
     params.tty = true;
     params.memory = 300'000'000;
 
     std::string id = m_dockerWrapper.run(std::move(params));
     if (id.empty()) {
-        Log::warning("Internal error: can't run container of type {}", type);
+        Log::warning("Internal error: can't run container of type {}", info.containerType);
         return nullptr;
     }
 
-    Log::info("Launch container: {}, id: {}", imageName, id);
+    Log::info("Launch container: {}, id: {}", info.image, id);
 
     std::unique_ptr<BaseCodeLauncher> container;
-    if (imageName.find("playground") != std::string::npos) {
-        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), type);
-    } else if (imageName.find("course") != std::string::npos) {
-        container = std::make_unique<CourseCodeLauncher>(std::move(id), type);
-    } else if (imageName.find("practice") != std::string::npos) {
-        container = std::make_unique<PracticeCodeLauncher>(std::move(id), type);
+    if (info.image.find("playground") != std::string::npos) {
+        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), info.containerType);
+    } else if (info.image.find("course") != std::string::npos) {
+        container = std::make_unique<CourseCodeLauncher>(std::move(id), info.containerType);
+    } else if (info.image.find("practice") != std::string::npos) {
+        container = std::make_unique<PracticeCodeLauncher>(std::move(id), info.containerType);
     } else {
-        throw std::logic_error{"Wrong image name: " + imageName};
+        throw std::logic_error{"Wrong image name: " + info.image};
     }
 
     return container;
 }
 
-void ContainerOSManipulator::killContainer(std::string const & id) {
+void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
     if (m_dockerWrapper.isRunning(id)) {
         m_dockerWrapper.killContainer(id);
     }
@@ -44,31 +47,31 @@ void ContainerOSManipulator::killContainer(std::string const & id) {
     m_dockerWrapper.removeContainer(id);
 }
 
-ContainerOSManipulator::ContainerOSManipulator(Config && config,
-                                               ProtectedLaunchers & protectedContainers)
-    : m_protectedContainers(protectedContainers) {
-    syncKillRunningContainers(config);
-    syncLaunchNewContainers(config);
+CodeLauncherOSManipulator::CodeLauncherOSManipulator(Config && config,
+                                                     ProtectedLaunchers & protectedContainers)
+    : m_codeLaunchers(protectedContainers) {
+    syncRemoveRunningCodeLanchers(config);
+    syncCreateCodeLaunchers(config);
 }
 
-void ContainerOSManipulator::asyncRemoveContainerFromOs(std::string const & id) {
+void CodeLauncherOSManipulator::asyncRemoveCodeLauncher(std::string const & id) {
     unifex::schedule(m_containersContext.get_scheduler())
-        | unifex::then([this, &id] { killContainer(id); }) | unifex::sync_wait();
+        | unifex::then([this, &id] { removeCodeLauncher(id); }) | unifex::sync_wait();
 }
 
-void ContainerOSManipulator::asyncCreateNewContainer(Config::CodeLauncherType type,
-                                                     std::string const & image) {
+void CodeLauncherOSManipulator::asyncCreateCodeLauncher(Config::CodeLauncherType type,
+                                                        std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
-        auto container = createContainer(type, image);
+        auto container = createCodeLauncher({"", image, type});
         {
-            std::scoped_lock lock(m_protectedContainers.mutex);
-            m_protectedContainers.codeLaunchers.at(type).push_back(std::move(container));
+            std::scoped_lock lock(m_codeLaunchers.mutex);
+            m_codeLaunchers.codeLaunchers.at(type).push_back(std::move(container));
         }
-        m_protectedContainers.containerFree.notify_all();
+        m_codeLaunchers.codeLauncherFree.notify_all();
     }) | unifex::sync_wait();
 }
 
-void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
+void CodeLauncherOSManipulator::syncRemoveRunningCodeLanchers(Config const & config) {
     auto const workingContainers = m_dockerWrapper.getAllContainers();
 
     // todo think about naming, containerTypes is awful
@@ -77,7 +80,7 @@ void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
             for (auto const & container : workingContainers) {
                 if (container.image.find(info.imageName) != std::string::npos) {
                     Log::info("Remove container type: {}, id: {}", info.imageName, container.id);
-                    killContainer(container.id);
+                    removeCodeLauncher(container.id);
                 }
             }
         }
@@ -88,17 +91,17 @@ void ContainerOSManipulator::syncKillRunningContainers(Config const & config) {
     killContainers(config.practices);
 }
 
-void ContainerOSManipulator::syncLaunchNewContainers(Config const & config) {
+void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
     auto const launchContainers = [this](auto && containerTypes) {
         for (auto const & [type, info] : containerTypes) {
             std::list<std::unique_ptr<BaseCodeLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
-                auto container = createContainer(type, info.imageName);
+                auto container = createCodeLauncher({"", type, info.imageName});
                 containers.emplace_back(std::move(container));
             }
 
             if (!containers.empty()) {
-                m_protectedContainers.codeLaunchers.emplace(type, std::move(containers));
+                m_codeLaunchers.codeLaunchers.emplace(type, std::move(containers));
             }
         }
     };

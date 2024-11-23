@@ -20,7 +20,7 @@ public:
     Response runPractice(RunPracticeParams const & params);
 
 private:
-    detail::RestartingLauncher getCodeLauncher(Config::CodeLauncherType type);
+    detail::RestartingCodeLauncher getCodeLauncher(Config::CodeLauncherType type);
     detail::CodeLauncherController m_codeLauncherController;
 };
 }  // namespace watchman

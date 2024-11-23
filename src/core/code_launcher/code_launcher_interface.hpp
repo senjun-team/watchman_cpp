@@ -13,6 +13,8 @@ public:
 
     virtual Response runCode(std::string && inMemoryTarWithSources,
                              std::vector<std::string> && cmdLineArgs) = 0;
+    
+    virtual CodeLauncherInfo getInfo() const = 0;
 };
 
 }  // namespace watchman

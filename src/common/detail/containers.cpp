@@ -8,11 +8,11 @@ namespace watchman::detail {
 
 CodeLauncherController::CodeLauncherController(Config && config)
     : m_manipulator(
-          std::make_unique<ContainerOSManipulator>(std::move(config), m_protectedLaunchers)) {
+          std::make_unique<CodeLauncherOSManipulator>(std::move(config), m_protectedLaunchers)) {
     Log::info("Service launched");
 }
 
-std::unique_ptr<BaseCodeLauncher>
+std::unique_ptr<CodeLauncherInterface>
 CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
     // lock for any container type
     // todo think of separating containers into different queues
@@ -20,7 +20,7 @@ CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
 
     auto & specificCodeLaunchers = m_protectedLaunchers.codeLaunchers.at(type);
 
-    m_protectedLaunchers.containerFree.wait(
+    m_protectedLaunchers.codeLauncherFree.wait(
         lock, [&specificCodeLaunchers]() -> bool { return !specificCodeLaunchers.empty(); });
 
     auto launcher = std::move(specificCodeLaunchers.back());
@@ -29,7 +29,7 @@ CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
     return launcher;
 }
 
-void CodeLauncherController::restartCodeLauncher(LauncherRestartInfo const & restartInfo) {
+void CodeLauncherController::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
     {
@@ -43,35 +43,35 @@ void CodeLauncherController::restartCodeLauncher(LauncherRestartInfo const & res
                                         }),
                          containers.end());
     }
-    removeContainerFromOs(id);
-    createNewContainer(restartInfo.containerType, image);
+    removeCodeLauncher(id);
+    createNewCodeLauncher(restartInfo.containerType, image);
 }
 
 CodeLauncherController::~CodeLauncherController() = default;
 
-RestartingLauncher::RestartingLauncher(std::unique_ptr<BaseCodeLauncher> container,
+RestartingCodeLauncher::RestartingCodeLauncher(std::unique_ptr<CodeLauncherInterface> container,
                                        std::function<void()> deleter)
     : m_codeLauncher(std::move(container))
     , m_releaser(std::move(deleter)) {}
 
-RestartingLauncher::~RestartingLauncher() { m_releaser(); }
+RestartingCodeLauncher::~RestartingCodeLauncher() { m_releaser(); }
 
-Response RestartingLauncher::runCode(std::string && inMemoryTarWithSources,
+Response RestartingCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                      std::vector<std::string> && cmdLineArgs) {
     return m_codeLauncher->runCode(std::move(inMemoryTarWithSources), std::move(cmdLineArgs));
 }
 
-bool CodeLauncherController::launcherTypeIsValid(std::string const & name) const {
+bool CodeLauncherController::codeLauncherTypeIsValid(std::string const & name) const {
     return m_protectedLaunchers.codeLaunchers.contains(name);
 }
 
-void CodeLauncherController::removeContainerFromOs(std::string const & id) {
-    m_manipulator->asyncRemoveContainerFromOs(id);
+void CodeLauncherController::removeCodeLauncher(std::string const & id) {
+    m_manipulator->asyncRemoveCodeLauncher(id);
 }
 
-void CodeLauncherController::createNewContainer(Config::CodeLauncherType type,
+void CodeLauncherController::createNewCodeLauncher(Config::CodeLauncherType type,
                                                 std::string const & image) {
-    m_manipulator->asyncCreateNewContainer(type, image);
+    m_manipulator->asyncCreateCodeLauncher(type, image);
 }
 
 }  // namespace watchman::detail

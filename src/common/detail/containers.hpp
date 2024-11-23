@@ -8,7 +8,7 @@
 
 namespace watchman::detail {
 
-class ContainerOSManipulator;
+class CodeLauncherOSManipulator;
 
 class CodeLauncherController {
 public:
@@ -20,33 +20,34 @@ public:
     CodeLauncherController & operator=(CodeLauncherController const & other) = delete;
     CodeLauncherController & operator=(CodeLauncherController && other) = delete;
 
-    std::unique_ptr<BaseCodeLauncher> getCodeLauncher(Config::CodeLauncherType const & type);
-    void restartCodeLauncher(LauncherRestartInfo const & restartInfo);
-    bool launcherTypeIsValid(std::string const & name) const;
+    std::unique_ptr<CodeLauncherInterface> getCodeLauncher(Config::CodeLauncherType const & type);
+    void restartCodeLauncher(CodeLauncherInfo const & info);
+    bool codeLauncherTypeIsValid(std::string const & name) const;
 
 private:
-    void removeContainerFromOs(std::string const & id);
-    void createNewContainer(Config::CodeLauncherType type, std::string const & image);
+    void removeCodeLauncher(std::string const & id);
+    void createNewCodeLauncher(Config::CodeLauncherType type, std::string const & image);
 
     ProtectedLaunchers m_protectedLaunchers;
-    std::unique_ptr<ContainerOSManipulator> m_manipulator;
+    std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 
-class RestartingLauncher {
+class RestartingCodeLauncher {
 public:
-    RestartingLauncher(std::unique_ptr<BaseCodeLauncher> launcher, std::function<void()> deleter);
-    ~RestartingLauncher();
+    RestartingCodeLauncher(std::unique_ptr<CodeLauncherInterface> launcher,
+                       std::function<void()> deleter);
+    ~RestartingCodeLauncher();
 
-    RestartingLauncher(RestartingLauncher const &) = delete;
-    RestartingLauncher(RestartingLauncher &&) = delete;
-    RestartingLauncher & operator=(RestartingLauncher const &) = delete;
-    RestartingLauncher & operator=(RestartingLauncher &&) = delete;
+    RestartingCodeLauncher(RestartingCodeLauncher const &) = delete;
+    RestartingCodeLauncher(RestartingCodeLauncher &&) = delete;
+    RestartingCodeLauncher & operator=(RestartingCodeLauncher const &) = delete;
+    RestartingCodeLauncher & operator=(RestartingCodeLauncher &&) = delete;
 
     Response runCode(std::string && inMemoryTarWithSources,
                      std::vector<std::string> && cmdLineArgs);
 
 private:
-    std::unique_ptr<BaseCodeLauncher> m_codeLauncher;
+    std::unique_ptr<CodeLauncherInterface> m_codeLauncher;
     std::function<void()> m_releaser;
 };
 

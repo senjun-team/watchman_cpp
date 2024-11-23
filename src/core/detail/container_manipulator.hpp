@@ -1,30 +1,30 @@
 #pragma once
 
 #include "common/common.hpp"
+#include "core/code_launcher/code_launchers.hpp"
 #include "core/docker_wrapper.hpp"
 
 #include <unifex/single_thread_context.hpp>
-#include <unifex/sync_wait.hpp>
-#include <unifex/then.hpp>
 
 namespace watchman::detail {
 
-class ContainerOSManipulator {
+class CodeLauncherOSManipulator {
 public:
-    ContainerOSManipulator(Config && config, ProtectedLaunchers & protectedContainers);
+    CodeLauncherOSManipulator(Config && config, ProtectedLaunchers & protectedContainers);
 
-    void asyncRemoveContainerFromOs(std::string const & id);
-    void asyncCreateNewContainer(Config::CodeLauncherType type, std::string const & image);
+    void asyncRemoveCodeLauncher(std::string const & id);
+    void asyncCreateCodeLauncher(Config::CodeLauncherType type, std::string const & image);
 
 private:
-    void syncKillRunningContainers(Config const & config);
-    void syncLaunchNewContainers(Config const & config);
+    void syncRemoveRunningCodeLanchers(Config const & config);
+    void syncCreateCodeLaunchers(Config const & config);
 
-    std::unique_ptr<BaseCodeLauncher> createContainer(std::string const & containerType,
-                                                   std::string const & imageName);
-    void killContainer(std::string const & id);
+    // todo
+    // user pair, not code launcher info
+    std::unique_ptr<BaseCodeLauncher> createCodeLauncher(CodeLauncherInfo const & info);
+    void removeCodeLauncher(std::string const & id);
 
-    ProtectedLaunchers & m_protectedContainers;
+    ProtectedLaunchers & m_codeLaunchers;
 
     unifex::single_thread_context m_containersContext;
     DockerWrapper m_dockerWrapper;

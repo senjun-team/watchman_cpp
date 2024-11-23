@@ -64,7 +64,7 @@ BaseCodeLauncher::BaseCodeLauncher(std::string id, Config::CodeLauncherType type
     : containerId(std::move(id))
     , type(std::move(type)) {}
 
-LauncherRestartInfo BaseCodeLauncher::getRestartInfo() const {
+CodeLauncherInfo BaseCodeLauncher::getInfo() const {
     return {containerId, dockerWrapper.getImage(containerId), type};
 }
 

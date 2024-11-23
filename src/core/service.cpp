@@ -61,7 +61,7 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
-    if (!m_codeLauncherController.launcherTypeIsValid(runTaskParams.containerType)) {
+    if (!m_codeLauncherController.codeLauncherTypeIsValid(runTaskParams.containerType)) {
         Log::warning("Invalid container type: {}", runTaskParams.containerType);
         return {kInvalidCode,
                 fmt::format("Invalid container type: {}", runTaskParams.containerType),
@@ -82,7 +82,7 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
 }
 
 Response Service::runPlayground(RunProjectParams const & runProjectParams) {
-    if (!m_codeLauncherController.launcherTypeIsValid(runProjectParams.containerType)) {
+    if (!m_codeLauncherController.codeLauncherTypeIsValid(runProjectParams.containerType)) {
         Log::warning("Invalid container type: {}", runProjectParams.containerType);
         return {};
     }
@@ -94,7 +94,7 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {
-    if (!m_codeLauncherController.launcherTypeIsValid(params.containerType)) {
+    if (!m_codeLauncherController.codeLauncherTypeIsValid(params.containerType)) {
         Log::warning("Invalid container type: {}", params.containerType);
         return {};
     }
@@ -105,12 +105,12 @@ Response Service::runPractice(RunPracticeParams const & params) {
     return codeLauncher.runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
 }
 
-detail::RestartingLauncher Service::getCodeLauncher(Config::CodeLauncherType type) {
+detail::RestartingCodeLauncher Service::getCodeLauncher(Config::CodeLauncherType type) {
     auto codeLauncher = m_codeLauncherController.getCodeLauncher(type);
-    auto restartInfo = codeLauncher->getRestartInfo();
+    auto codeLauncherInfo = codeLauncher->getInfo();
 
-    return {std::move(codeLauncher), [this, restartInfo = std::move(restartInfo)]() {
-                m_codeLauncherController.restartCodeLauncher(restartInfo);
+    return {std::move(codeLauncher), [this, codeLauncherInfo = std::move(codeLauncherInfo)]() {
+                m_codeLauncherController.restartCodeLauncher(codeLauncherInfo);
             }};
 }
 

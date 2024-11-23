@@ -40,7 +40,6 @@ struct RunPracticeParams {
 
 size_t getCpuCount();
 
-
 struct CodeFilename {
     std::string code;
     std::string filename;
@@ -63,7 +62,7 @@ namespace detail {
 
 struct ProtectedLaunchers {
     std::mutex mutex;
-    std::condition_variable containerFree;
+    std::condition_variable codeLauncherFree;
     std::unordered_map<Config::CodeLauncherType, std::list<std::unique_ptr<BaseCodeLauncher>>>
         codeLaunchers;
 };
