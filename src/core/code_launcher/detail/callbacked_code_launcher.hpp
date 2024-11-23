@@ -6,16 +6,16 @@
 
 namespace watchman::detail {
 
-class RestartingCodeLauncher : public CodeLauncherInterface {
+class CallbackedCodeLauncher : public CodeLauncherInterface {
 public:
-    RestartingCodeLauncher(std::unique_ptr<CodeLauncherInterface> launcher,
+    CallbackedCodeLauncher(std::unique_ptr<CodeLauncherInterface> launcher,
                            std::function<void()> deleter);
-    ~RestartingCodeLauncher();
+    ~CallbackedCodeLauncher();
 
-    RestartingCodeLauncher(RestartingCodeLauncher const &) = delete;
-    RestartingCodeLauncher(RestartingCodeLauncher &&) = delete;
-    RestartingCodeLauncher & operator=(RestartingCodeLauncher const &) = delete;
-    RestartingCodeLauncher & operator=(RestartingCodeLauncher &&) = delete;
+    CallbackedCodeLauncher(CallbackedCodeLauncher const &) = delete;
+    CallbackedCodeLauncher(CallbackedCodeLauncher &&) = delete;
+    CallbackedCodeLauncher & operator=(CallbackedCodeLauncher const &) = delete;
+    CallbackedCodeLauncher & operator=(CallbackedCodeLauncher &&) = delete;
 
     Response runCode(std::string && inMemoryTarWithSources,
                      std::vector<std::string> && cmdLineArgs) override;

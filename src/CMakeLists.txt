@@ -20,7 +20,7 @@ set(CORE_SOURCES
         core/code_launcher/detail/process_playground.cpp
         core/code_launcher/detail/process_practice.cpp
         core/code_launcher/detail/code_launchers.cpp
-        core/code_launcher/detail/restarting_code_launcher.cpp
+        core/code_launcher/detail/callbacked_code_launcher.cpp
         core/code_launcher/detail/containers.cpp
         common/config.cpp
         common/detail/answer_common.cpp

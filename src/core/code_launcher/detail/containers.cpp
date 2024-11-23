@@ -1,9 +1,9 @@
 #include "core/code_launcher/detail/containers.hpp"
 
 #include "common/logging.hpp"
+#include "core/code_launcher/detail/callbacked_code_launcher.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 #include "core/code_launcher/detail/container_manipulator.hpp"
-#include "core/code_launcher/detail/restarting_code_launcher.hpp"
 
 namespace watchman::detail {
 
@@ -32,7 +32,7 @@ CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
     auto launcher = std::move(specificCodeLaunchers.back());
     specificCodeLaunchers.pop_back();
 
-    auto ptr = std::make_unique<detail::RestartingCodeLauncher>(
+    auto ptr = std::make_unique<detail::CallbackedCodeLauncher>(
         std::move(launcher), [this, codeLauncherInfo = launcher->getInfo()]() {
             restartCodeLauncher(codeLauncherInfo);
         });
