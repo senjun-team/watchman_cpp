@@ -1,4 +1,4 @@
-#include "core/code_launcher/detail/code_launcher_controller.hpp"
+#include "core/code_launcher/detail/restarting_code_launcher_controller.hpp"
 
 #include "common/logging.hpp"
 #include "core/code_launcher/detail/callbacked_code_launcher.hpp"
@@ -7,14 +7,14 @@
 
 namespace watchman::detail {
 
-CodeLauncherController::CodeLauncherController(Config && config)
+RestartingCodeLauncher::RestartingCodeLauncher(Config && config)
     : m_manipulator(
           std::make_unique<CodeLauncherOSManipulator>(std::move(config), m_protectedLaunchers)) {
     Log::info("Service launched");
 }
 
 std::unique_ptr<CodeLauncherInterface>
-CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
+RestartingCodeLauncher::getCodeLauncher(Config::CodeLauncherType const & type) {
     if (!codeLauncherTypeIsValid(type)) {
         Log::warning("Invalid container type: {}", type);
         return nullptr;
@@ -40,7 +40,7 @@ CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
     return ptr;
 }
 
-void CodeLauncherController::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
+void RestartingCodeLauncher::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
     {
@@ -54,23 +54,14 @@ void CodeLauncherController::restartCodeLauncher(CodeLauncherInfo const & restar
                                         }),
                          containers.end());
     }
-    removeCodeLauncher(id);
-    createNewCodeLauncher(restartInfo.containerType, image);
-}
-
-CodeLauncherController::~CodeLauncherController() = default;
-
-void CodeLauncherController::removeCodeLauncher(std::string const & id) {
     m_manipulator->asyncRemoveCodeLauncher(id);
+    m_manipulator->asyncCreateCodeLauncher(restartInfo.containerType, image);
 }
 
-void CodeLauncherController::createNewCodeLauncher(Config::CodeLauncherType type,
-                                                   std::string const & image) {
-    m_manipulator->asyncCreateCodeLauncher(type, image);
-}
-
-bool CodeLauncherController::codeLauncherTypeIsValid(std::string const & name) const {
+bool RestartingCodeLauncher::codeLauncherTypeIsValid(std::string const & name) const {
     return m_protectedLaunchers.codeLaunchers.contains(name);
 }
+
+RestartingCodeLauncher::~RestartingCodeLauncher() = default;
 
 }  // namespace watchman::detail

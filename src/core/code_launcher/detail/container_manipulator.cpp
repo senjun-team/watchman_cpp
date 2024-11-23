@@ -2,7 +2,6 @@
 
 #include "common/common.hpp"
 #include "common/logging.hpp"
-#include "core/code_launcher/detail/code_launcher_controller.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 
 #include <unifex/sync_wait.hpp>

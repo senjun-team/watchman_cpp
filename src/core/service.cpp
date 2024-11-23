@@ -2,7 +2,7 @@
 
 #include "common/logging.hpp"
 #include "common/project.hpp"
-#include "core/code_launcher/detail/code_launcher_controller.hpp"
+#include "core/code_launcher/detail/restarting_code_launcher_controller.hpp"
 #include "core/code_launcher/response.hpp"
 #include "fmt/core.h"
 
@@ -10,7 +10,7 @@ namespace watchman {
 
 Service::Service(Config && config)
     : m_codeLauncherController(
-          std::make_unique<detail::CodeLauncherController>(std::move(config))) {}
+          std::make_unique<detail::RestartingCodeLauncher>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,
