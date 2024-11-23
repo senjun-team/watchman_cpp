@@ -4,11 +4,14 @@
 #include "common/project.hpp"
 #include "core/code_launcher/detail/containers.hpp"
 #include "core/code_launcher/detail/restarting_code_launcher.hpp"
+#include "core/code_launcher/response.hpp"
+#include "fmt/core.h"
 
 namespace watchman {
 
 Service::Service(Config && config)
-    : m_codeLauncherController(std::move(config)) {}
+    : m_codeLauncherController(
+          std::make_unique<detail::CodeLauncherController>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,
@@ -62,14 +65,14 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
-    if (!m_codeLauncherController.codeLauncherTypeIsValid(runTaskParams.containerType)) {
-        Log::warning("Invalid container type: {}", runTaskParams.containerType);
+    auto codeLauncher = m_codeLauncherController->getCodeLauncher(
+        runTaskParams.containerType);  // here we have got a race
+
+    if (codeLauncher == nullptr) {
         return {kInvalidCode,
-                fmt::format("Invalid container type: {}", runTaskParams.containerType),
-                std::string{}};
+                fmt::format("Probably wrong container type: {}", runTaskParams.containerType)};
     }
 
-    auto codeLauncher = getCodeLauncher(runTaskParams.containerType);  // here we have got a race
     std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
                                    {runTaskParams.sourceTest, kFilenameTaskTests}};
 
@@ -83,39 +86,28 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
 }
 
 Response Service::runPlayground(RunProjectParams const & runProjectParams) {
-    if (!m_codeLauncherController.codeLauncherTypeIsValid(runProjectParams.containerType)) {
-        Log::warning("Invalid container type: {}", runProjectParams.containerType);
+    auto codeLauncher = m_codeLauncherController->getCodeLauncher(
+        runProjectParams.containerType);  // here we have got a race
+
+    if (codeLauncher == nullptr) {
         return {};
     }
 
-    auto codeLauncher = getCodeLauncher(runProjectParams.containerType);  // here we have got a race
     return codeLauncher->runCode(
         makeProjectTar(std::move(runProjectParams.project)),
         getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {
-    if (!m_codeLauncherController.codeLauncherTypeIsValid(params.containerType)) {
-        Log::warning("Invalid container type: {}", params.containerType);
+    auto codeLauncher =
+        m_codeLauncherController->getCodeLauncher(params.containerType);  // here we have got a race
+
+    if (codeLauncher == nullptr) {
         return {};
     }
-
-    auto codeLauncher = getCodeLauncher(params.containerType);  // here we have got a race
     auto dockerCmdArgs = getPracticeDockerArgs(params);
 
     return codeLauncher->runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
-}
-
-std::unique_ptr<CodeLauncherInterface> Service::getCodeLauncher(Config::CodeLauncherType type) {
-    auto codeLauncher = m_codeLauncherController.getCodeLauncher(type);
-    auto codeLauncherInfo = codeLauncher->getInfo();
-
-    auto ptr = std::make_unique<detail::RestartingCodeLauncher>(
-        std::move(codeLauncher), [this, codeLauncherInfo = std::move(codeLauncherInfo)]() {
-            m_codeLauncherController.restartCodeLauncher(codeLauncherInfo);
-        });
-
-    return ptr;
 }
 
 }  // namespace watchman

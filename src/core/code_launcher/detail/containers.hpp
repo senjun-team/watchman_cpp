@@ -1,13 +1,13 @@
 #pragma once
 
 #include "common/common.hpp"
-#include "core/code_launcher/code_launcher_interface.hpp"
+#include "core/code_launcher/code_launcher_controller_interface.hpp"
 
 namespace watchman::detail {
 
 class CodeLauncherOSManipulator;
 
-class CodeLauncherController {
+class CodeLauncherController : public CodeLauncherControllerInterface {
 public:
     explicit CodeLauncherController(Config && config);
     ~CodeLauncherController();
@@ -17,17 +17,17 @@ public:
     CodeLauncherController & operator=(CodeLauncherController const & other) = delete;
     CodeLauncherController & operator=(CodeLauncherController && other) = delete;
 
-    std::unique_ptr<CodeLauncherInterface> getCodeLauncher(Config::CodeLauncherType const & type);
-    void restartCodeLauncher(CodeLauncherInfo const & info);
-    bool codeLauncherTypeIsValid(std::string const & name) const;
+    std::unique_ptr<CodeLauncherInterface>
+    getCodeLauncher(Config::CodeLauncherType const & type) override;
 
 private:
+    void restartCodeLauncher(CodeLauncherInfo const & info);
+    bool codeLauncherTypeIsValid(std::string const & name) const;
     void removeCodeLauncher(std::string const & id);
     void createNewCodeLauncher(Config::CodeLauncherType type, std::string const & image);
 
     ProtectedLaunchers m_protectedLaunchers;
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
-
 
 }  // namespace watchman::detail

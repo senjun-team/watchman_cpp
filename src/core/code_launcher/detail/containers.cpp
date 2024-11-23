@@ -1,7 +1,9 @@
 #include "core/code_launcher/detail/containers.hpp"
 
 #include "common/logging.hpp"
+#include "core/code_launcher/detail/code_launchers.hpp"
 #include "core/code_launcher/detail/container_manipulator.hpp"
+#include "core/code_launcher/detail/restarting_code_launcher.hpp"
 
 namespace watchman::detail {
 
@@ -13,6 +15,11 @@ CodeLauncherController::CodeLauncherController(Config && config)
 
 std::unique_ptr<CodeLauncherInterface>
 CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
+    if (!codeLauncherTypeIsValid(type)) {
+        Log::warning("Invalid container type: {}", type);
+        return nullptr;
+    }
+
     // lock for any container type
     // todo think of separating containers into different queues
     std::unique_lock lock(m_protectedLaunchers.mutex);
@@ -25,7 +32,12 @@ CodeLauncherController::getCodeLauncher(Config::CodeLauncherType const & type) {
     auto launcher = std::move(specificCodeLaunchers.back());
     specificCodeLaunchers.pop_back();
 
-    return launcher;
+    auto ptr = std::make_unique<detail::RestartingCodeLauncher>(
+        std::move(launcher), [this, codeLauncherInfo = launcher->getInfo()]() {
+            restartCodeLauncher(codeLauncherInfo);
+        });
+
+    return ptr;
 }
 
 void CodeLauncherController::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
