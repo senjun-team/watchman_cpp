@@ -2,15 +2,14 @@
 
 #include "common/logging.hpp"
 #include "common/project.hpp"
-#include "core/code_launcher/detail/restarting_code_launcher_controller.hpp"
+#include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
 #include "core/code_launcher/response.hpp"
 #include "fmt/core.h"
 
 namespace watchman {
 
 Service::Service(Config && config)
-    : m_codeLauncherController(
-          std::make_unique<detail::RestartingCodeLauncher>(std::move(config))) {}
+    : m_codeLauncherProvider(std::make_unique<detail::RestartingCodeLauncher>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,
@@ -64,7 +63,7 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
-    auto codeLauncher = m_codeLauncherController->getCodeLauncher(
+    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
         runTaskParams.containerType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
@@ -85,7 +84,7 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
 }
 
 Response Service::runPlayground(RunProjectParams const & runProjectParams) {
-    auto codeLauncher = m_codeLauncherController->getCodeLauncher(
+    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
         runProjectParams.containerType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
@@ -99,7 +98,7 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
 
 Response Service::runPractice(RunPracticeParams const & params) {
     auto codeLauncher =
-        m_codeLauncherController->getCodeLauncher(params.containerType);  // here we have got a race
+        m_codeLauncherProvider->getCodeLauncher(params.containerType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};

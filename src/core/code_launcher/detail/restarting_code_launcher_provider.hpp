@@ -1,13 +1,13 @@
 #pragma once
 
 #include "common/common.hpp"
-#include "core/code_launcher/code_launcher_controller_interface.hpp"
+#include "core/code_launcher/code_launcher_provider_interface.hpp"
 
 namespace watchman::detail {
 
 class CodeLauncherOSManipulator;
 
-class RestartingCodeLauncher : public CodeLauncherControllerInterface {
+class RestartingCodeLauncher : public CodeLauncherProviderInterface {
 public:
     explicit RestartingCodeLauncher(Config && config);
     ~RestartingCodeLauncher();

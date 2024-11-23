@@ -5,9 +5,9 @@
 
 namespace watchman {
 
-class CodeLauncherControllerInterface {
+class CodeLauncherProviderInterface {
 public:
-    virtual ~CodeLauncherControllerInterface() = default;
+    virtual ~CodeLauncherProviderInterface() = default;
 
     virtual std::unique_ptr<CodeLauncherInterface>
     getCodeLauncher(Config::CodeLauncherType const & type) = 0;
