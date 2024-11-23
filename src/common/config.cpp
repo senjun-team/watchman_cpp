@@ -5,6 +5,9 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
+#include <filesystem>
+#include <string_view>
+
 namespace watchman {
 
 std::string_view constexpr kConfig = "watchman_cpp_config.json";

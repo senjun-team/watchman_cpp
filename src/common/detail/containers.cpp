@@ -1,7 +1,6 @@
 #include "common/detail/containers.hpp"
 
 #include "common/logging.hpp"
-#include "core/code_launcher/code_launchers.hpp"
 #include "core/detail/container_manipulator.hpp"
 
 namespace watchman::detail {
@@ -49,24 +48,6 @@ void CodeLauncherController::restartCodeLauncher(CodeLauncherInfo const & restar
 
 CodeLauncherController::~CodeLauncherController() = default;
 
-RestartingCodeLauncher::RestartingCodeLauncher(std::unique_ptr<CodeLauncherInterface> container,
-                                               std::function<void()> deleter)
-    : m_codeLauncher(std::move(container))
-    , m_releaser(std::move(deleter)) {}
-
-RestartingCodeLauncher::~RestartingCodeLauncher() { m_releaser(); }
-
-Response RestartingCodeLauncher::runCode(std::string && inMemoryTarWithSources,
-                                         std::vector<std::string> && cmdLineArgs) {
-    return m_codeLauncher->runCode(std::move(inMemoryTarWithSources), std::move(cmdLineArgs));
-}
-
-bool CodeLauncherController::codeLauncherTypeIsValid(std::string const & name) const {
-    return m_protectedLaunchers.codeLaunchers.contains(name);
-}
-
-CodeLauncherInfo RestartingCodeLauncher::getInfo() const { return m_codeLauncher->getInfo(); }
-
 void CodeLauncherController::removeCodeLauncher(std::string const & id) {
     m_manipulator->asyncRemoveCodeLauncher(id);
 }
@@ -74,6 +55,10 @@ void CodeLauncherController::removeCodeLauncher(std::string const & id) {
 void CodeLauncherController::createNewCodeLauncher(Config::CodeLauncherType type,
                                                    std::string const & image) {
     m_manipulator->asyncCreateCodeLauncher(type, image);
+}
+
+bool CodeLauncherController::codeLauncherTypeIsValid(std::string const & name) const {
+    return m_protectedLaunchers.codeLaunchers.contains(name);
 }
 
 }  // namespace watchman::detail

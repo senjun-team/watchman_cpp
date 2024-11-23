@@ -96,7 +96,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         for (auto const & [type, info] : containerTypes) {
             std::list<std::unique_ptr<BaseCodeLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
-                auto container = createCodeLauncher({"", type, info.imageName});
+                auto container = createCodeLauncher({"", info.imageName, type});
                 containers.emplace_back(std::move(container));
             }
 
