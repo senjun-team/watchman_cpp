@@ -1,7 +1,7 @@
-#include "common/detail/containers.hpp"
+#include "core/code_launcher/detail/containers.hpp"
 
 #include "common/logging.hpp"
-#include "core/detail/container_manipulator.hpp"
+#include "core/code_launcher/detail/container_manipulator.hpp"
 
 namespace watchman::detail {
 

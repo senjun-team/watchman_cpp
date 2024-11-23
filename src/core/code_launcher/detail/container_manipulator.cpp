@@ -1,8 +1,8 @@
 #include "container_manipulator.hpp"
 
 #include "common/common.hpp"
-#include "common/detail/containers.hpp"
 #include "common/logging.hpp"
+#include "core/code_launcher/detail/containers.hpp"
 
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>

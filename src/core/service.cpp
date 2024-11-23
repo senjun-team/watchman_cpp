@@ -1,9 +1,8 @@
 #include "service.hpp"
 
-#include "common/detail/containers.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
-
+#include "core/code_launcher/detail/containers.hpp"
 #include "core/code_launcher/detail/restarting_code_launcher.hpp"
 
 namespace watchman {

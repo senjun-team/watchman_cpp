@@ -12,18 +12,18 @@ set(CORE_SOURCES
         core/docker_wrapper.cpp
         core/parser.cpp
         core/detail/directory_traverser.cpp
-        core/detail/container_manipulator.cpp
         common/common.cpp
         common/logging.cpp
         common/project.cpp
+        core/code_launcher/detail/container_manipulator.cpp
         core/code_launcher/detail/process_courses.cpp
         core/code_launcher/detail/process_playground.cpp
         core/code_launcher/detail/process_practice.cpp
         core/code_launcher/detail/code_launchers.cpp
         core/code_launcher/detail/restarting_code_launcher.cpp
+        core/code_launcher/detail/containers.cpp
         common/config.cpp
         common/detail/answer_common.cpp
-        common/detail/containers.cpp
         )
 set(WATCHMAN_CORE "${PROJECT_NAME}_core")
 add_library(${WATCHMAN_CORE} ${CORE_SOURCES})
