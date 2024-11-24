@@ -1,13 +1,8 @@
 #pragma once
 
-#include "common/config.hpp"
 #include "project.hpp"
 
 #include <chrono>
-#include <condition_variable>
-#include <list>
-#include <mutex>
-#include <string_view>
 
 namespace watchman {
 
@@ -56,16 +51,5 @@ private:
     std::string const m_operation;
     std::chrono::system_clock::time_point m_start;
 };
-
-struct BaseCodeLauncher;
-namespace detail {
-
-struct CodeLaunchersStorage {
-    std::mutex mutex;
-    std::condition_variable codeLauncherFree;
-    std::unordered_map<Config::CodeLauncherType, std::list<std::unique_ptr<BaseCodeLauncher>>>
-        codeLaunchers;
-};
-}  // namespace detail
 
 }  // namespace watchman

@@ -48,8 +48,8 @@ void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
 }
 
 CodeLauncherOSManipulator::CodeLauncherOSManipulator(Config && config,
-                                                     CodeLaunchersStorage & protectedContainers)
-    : m_codeLaunchers(protectedContainers) {
+                                                     CodeLaunchersStorage & storage)
+    : m_storage(storage) {
     syncRemoveRunningCodeLanchers(config);
     syncCreateCodeLaunchers(config);
 }
@@ -63,11 +63,7 @@ void CodeLauncherOSManipulator::asyncCreateCodeLauncher(Config::CodeLauncherType
                                                         std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         auto container = createCodeLauncher({"", image, type});
-        {
-            std::scoped_lock lock(m_codeLaunchers.mutex);
-            m_codeLaunchers.codeLaunchers.at(type).push_back(std::move(container));
-        }
-        m_codeLaunchers.codeLauncherFree.notify_all();
+        m_storage.addCodeLauncher(type, std::move(container));
     }) | unifex::sync_wait();
 }
 
@@ -101,7 +97,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
             }
 
             if (!containers.empty()) {
-                m_codeLaunchers.codeLaunchers.emplace(type, std::move(containers));
+                m_storage.addCodeLaunchers(type, std::move(containers));
             }
         }
     };

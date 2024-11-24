@@ -8,8 +8,7 @@
 namespace watchman::detail {
 
 RestartingCodeLauncherProvider::RestartingCodeLauncherProvider(Config && config)
-    : m_manipulator(
-          std::make_unique<CodeLauncherOSManipulator>(std::move(config), m_protectedLaunchers)) {
+    : m_manipulator(std::make_unique<CodeLauncherOSManipulator>(std::move(config), m_storage)) {
     Log::info("Service launched");
 }
 
@@ -20,17 +19,7 @@ RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const &
         return nullptr;
     }
 
-    // lock for any container type
-    // todo think of separating containers into different queues
-    std::unique_lock lock(m_protectedLaunchers.mutex);
-
-    auto & specificCodeLaunchers = m_protectedLaunchers.codeLaunchers.at(type);
-
-    m_protectedLaunchers.codeLauncherFree.wait(
-        lock, [&specificCodeLaunchers]() -> bool { return !specificCodeLaunchers.empty(); });
-
-    auto launcher = std::move(specificCodeLaunchers.back());
-    specificCodeLaunchers.pop_back();
+    auto launcher = m_storage.getCodeLauncher(type);
 
     auto ptr = std::make_unique<detail::CallbackedCodeLauncher>(
         std::move(launcher), [this, codeLauncherInfo = launcher->getInfo()]() {
@@ -43,23 +32,15 @@ RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const &
 void RestartingCodeLauncherProvider::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
-    {
-        std::scoped_lock const lock(m_protectedLaunchers.mutex);
 
-        auto & containers = m_protectedLaunchers.codeLaunchers.at(restartInfo.containerType);
+    m_storage.removeById(id, restartInfo.containerType);
 
-        containers.erase(std::remove_if(containers.begin(), containers.end(),
-                                        [id = restartInfo.containerId](auto const & c) {
-                                            return c->containerId == id;
-                                        }),
-                         containers.end());
-    }
     m_manipulator->asyncRemoveCodeLauncher(id);
     m_manipulator->asyncCreateCodeLauncher(restartInfo.containerType, image);
 }
 
 bool RestartingCodeLauncherProvider::codeLauncherTypeIsValid(std::string const & name) const {
-    return m_protectedLaunchers.codeLaunchers.contains(name);
+    return m_storage.contains(name);
 }
 
 RestartingCodeLauncherProvider::~RestartingCodeLauncherProvider() = default;

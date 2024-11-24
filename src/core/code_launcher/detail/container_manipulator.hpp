@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/common.hpp"
+#include "core/code_launcher/detail/storage.hpp"
 #include "core/code_launcher/response.hpp"
 #include "core/docker_wrapper.hpp"
 
@@ -10,7 +10,7 @@ namespace watchman::detail {
 
 class CodeLauncherOSManipulator {
 public:
-    CodeLauncherOSManipulator(Config && config, CodeLaunchersStorage & protectedContainers);
+    CodeLauncherOSManipulator(Config && config, CodeLaunchersStorage & storage);
 
     void asyncRemoveCodeLauncher(std::string const & id);
     void asyncCreateCodeLauncher(Config::CodeLauncherType type, std::string const & image);
@@ -24,7 +24,7 @@ private:
     std::unique_ptr<BaseCodeLauncher> createCodeLauncher(CodeLauncherInfo const & info);
     void removeCodeLauncher(std::string const & id);
 
-    CodeLaunchersStorage & m_codeLaunchers;
+    CodeLaunchersStorage & m_storage;
 
     unifex::single_thread_context m_containersContext;
     DockerWrapper m_dockerWrapper;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common/common.hpp"
 #include "core/code_launcher/code_launcher_provider_interface.hpp"
+#include "core/code_launcher/detail/storage.hpp"
 
 namespace watchman::detail {
 
@@ -26,7 +26,7 @@ private:
     void restartCodeLauncher(CodeLauncherInfo const & info);
     bool codeLauncherTypeIsValid(std::string const & name) const;
 
-    CodeLaunchersStorage m_protectedLaunchers;
+    CodeLaunchersStorage m_storage;
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 
