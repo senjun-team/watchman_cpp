@@ -33,7 +33,8 @@ void RestartingCodeLauncherProvider::restartCodeLauncher(CodeLauncherInfo const 
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
 
-    m_storage.removeById(id, restartInfo.containerType);
+    m_storage.removeById(id, restartInfo.containerType,
+                         [&id](auto const & c) { return c->containerId == id; });
 
     m_manipulator->asyncRemoveCodeLauncher(id);
     m_manipulator->asyncCreateCodeLauncher(restartInfo.containerType, image);

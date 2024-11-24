@@ -1,20 +1,19 @@
 #pragma once
 
-#include "common/config.hpp"
-#include "core/code_launcher/detail/code_launchers.hpp"
-
 #include <algorithm>
 #include <condition_variable>
 #include <list>
+#include <memory>
 #include <mutex>
 
 namespace watchman::detail {
 
+template<typename K, typename V, typename C = std::list<std::unique_ptr<V>>>
 class CodeLaunchersStorage {
 public:
     bool contains(std::string const & name) const { return codeLaunchers.contains(name); }
 
-    std::unique_ptr<BaseCodeLauncher> getCodeLauncher(Config::CodeLauncherType const & type) {
+    std::unique_ptr<V> getCodeLauncher(K const & type) {
         std::unique_lock lock(mutex);
 
         auto & specificCodeLaunchers = codeLaunchers.at(type);
@@ -28,18 +27,15 @@ public:
         return launcher;
     }
 
-    void removeById(std::string const & id, Config::CodeLauncherType const & type) {
+    template<typename U, typename P>
+    void removeById(U const & id, K const & type, P && p) {
         std::scoped_lock const lock(mutex);
-
         auto & containers = codeLaunchers.at(type);
-
-        containers.erase(std::remove_if(containers.begin(), containers.end(),
-                                        [id](auto const & c) { return c->containerId == id; }),
+        containers.erase(std::remove_if(containers.begin(), containers.end(), std::forward<P>(p)),
                          containers.end());
     }
 
-    void addCodeLauncher(Config::CodeLauncherType const & type,
-                         std::unique_ptr<BaseCodeLauncher> launcher) {
+    void addCodeLauncher(K const & type, std::unique_ptr<V> launcher) {
         {
             std::scoped_lock lock(mutex);
             codeLaunchers.at(type).push_back(std::move(launcher));
@@ -47,16 +43,14 @@ public:
         codeLauncherFree.notify_all();
     }
 
-    void addCodeLaunchers(Config::CodeLauncherType const & type,
-                          std::list<std::unique_ptr<BaseCodeLauncher>> && launchers) {
-        codeLaunchers.emplace(type, std::move(launchers));
+    void addCodeLaunchers(K const & key, C && launchers) {
+        codeLaunchers.emplace(key, std::move(launchers));
     }
 
 private:
     std::mutex mutex;
     std::condition_variable codeLauncherFree;
-    std::unordered_map<Config::CodeLauncherType, std::list<std::unique_ptr<BaseCodeLauncher>>>
-        codeLaunchers;
+    std::unordered_map<K, C> codeLaunchers;
 };
 
 }  // namespace watchman::detail

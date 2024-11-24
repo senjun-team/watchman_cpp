@@ -3,6 +3,8 @@
 #include "common/config.hpp"
 #include "core/code_launcher/code_launcher_interface.hpp"
 
+#include <memory>
+
 namespace watchman {
 
 class CodeLauncherProviderInterface {

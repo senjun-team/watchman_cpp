@@ -1,6 +1,5 @@
 #include "container_manipulator.hpp"
 
-#include "common/common.hpp"
 #include "common/logging.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 
@@ -47,8 +46,7 @@ void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
     m_dockerWrapper.removeContainer(id);
 }
 
-CodeLauncherOSManipulator::CodeLauncherOSManipulator(Config && config,
-                                                     CodeLaunchersStorage & storage)
+CodeLauncherOSManipulator::CodeLauncherOSManipulator(Config && config, Storage & storage)
     : m_storage(storage) {
     syncRemoveRunningCodeLanchers(config);
     syncCreateCodeLaunchers(config);
