@@ -27,7 +27,7 @@ private:
     void restartCodeLauncher(CodeLauncherInfo const & info);
     bool codeLauncherTypeIsValid(std::string const & name) const;
 
-    CodeLaunchersStorage<Config::CodeLauncherType, BaseCodeLauncher> m_storage;
+    ExtractingStorage<Config::CodeLauncherType, BaseCodeLauncher> m_storage;
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 

@@ -19,7 +19,7 @@ RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const &
         return nullptr;
     }
 
-    auto launcher = m_storage.getCodeLauncher(type);
+    auto launcher = m_storage.extract(type);
 
     auto ptr = std::make_unique<detail::CallbackedCodeLauncher>(
         std::move(launcher), [this, codeLauncherInfo = launcher->getInfo()]() {
@@ -32,9 +32,6 @@ RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const &
 void RestartingCodeLauncherProvider::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
-
-    m_storage.removeById(id, restartInfo.containerType,
-                         [&id](auto const & c) { return c->containerId == id; });
 
     m_manipulator->asyncRemoveCodeLauncher(id);
     m_manipulator->asyncCreateCodeLauncher(restartInfo.containerType, image);

@@ -61,7 +61,7 @@ void CodeLauncherOSManipulator::asyncCreateCodeLauncher(Config::CodeLauncherType
                                                         std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         auto container = createCodeLauncher({"", image, type});
-        m_storage.addCodeLauncher(type, std::move(container));
+        m_storage.addValue(type, std::move(container));
     }) | unifex::sync_wait();
 }
 
@@ -95,7 +95,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
             }
 
             if (!containers.empty()) {
-                m_storage.addCodeLaunchers(type, std::move(containers));
+                m_storage.addValues(type, std::move(containers));
             }
         }
     };

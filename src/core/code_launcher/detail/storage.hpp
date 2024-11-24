@@ -1,56 +1,50 @@
 #pragma once
 
-#include <algorithm>
 #include <condition_variable>
 #include <list>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 
 namespace watchman::detail {
 
-template<typename K, typename V, typename C = std::list<std::unique_ptr<V>>>
-class CodeLaunchersStorage {
-public:
-    bool contains(std::string const & name) const { return codeLaunchers.contains(name); }
+// Multithreading FIFO storage
+// Each element can be accessed only one time
+// It is required to add new element after extracting
 
-    std::unique_ptr<V> getCodeLauncher(K const & type) {
+template<typename K, typename V>
+class ExtractingStorage {
+public:
+    bool contains(K const & key) const { return storage.contains(key); }
+
+    std::unique_ptr<V> extract(K const & type) {
         std::unique_lock lock(mutex);
 
-        auto & specificCodeLaunchers = codeLaunchers.at(type);
+        auto & values = storage.at(type);
+        storageFree.wait(lock, [&values]() -> bool { return !values.empty(); });
 
-        codeLauncherFree.wait(
-            lock, [&specificCodeLaunchers]() -> bool { return !specificCodeLaunchers.empty(); });
+        auto value = std::move(values.back());
+        values.pop_back();
 
-        auto launcher = std::move(specificCodeLaunchers.back());
-        specificCodeLaunchers.pop_back();
-
-        return launcher;
+        return value;
     }
 
-    template<typename U, typename P>
-    void removeById(U const & id, K const & type, P && p) {
-        std::scoped_lock const lock(mutex);
-        auto & containers = codeLaunchers.at(type);
-        containers.erase(std::remove_if(containers.begin(), containers.end(), std::forward<P>(p)),
-                         containers.end());
-    }
-
-    void addCodeLauncher(K const & type, std::unique_ptr<V> launcher) {
+    void addValue(K const & type, std::unique_ptr<V> value) {
         {
             std::scoped_lock lock(mutex);
-            codeLaunchers.at(type).push_back(std::move(launcher));
+            storage.at(type).push_back(std::move(value));
         }
-        codeLauncherFree.notify_all();
+        storageFree.notify_all();
     }
 
-    void addCodeLaunchers(K const & key, C && launchers) {
-        codeLaunchers.emplace(key, std::move(launchers));
+    void addValues(K const & key, std::list<std::unique_ptr<V>> values) {
+        storage.emplace(key, std::move(values));
     }
 
 private:
     std::mutex mutex;
-    std::condition_variable codeLauncherFree;
-    std::unordered_map<K, C> codeLaunchers;
+    std::condition_variable storageFree;
+    std::unordered_map<K, std::list<std::unique_ptr<V>>> storage;
 };
 
 }  // namespace watchman::detail
