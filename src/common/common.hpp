@@ -60,7 +60,7 @@ private:
 struct BaseCodeLauncher;
 namespace detail {
 
-struct ProtectedLaunchers {
+struct CodeLaunchersStorage {
     std::mutex mutex;
     std::condition_variable codeLauncherFree;
     std::unordered_map<Config::CodeLauncherType, std::list<std::unique_ptr<BaseCodeLauncher>>>

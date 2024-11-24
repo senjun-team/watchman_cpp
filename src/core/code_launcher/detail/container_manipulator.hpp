@@ -10,7 +10,7 @@ namespace watchman::detail {
 
 class CodeLauncherOSManipulator {
 public:
-    CodeLauncherOSManipulator(Config && config, ProtectedLaunchers & protectedContainers);
+    CodeLauncherOSManipulator(Config && config, CodeLaunchersStorage & protectedContainers);
 
     void asyncRemoveCodeLauncher(std::string const & id);
     void asyncCreateCodeLauncher(Config::CodeLauncherType type, std::string const & image);
@@ -24,7 +24,7 @@ private:
     std::unique_ptr<BaseCodeLauncher> createCodeLauncher(CodeLauncherInfo const & info);
     void removeCodeLauncher(std::string const & id);
 
-    ProtectedLaunchers & m_codeLaunchers;
+    CodeLaunchersStorage & m_codeLaunchers;
 
     unifex::single_thread_context m_containersContext;
     DockerWrapper m_dockerWrapper;

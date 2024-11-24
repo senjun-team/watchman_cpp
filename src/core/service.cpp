@@ -9,7 +9,7 @@
 namespace watchman {
 
 Service::Service(Config && config)
-    : m_codeLauncherProvider(std::make_unique<detail::RestartingCodeLauncher>(std::move(config))) {}
+    : m_codeLauncherProvider(std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,

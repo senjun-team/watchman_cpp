@@ -7,14 +7,14 @@
 
 namespace watchman::detail {
 
-RestartingCodeLauncher::RestartingCodeLauncher(Config && config)
+RestartingCodeLauncherProvider::RestartingCodeLauncherProvider(Config && config)
     : m_manipulator(
           std::make_unique<CodeLauncherOSManipulator>(std::move(config), m_protectedLaunchers)) {
     Log::info("Service launched");
 }
 
 std::unique_ptr<CodeLauncherInterface>
-RestartingCodeLauncher::getCodeLauncher(Config::CodeLauncherType const & type) {
+RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const & type) {
     if (!codeLauncherTypeIsValid(type)) {
         Log::warning("Invalid container type: {}", type);
         return nullptr;
@@ -40,7 +40,7 @@ RestartingCodeLauncher::getCodeLauncher(Config::CodeLauncherType const & type) {
     return ptr;
 }
 
-void RestartingCodeLauncher::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
+void RestartingCodeLauncherProvider::restartCodeLauncher(CodeLauncherInfo const & restartInfo) {
     std::string const id = restartInfo.containerId;
     std::string const image = restartInfo.image;
     {
@@ -58,10 +58,10 @@ void RestartingCodeLauncher::restartCodeLauncher(CodeLauncherInfo const & restar
     m_manipulator->asyncCreateCodeLauncher(restartInfo.containerType, image);
 }
 
-bool RestartingCodeLauncher::codeLauncherTypeIsValid(std::string const & name) const {
+bool RestartingCodeLauncherProvider::codeLauncherTypeIsValid(std::string const & name) const {
     return m_protectedLaunchers.codeLaunchers.contains(name);
 }
 
-RestartingCodeLauncher::~RestartingCodeLauncher() = default;
+RestartingCodeLauncherProvider::~RestartingCodeLauncherProvider() = default;
 
 }  // namespace watchman::detail

@@ -7,15 +7,17 @@ namespace watchman::detail {
 
 class CodeLauncherOSManipulator;
 
-class RestartingCodeLauncher : public CodeLauncherProviderInterface {
+// Restarts code launcher after usage
+class RestartingCodeLauncherProvider : public CodeLauncherProviderInterface {
 public:
-    explicit RestartingCodeLauncher(Config && config);
-    ~RestartingCodeLauncher();
+    explicit RestartingCodeLauncherProvider(Config && config);
+    ~RestartingCodeLauncherProvider();
 
-    RestartingCodeLauncher(RestartingCodeLauncher const & other) = delete;
-    RestartingCodeLauncher(RestartingCodeLauncher && other) = delete;
-    RestartingCodeLauncher & operator=(RestartingCodeLauncher const & other) = delete;
-    RestartingCodeLauncher & operator=(RestartingCodeLauncher && other) = delete;
+    RestartingCodeLauncherProvider(RestartingCodeLauncherProvider const & other) = delete;
+    RestartingCodeLauncherProvider(RestartingCodeLauncherProvider && other) = delete;
+    RestartingCodeLauncherProvider &
+    operator=(RestartingCodeLauncherProvider const & other) = delete;
+    RestartingCodeLauncherProvider & operator=(RestartingCodeLauncherProvider && other) = delete;
 
     std::unique_ptr<CodeLauncherInterface>
     getCodeLauncher(Config::CodeLauncherType const & type) override;
@@ -24,7 +26,7 @@ private:
     void restartCodeLauncher(CodeLauncherInfo const & info);
     bool codeLauncherTypeIsValid(std::string const & name) const;
 
-    ProtectedLaunchers m_protectedLaunchers;
+    CodeLaunchersStorage m_protectedLaunchers;
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 

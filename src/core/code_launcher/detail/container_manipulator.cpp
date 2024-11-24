@@ -48,7 +48,7 @@ void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
 }
 
 CodeLauncherOSManipulator::CodeLauncherOSManipulator(Config && config,
-                                                     ProtectedLaunchers & protectedContainers)
+                                                     CodeLaunchersStorage & protectedContainers)
     : m_codeLaunchers(protectedContainers) {
     syncRemoveRunningCodeLanchers(config);
     syncCreateCodeLaunchers(config);
