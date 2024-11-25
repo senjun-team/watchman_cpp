@@ -13,7 +13,7 @@ namespace watchman {
 std::string_view constexpr kConfig = "watchman_cpp_config.json";
 std::string_view constexpr kEtcConfig = "/etc/watchman_cpp_config.json";
 
-struct ConfgiHelper {
+struct ConfigHelper {
     std::unordered_map<Config::CodeLauncherType, Language> & table;
     std::string key;
     std::string suffix;
@@ -37,7 +37,7 @@ std::string_view findConfig() {
 }
 
 template<typename Ptree>
-void fillTable(Ptree const & root, ConfgiHelper const & configHelper) {
+void fillTable(Ptree const & root, ConfigHelper const & configHelper) {
     auto const & child = root.get_child_optional(configHelper.key);
     if (!child.has_value()) {
         Log::error("Required field `{}` is absent", configHelper.key);
