@@ -1,11 +1,15 @@
 #include "service.hpp"
 
 #include "common/logging.hpp"
+#include "common/project.hpp"
+#include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
+#include "core/code_launcher/response.hpp"
+#include "fmt/core.h"
 
 namespace watchman {
 
 Service::Service(Config && config)
-    : m_containerController(std::move(config)) {}
+    : m_codeLauncherProvider(std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,
@@ -59,77 +63,49 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
-    if (!m_containerController.containerNameIsValid(runTaskParams.containerType)) {
-        Log::warning("Invalid container type: {}", runTaskParams.containerType);
-        return {kInvalidCode,
-                fmt::format("Invalid container type: {}", runTaskParams.containerType),
-                std::string{}};
-    }
+    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
+        runTaskParams.containerType);  // here we have got a race
 
-    auto raiiContainer = getReadyContainer(runTaskParams.containerType);  // here we have got a race
-    auto & container = raiiContainer.container;
+    if (codeLauncher == nullptr) {
+        return {kInvalidCode,
+                fmt::format("Probably wrong container type: {}", runTaskParams.containerType)};
+    }
 
     std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
                                    {runTaskParams.sourceTest, kFilenameTaskTests}};
 
-    if (!container.prepareCode(makeTar(std::move(data)))) {
-        Log::warning("Couldn't pass tar to container. Source: {}", runTaskParams.sourceRun);
-        return {};
-    }
-
-    auto result = container.runCode(getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+    auto result = codeLauncher->runCode(makeTar(std::move(data)),
+                                        getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
-        Log::error("Error return code {} from container {} type of {}", result.sourceCode,
-                   container.id, container.type);
+        Log::error("Error return code {} from container type of {}", result.sourceCode,
+                   runTaskParams.containerType);
     }
     return result;
 }
 
 Response Service::runPlayground(RunProjectParams const & runProjectParams) {
-    if (!m_containerController.containerNameIsValid(runProjectParams.containerType)) {
-        Log::warning("Invalid container type: {}", runProjectParams.containerType);
+    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
+        runProjectParams.containerType);  // here we have got a race
+
+    if (codeLauncher == nullptr) {
         return {};
     }
 
-    auto raiiContainer =
-        getReadyContainer(runProjectParams.containerType);  // here we have got a race
-    auto & container = raiiContainer.container;
-
-    if (!container.prepareCode(makeProjectTar(std::move(runProjectParams.project)))) {
-        Log::warning("Couldn't pass tar to container. Project name: {}",
-                     runProjectParams.project.name);
-        return {};
-    }
-
-    return container.runCode(getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
+    return codeLauncher->runCode(
+        makeProjectTar(std::move(runProjectParams.project)),
+        getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {
-    if (!m_containerController.containerNameIsValid(params.containerType)) {
-        Log::warning("Invalid container type: {}", params.containerType);
+    auto codeLauncher =
+        m_codeLauncherProvider->getCodeLauncher(params.containerType);  // here we have got a race
+
+    if (codeLauncher == nullptr) {
         return {};
     }
-
-    auto raiiContainer = getReadyContainer(params.containerType);  // here we have got a race
-    auto & container = raiiContainer.container;
-    // here I want to process two cases
-    // 1) just compile and run souce file
-
-    if (!container.prepareCode(makeProjectTar(params.practice.project))) {
-        Log::warning("Couldn't pass tar to container. Project name: {}",
-                     params.practice.project.name);
-        return {};
-    }
-
     auto dockerCmdArgs = getPracticeDockerArgs(params);
-    return container.runCode(std::move(dockerCmdArgs));
-}
 
-detail::ReleasingContainer Service::getReadyContainer(Config::ContainerType type) {
-    auto & container = m_containerController.getReadyContainer(type);
-
-    return {container,
-            [this, &container]() { m_containerController.containerReleased(container); }};
+    return codeLauncher->runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
 }
 
 }  // namespace watchman

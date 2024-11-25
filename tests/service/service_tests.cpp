@@ -21,7 +21,7 @@ watchman::RunTaskParams getTaskParams(std::string const & containerType,
 TEST(Service, ReadConfig) {
     const watchman::Config cfg = watchman::readConfig(kParams.config);
 
-    ASSERT_TRUE(cfg.threadPoolSize.value() == 10);
+    ASSERT_TRUE(cfg.threadPoolSize == 10);
     ASSERT_TRUE(cfg.maxContainersAmount == 8);
 
     watchman::Language const & python = cfg.languages.at("python_check");
