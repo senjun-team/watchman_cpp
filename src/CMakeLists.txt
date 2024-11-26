@@ -49,6 +49,7 @@ set(SERVER_HEADERS
 set(SERVER_SOURCES
         main.cpp
         server/server.cpp
+        server/detail/server_impl.cpp
         common/detail/answer_common.cpp
 )
 
