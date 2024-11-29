@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "common.hpp"
+#include "common/detail/project_utils.hpp"
 #include "core/docker_wrapper.hpp"
 #include "core/parser.hpp"
 #include "core/service.hpp"
@@ -77,7 +78,8 @@ TEST(Playground, C_plus_plus_failure) {
 }
 
 TEST(Playground, TarDir) {
-    watchman::Directory rootDirectory = watchman::jsonToDirectory(getJson(kFilesStructureAssets));
+    watchman::detail::Directory rootDirectory =
+        watchman::detail::jsonToDirectory(getJson(kFilesStructureAssets));
     auto const pathsContents = getPathsToFiles(rootDirectory);
 
     watchman::DockerWrapper dockerWrapper;
@@ -86,6 +88,6 @@ TEST(Playground, TarDir) {
     std::string const pathInContainer = "/home/code_runner";
 
     bool const success = dockerWrapper.putArchive(
-        {id, pathInContainer, watchman::makeProjectTar({rootDirectory.name, pathsContents})});
+        {id, pathInContainer, watchman::detail::makeProjectTar({rootDirectory.name, pathsContents})});
     ASSERT_TRUE(success);
 }

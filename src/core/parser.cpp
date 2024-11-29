@@ -1,6 +1,7 @@
 #include "parser.hpp"
 
 #include "common/common.hpp"
+#include "common/detail/project_utils.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
 
@@ -188,7 +189,7 @@ RunTaskParams parseTask(std::string const & body) {
 }
 
 Project parseProject(std::string const & json) {
-    auto const directory = jsonToDirectory(json);
+    auto const directory = detail::jsonToDirectory(json);
     return {directory.name, getPathsToFiles(directory)};
 }
 
@@ -233,7 +234,7 @@ RunPracticeParams parsePractice(std::string const & body) {
     params.practice.project = parseProject(document.getPractice());
     params.practice.action = getPracticeAction(document.getPracticeAction());
     params.userCmdLineArgs = document.getString(kUserCmdLineArgs);
-    params.pathToMainFile = getMainFile(params.practice.project.pathsContents);
+    params.pathToMainFile = detail::getMainFile(params.practice.project.pathsContents);
 
     return params;
 }

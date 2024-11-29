@@ -15,7 +15,7 @@ set(CORE_SOURCES
         core/detail/data_run_prepare.cpp
         common/common.cpp
         common/logging.cpp
-        common/project.cpp
+        common/detail/project_utils.cpp
         core/code_launcher/detail/container_manipulator.cpp
         core/code_launcher/detail/process_courses.cpp
         core/code_launcher/detail/process_playground.cpp

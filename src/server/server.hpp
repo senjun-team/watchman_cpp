@@ -2,6 +2,8 @@
 
 #include "common/config.hpp"
 
+#include <memory>
+
 namespace watchman::detail {
 class ServerImpl;
 }

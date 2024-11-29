@@ -1,6 +1,7 @@
 #include "core/detail/data_run_prepare.hpp"
 
 #include "common/common.hpp"
+#include "common/detail/project_utils.hpp"
 #include "common/project.hpp"
 
 namespace watchman::detail {

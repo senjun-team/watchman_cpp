@@ -1,11 +1,11 @@
-#include "common/common.hpp"
+#include "common/detail/project_utils.hpp"
 #include "common/logging.hpp"
 
 #include <rapidjson/document.h>
 
 #include <common/project.hpp>
 
-namespace {
+namespace watchman::detail {
 
 std::string const name = "name";
 std::string const children = "children";
@@ -16,7 +16,7 @@ bool isFile(auto && child) { return child.HasMember(contents); };
 
 bool isDirectory(auto && child) { return child.HasMember(children); };
 
-void recursiveDirectoryTraverse(watchman::Directory & directory, auto && document) {
+void recursiveDirectoryTraverse(watchman::detail::Directory & directory, auto && document) {
     if (!document.HasMember(name)) {
         watchman::Log::warning("Directory without name");
         return;
@@ -30,7 +30,7 @@ void recursiveDirectoryTraverse(watchman::Directory & directory, auto && documen
     auto const & childrenArray = document[children].GetArray();
     for (auto const & child : childrenArray) {
         if (isFile(child)) {
-            watchman::File file;
+            watchman::detail::File file;
             file.name = child[name].GetString();
             std::string content = child[contents].GetString();
             file.content = content.empty()
@@ -50,9 +50,6 @@ void recursiveDirectoryTraverse(watchman::Directory & directory, auto && documen
         }
     }
 }
-}  // namespace
-
-namespace watchman {
 
 Directory jsonToDirectory(std::string const & json) {
     rapidjson::Document document;
@@ -68,4 +65,4 @@ Directory jsonToDirectory(std::string const & json) {
     recursiveDirectoryTraverse(directory, document);
     return directory;
 }
-}  // namespace watchman
+}  // namespace watchman::detail

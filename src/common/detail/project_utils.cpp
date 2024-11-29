@@ -1,4 +1,4 @@
-#include "project.hpp"
+#include "common/detail/project_utils.hpp"
 
 #include "structarus/tar_creator.hpp"
 
@@ -6,7 +6,7 @@
 #include <sstream>
 
 namespace fs = std::filesystem;
-namespace watchman {
+namespace watchman::detail {
 
 void recursiveFillAbsolutePaths(Directory const & directory, fs::path const & currentPath,
                                 std::vector<PathContent> & paths) {
@@ -61,4 +61,4 @@ std::string makeProjectTar(Project const & project) {
     return resultTar;
 }
 
-}  // namespace watchman
+}  // namespace watchman::detail
