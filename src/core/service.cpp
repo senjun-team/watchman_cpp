@@ -1,15 +1,18 @@
 #include "service.hpp"
 
+#include "common/common.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
 #include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
 #include "core/code_launcher/response.hpp"
+#include "core/detail/data_run_prepare.hpp"
 #include "fmt/core.h"
 
 namespace watchman {
 
 Service::Service(Config && config)
-    : m_codeLauncherProvider(std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
+    : m_codeLauncherProvider(
+          std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,
@@ -71,10 +74,7 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
                 fmt::format("Probably wrong container type: {}", runTaskParams.containerType)};
     }
 
-    std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
-                                   {runTaskParams.sourceTest, kFilenameTaskTests}};
-
-    auto result = codeLauncher->runCode(makeTar(std::move(data)),
+    auto result = codeLauncher->runCode(detail::prepareData(runTaskParams),
                                         getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
         Log::error("Error return code {} from container type of {}", result.sourceCode,
@@ -92,7 +92,7 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
     }
 
     return codeLauncher->runCode(
-        makeProjectTar(std::move(runProjectParams.project)),
+        detail::prepareData(runProjectParams),
         getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
@@ -103,9 +103,9 @@ Response Service::runPractice(RunPracticeParams const & params) {
     if (codeLauncher == nullptr) {
         return {};
     }
-    auto dockerCmdArgs = getPracticeDockerArgs(params);
 
-    return codeLauncher->runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
+    auto dockerCmdArgs = getPracticeDockerArgs(params);
+    return codeLauncher->runCode(detail::prepareData(params), std::move(dockerCmdArgs));
 }
 
 }  // namespace watchman

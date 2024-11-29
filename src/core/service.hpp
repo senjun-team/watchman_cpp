@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/common.hpp"
+#include "common/run_params.hpp"
 #include "core/code_launcher/code_launcher_provider_interface.hpp"
 
 namespace watchman {

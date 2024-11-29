@@ -1,5 +1,6 @@
 #include "server/detail/server_impl.hpp"
 
+#include "common/common.hpp"
 #include "common/logging.hpp"
 #include "core/parser.hpp"
 

@@ -1,5 +1,6 @@
 #include "parser.hpp"
 
+#include "common/common.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
 
