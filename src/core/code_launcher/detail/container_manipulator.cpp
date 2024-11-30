@@ -18,7 +18,6 @@ CodeLauncherOSManipulator::createCodeLauncher(CodeLauncherInfo const & info) {
 
     std::string id = m_dockerWrapper.run(std::move(params));
     if (id.empty()) {
-        Log::warning("Internal error: can't run container of type {}", info.containerType);
         return nullptr;
     }
 
@@ -26,11 +25,11 @@ CodeLauncherOSManipulator::createCodeLauncher(CodeLauncherInfo const & info) {
 
     std::unique_ptr<BaseCodeLauncher> container;
     if (info.image.find("playground") != std::string::npos) {
-        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), info.containerType);
+        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), info.type);
     } else if (info.image.find("course") != std::string::npos) {
-        container = std::make_unique<CourseCodeLauncher>(std::move(id), info.containerType);
+        container = std::make_unique<CourseCodeLauncher>(std::move(id), info.type);
     } else if (info.image.find("practice") != std::string::npos) {
-        container = std::make_unique<PracticeCodeLauncher>(std::move(id), info.containerType);
+        container = std::make_unique<PracticeCodeLauncher>(std::move(id), info.type);
     } else {
         throw std::logic_error{"Wrong image name: " + info.image};
     }
@@ -83,7 +82,7 @@ void CodeLauncherOSManipulator::syncRemoveRunningCodeLanchers(Config const & con
         }
     };
 
-    killContainers(config.languages);
+    killContainers(config.courses);
     killContainers(config.playgrounds);
     killContainers(config.practices);
 }
@@ -106,7 +105,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         }
     };
 
-    launchContainers(config.languages);
+    launchContainers(config.courses);
     launchContainers(config.playgrounds);
     launchContainers(config.practices);
 }

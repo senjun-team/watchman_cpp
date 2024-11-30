@@ -1,6 +1,7 @@
 #include "server/detail/server_impl.hpp"
 
 #include "common/common.hpp"
+#include "common/config.hpp"
 #include "common/logging.hpp"
 #include "core/parser.hpp"
 
@@ -92,7 +93,7 @@ std::string ServerImpl::processRequest(std::string_view apiString, std::string c
 
 std::string ServerImpl::processCheck(std::string const & body) {
     auto const params = parseTask(body);
-    if (params.containerType.empty()) {
+    if (params.containerType == TaskLauncherType::UNKNOWN) {
         return {};
     }
 
@@ -101,7 +102,7 @@ std::string ServerImpl::processCheck(std::string const & body) {
 
 std::string ServerImpl::processPlayground(std::string const & body) {
     auto const params = parsePlayground(body);
-    if (params.containerType.empty()) {
+    if (params.containerType == TaskLauncherType::UNKNOWN) {
         return {};
     }
 
@@ -110,7 +111,7 @@ std::string ServerImpl::processPlayground(std::string const & body) {
 
 std::string ServerImpl::processPractice(std::string const & body) {
     auto const params = parsePractice(body);
-    if (params.containerType.empty()) {
+    if (params.containerType == TaskLauncherType::UNKNOWN) {
         return {};
     }
 

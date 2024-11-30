@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/code_launcher/code_launcher_info.hpp"
 #include "core/code_launcher/response.hpp"
 
 #include <string>
@@ -13,7 +14,7 @@ public:
 
     virtual Response runCode(std::string && inMemoryTarWithSources,
                              std::vector<std::string> && cmdLineArgs) = 0;
-    
+
     virtual CodeLauncherInfo getInfo() const = 0;
 };
 

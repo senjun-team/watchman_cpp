@@ -70,15 +70,14 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
         runTaskParams.containerType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
-        return {kInvalidCode,
-                fmt::format("Probably wrong container type: {}", runTaskParams.containerType)};
+        return {kInvalidCode, fmt::format("Probably wrong containerType")};
     }
 
     auto result = codeLauncher->runCode(detail::prepareData(runTaskParams),
                                         getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
-        Log::error("Error return code {} from container type of {}", result.sourceCode,
-                   runTaskParams.containerType);
+        Log::error("Error return code {} from image {}", result.sourceCode,
+                   codeLauncher->getInfo().image);
     }
     return result;
 }

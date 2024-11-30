@@ -1,18 +1,20 @@
 #include <gtest/gtest.h>
 
 #include "common.hpp"
+#include "common/config.hpp"
+#include "common/run_params.hpp"
 #include "core/service.hpp"
 
 TEST(Coursess, C_plus_plus) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "cpp_check";
+    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::CPP_COURSE;
     std::string sourceCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
     std::string testingCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
 
     watchman::RunTaskParams const params{{
-                                             std::move(containerType),
+                                             taskType ,
                                              {},
                                          },
                                          std::move(sourceCode),

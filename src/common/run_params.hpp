@@ -1,11 +1,12 @@
 #pragma once
 
+#include "common/config.hpp"
 #include "project.hpp"
 
 namespace watchman {
 
 struct RunCodeParams {
-    std::string
+    TaskLauncherType
         containerType;  // language with suffix, e.g. python_check, cpp_practice, go_playground
     std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
 };
@@ -20,7 +21,7 @@ struct RunProjectParams : RunCodeParams {
 };
 
 struct RunPracticeParams {
-    std::string containerType;
+    TaskLauncherType containerType;
     std::string userCmdLineArgs;  // args for command line while running code
     std::string pathToMainFile;
     Practice practice;

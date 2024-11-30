@@ -9,7 +9,7 @@ struct PathContent {
     std::string path;
     std::string content;
     bool isMain = false;
-    bool isDir = false;
+    bool isDir = false; // isDir == false means file
 };
 
 struct Project {

@@ -1,5 +1,6 @@
 #include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
 
+#include "common/config.hpp"
 #include "common/logging.hpp"
 #include "core/code_launcher/detail/callbacked_code_launcher.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
@@ -15,7 +16,6 @@ RestartingCodeLauncherProvider::RestartingCodeLauncherProvider(Config && config)
 std::unique_ptr<CodeLauncherInterface>
 RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const & type) {
     if (!codeLauncherTypeIsValid(type)) {
-        Log::warning("Invalid container type: {}", type);
         return nullptr;
     }
 
@@ -34,10 +34,10 @@ void RestartingCodeLauncherProvider::restartCodeLauncher(CodeLauncherInfo const 
     std::string const image = restartInfo.image;
 
     m_manipulator->asyncRemoveCodeLauncher(id);
-    m_manipulator->asyncCreateCodeLauncher(restartInfo.containerType, image);
+    m_manipulator->asyncCreateCodeLauncher(restartInfo.type, image);
 }
 
-bool RestartingCodeLauncherProvider::codeLauncherTypeIsValid(std::string const & name) const {
+bool RestartingCodeLauncherProvider::codeLauncherTypeIsValid(TaskLauncherType const & name) const {
     return m_storage.contains(name);
 }
 

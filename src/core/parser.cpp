@@ -1,6 +1,7 @@
 #include "parser.hpp"
 
 #include "common/common.hpp"
+#include "common/config.hpp"
 #include "common/detail/project_utils.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
@@ -156,7 +157,8 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
 
     RunCodeParams params;
 
-    params.containerType = document.getString(getContainerTypeString(api));
+    params.containerType =
+        constructTaskLauncher(document.getString(getContainerTypeString(api)), api);
 
     if (document.hasField(cmdLineArgs, false)) {
         if (!document.isArray(cmdLineArgs)) {
@@ -180,7 +182,7 @@ RunTaskParams parseTask(std::string const & body) {
     RunCodeParams codeParams = parseCommon(document, Api::Check);
 
     RunTaskParams taskParams;
-    taskParams.containerType = codeParams.containerType + "_check";
+    taskParams.containerType = codeParams.containerType;
     taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;
     taskParams.sourceTest = document.getString(sourceTest);
@@ -210,7 +212,6 @@ RunProjectParams parsePlayground(std::string const & body) {
     }
 
     RunCodeParams codeParams = parseCommon(document, Api::Playground);
-    codeParams.containerType += "_playground";  // todo make it better?
 
     RunProjectParams projectParams;
     projectParams.containerType = codeParams.containerType;
@@ -230,7 +231,9 @@ RunPracticeParams parsePractice(std::string const & body) {
     }
 
     RunPracticeParams params;
-    params.containerType = document.getString(getContainerTypeString(Api::Practice)) + "_practice";
+
+    params.containerType = constructTaskLauncher(
+        document.getString(getContainerTypeString(Api::Practice)), Api::Practice);
     params.practice.project = parseProject(document.getPractice());
     params.practice.action = getPracticeAction(document.getPracticeAction());
     params.userCmdLineArgs = document.getString(kUserCmdLineArgs);

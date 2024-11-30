@@ -6,18 +6,56 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <filesystem>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace watchman {
 
 std::string_view constexpr kConfig = "watchman_cpp_config.json";
 std::string_view constexpr kEtcConfig = "/etc/watchman_cpp_config.json";
 
-struct ConfigHelper {
-    std::unordered_map<Config::CodeLauncherType, Language> & table;
-    std::string key;
-    std::string suffix;
+std::string const kCpp = "cpp";
+std::string const kGolang = "golang";
+std::string const kHaskell = "haskell";
+std::string const kPython = "python";
+std::string const kRust = "rust";
+
+std::unordered_map<std::string, TaskLauncherType> const kCoursesMatch{
+    {kCpp, TaskLauncherType::CPP_COURSE},         {kGolang, TaskLauncherType::GO_COURSE},
+    {kHaskell, TaskLauncherType::HASKELL_COURSE}, {kPython, TaskLauncherType::PYTHON_COURSE},
+    {kRust, TaskLauncherType::RUST_COURSE},
 };
+
+std::unordered_map<std::string, TaskLauncherType> const kPlaygroundMatch{
+    {kCpp, TaskLauncherType::CPP_PLAYGROUND},
+    {kGolang, TaskLauncherType::GO_PLAYGROUND},
+    {kHaskell, TaskLauncherType::HASKELL_PLAYGROUND},
+    {kPython, TaskLauncherType::PYTHON_PLAYGROUND},
+    {kRust, TaskLauncherType::RUST_PLAYGROUND},
+};
+
+std::unordered_map<std::string, TaskLauncherType> const kPracticeMatch{
+    {kCpp, TaskLauncherType::CPP_PRACTICE},
+    {kGolang, TaskLauncherType::GO_PRACTICE},
+    {kHaskell, TaskLauncherType::HASKELL_PRACTICE},
+    {kPython, TaskLauncherType::PYTHON_PRACTICE},
+    {kRust, TaskLauncherType::RUST_PRACTICE}};
+
+std::unordered_map<std::string, Api> const kConfigApi{
+    {"courses", Api::Check}, {"playground", Api::Playground}, {"practice", Api::Practice}
+
+};
+
+TaskLauncherType getTaskLauncherType(std::unordered_map<std::string, TaskLauncherType> const & m,
+                                     std::string const & language) {
+    auto type = m.find(language);
+    if (type == m.end()) {
+        return TaskLauncherType::UNKNOWN;
+    }
+
+    return type->second;
+}
 
 std::string_view findConfig() {
     bool const existsNearBinary = std::filesystem::exists(kConfig);
@@ -37,31 +75,30 @@ std::string_view findConfig() {
 }
 
 template<typename Ptree>
-void fillTable(Ptree const & root, ConfigHelper const & configHelper) {
-    auto const & child = root.get_child_optional(configHelper.key);
-    if (!child.has_value()) {
-        Log::error("Required field `{}` is absent", configHelper.key);
+void fillTable(Ptree const & taskType,
+               std::unordered_map<TaskLauncherType, ContainerTypeInfo> & table, Api api) {
+    if (!taskType.has_value()) {
+        Log::error("Required field `{}` is absent", requiredApiField(api));
         std::terminate();
     }
 
-    for (auto const & field : child.value()) {
-        auto imageName = field.second.get_child_optional("image-name");
+    for (auto const & configLanguage : taskType.value()) {
+        auto imageName = configLanguage.second.get_child_optional("image-name");
         if (!imageName.has_value()) {
-            Log::error("Required field \'image-name\' is absent in {}", field.first);
+            Log::error("Required field \'image-name\' is absent in {}", configLanguage.first);
             std::terminate();
         }
 
-        auto const launched = field.second.get_child_optional("launched");
+        auto const launched = configLanguage.second.get_child_optional("launched");
         if (!launched.has_value()) {
-            Log::error("Required field \'launched\' is absent in {}", field.first);
+            Log::error("Required field \'launched\' is absent in {}", configLanguage.first);
             std::terminate();
         }
 
-        auto const & containerType = field.first;
-
-        configHelper.table.insert({containerType + configHelper.suffix,
-                                   {imageName.value().template get_value<std::string>(),
-                                    launched.value().template get_value<uint32_t>()}});
+        auto const taskLauncher = constructTaskLauncher(configLanguage.first, api);
+        table.insert({taskLauncher,
+                      {imageName.value().template get_value<std::string>(),
+                       launched.value().template get_value<uint32_t>()}});
     }
 }
 
@@ -83,10 +120,9 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    // TODO remove suffixes, make it more intellectual
-    fillTable(root, {config.languages, "courses", "_check"});
-    fillTable(root, {config.playgrounds, "playground", "_playground"});
-    fillTable(root, {config.practices, "practice", "_practice"});
+    fillTable(root.get_child_optional("courses"), config.courses, Api::Check);
+    fillTable(root.get_child_optional("playground"), config.playgrounds, Api::Playground);
+    fillTable(root.get_child_optional("practice"), config.practices, Api::Practice);
     return config;
 }
 
@@ -111,6 +147,16 @@ std::optional<Config> getConfig() {
 
     auto config = readConfig(path);
     return config;
+}
+
+TaskLauncherType constructTaskLauncher(std::string const & language, Api api) {
+    switch (api) {
+    case Api::Check: return getTaskLauncherType(kCoursesMatch, language);
+    case Api::Playground: return getTaskLauncherType(kPlaygroundMatch, language);
+    case Api::Practice: return getTaskLauncherType(kPracticeMatch, language);
+    }
+
+    return TaskLauncherType::UNKNOWN;
 }
 
 }  // namespace watchman
