@@ -6,13 +6,13 @@
 
 namespace watchman::detail {
 
-std::string prepareData(RunTaskParams const & runTaskParams) {
+std::string prepareData(CourseTaskParams const & runTaskParams) {
     std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
                                    {runTaskParams.sourceTest, kFilenameTaskTests}};
     return makeTar(std::move(data));
 }
 
-std::string prepareData(RunProjectParams const & taskParams) {
+std::string prepareData(PlaygroundTaskParams const & taskParams) {
     return makeProjectTar(taskParams.project);
 }
 

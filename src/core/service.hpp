@@ -16,8 +16,8 @@ public:
     Service & operator=(Service const &) = delete;
     Service & operator=(Service &&) = delete;
 
-    Response runTask(RunTaskParams const & runTaskParams);
-    Response runPlayground(RunProjectParams const & runProjectParams);
+    Response runTask(CourseTaskParams const & runTaskParams);
+    Response runPlayground(PlaygroundTaskParams const & runProjectParams);
     Response runPractice(RunPracticeParams const & params);
 
 private:

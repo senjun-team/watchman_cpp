@@ -142,7 +142,7 @@ std::string getContainerTypeString(Api api) {
     throw std::logic_error{"getContainerTypeString logic error"};
 }
 
-RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
+RequiredParams parseCommon(DocumentKeeper const & document, Api api) {
     // Optional json fields
     std::string const cmdLineArgs = "cmd_line_args";
 
@@ -155,7 +155,7 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
         }
     }
 
-    RunCodeParams params;
+    RequiredParams params;
 
     params.taskLauncherType =
         constructTaskLauncher(document.getString(getContainerTypeString(api)), api);
@@ -171,7 +171,7 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
     return params;
 }
 
-RunTaskParams parseTask(std::string const & body) {
+CourseTaskParams parseTask(std::string const & body) {
     std::string const sourceTest = "source_test";
 
     DocumentKeeper document(body);
@@ -179,9 +179,9 @@ RunTaskParams parseTask(std::string const & body) {
         return {};
     }
 
-    RunCodeParams codeParams = parseCommon(document, Api::Check);
+    RequiredParams codeParams = parseCommon(document, Api::Check);
 
-    RunTaskParams taskParams;
+    CourseTaskParams taskParams;
     taskParams.taskLauncherType = codeParams.taskLauncherType;
     taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;
@@ -203,7 +203,7 @@ PracticeAction getPracticeAction(std::string const & action) {
     return PracticeAction::Test;
 }
 
-RunProjectParams parsePlayground(std::string const & body) {
+PlaygroundTaskParams parsePlayground(std::string const & body) {
     std::string const project = "project";
 
     DocumentKeeper document(body);
@@ -211,9 +211,9 @@ RunProjectParams parsePlayground(std::string const & body) {
         return {};
     }
 
-    RunCodeParams codeParams = parseCommon(document, Api::Playground);
+    RequiredParams codeParams = parseCommon(document, Api::Playground);
 
-    RunProjectParams projectParams;
+    PlaygroundTaskParams projectParams;
     projectParams.taskLauncherType = codeParams.taskLauncherType;
     projectParams.cmdLineArgs = codeParams.cmdLineArgs;
     projectParams.project = parseProject(document.getProject());

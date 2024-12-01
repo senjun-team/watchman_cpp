@@ -13,12 +13,12 @@ TEST(Coursess, C_plus_plus) {
     std::string testingCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
 
-    watchman::RunTaskParams const params{{
-                                             taskType ,
-                                             {},
-                                         },
-                                         std::move(sourceCode),
-                                         std::move(testingCode)};
+    watchman::CourseTaskParams const params{{
+                                                taskType,
+                                                {},
+                                            },
+                                            std::move(sourceCode),
+                                            std::move(testingCode)};
     watchman::Response response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");

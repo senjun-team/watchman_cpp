@@ -42,11 +42,6 @@ std::unordered_map<std::string, TaskLauncherType> const kPracticeMatch{
     {kPython, TaskLauncherType::PYTHON_PRACTICE},
     {kRust, TaskLauncherType::RUST_PRACTICE}};
 
-std::unordered_map<std::string, Api> const kConfigApi{
-    {"courses", Api::Check}, {"playground", Api::Playground}, {"practice", Api::Practice}
-
-};
-
 TaskLauncherType getTaskLauncherType(std::unordered_map<std::string, TaskLauncherType> const & m,
                                      std::string const & language) {
     auto type = m.find(language);

@@ -60,7 +60,7 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
     return runArgs;
 }
 
-Response Service::runTask(RunTaskParams const & runTaskParams) {
+Response Service::runTask(CourseTaskParams const & runTaskParams) {
     if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
         Log::warning("Empty files with code and test");
         return {kUserCodeError, "Sources and tests are not provided", ""};
@@ -82,7 +82,7 @@ Response Service::runTask(RunTaskParams const & runTaskParams) {
     return result;
 }
 
-Response Service::runPlayground(RunProjectParams const & runProjectParams) {
+Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
         runProjectParams.taskLauncherType);  // here we have got a race
 
@@ -96,8 +96,8 @@ Response Service::runPlayground(RunProjectParams const & runProjectParams) {
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {
-    auto codeLauncher =
-        m_codeLauncherProvider->getCodeLauncher(params.taskLauncherType);  // here we have got a race
+    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
+        params.taskLauncherType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};

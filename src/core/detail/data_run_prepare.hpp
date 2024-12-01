@@ -3,8 +3,8 @@
 
 namespace watchman::detail {
 
-std::string prepareData(RunTaskParams const & taskParams);
-std::string prepareData(RunProjectParams const & taskParams);
+std::string prepareData(CourseTaskParams const & taskParams);
+std::string prepareData(PlaygroundTaskParams const & taskParams);
 std::string prepareData(RunPracticeParams const & taskParams);
 
 }  // namespace watchman::detail

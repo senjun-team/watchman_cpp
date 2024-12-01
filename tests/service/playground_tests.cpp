@@ -11,7 +11,7 @@ TEST(Playground, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::PYTHON_PLAYGROUND;
 
-    watchman::RunProjectParams params;
+    watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
     params.project = watchman::parseProject(getJson(kPythonProject));
     auto response = service.runPlayground(params);
@@ -24,7 +24,7 @@ TEST(Playground, Go) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::GO_PLAYGROUND;
 
-    watchman::RunProjectParams params;
+    watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
     params.project = watchman::parseProject(getJson(kGoProject));
     auto response = service.runPlayground(params);
@@ -36,7 +36,7 @@ TEST(Playground, DISABLED_Haskell_HelloWorld) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::HASKELL_PLAYGROUND;
 
-    watchman::RunProjectParams params;
+    watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
     params.project = watchman::parseProject(getJson(kHaskellProject));
     auto response = service.runPlayground(params);
@@ -47,7 +47,7 @@ TEST(Playground, Rust_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::RUST_PLAYGROUND;
 
-    watchman::RunProjectParams params;
+    watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
     params.project = watchman::parseProject(getJson(kRustProject));
     auto response = service.runPlayground(params);
@@ -59,7 +59,7 @@ TEST(Playground, C_plus_plus_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::CPP_PLAYGROUND;
 
-    watchman::RunProjectParams params;
+    watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
     params.project = watchman::parseProject(getJson(kCppProject));
     auto response = service.runPlayground(params);
@@ -71,7 +71,7 @@ TEST(Playground, C_plus_plus_failure) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::CPP_PLAYGROUND;
 
-    watchman::RunProjectParams params;
+    watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
     params.project = watchman::parseProject(getJson(kCppProjectCompileError));
     auto response = service.runPlayground(params);
