@@ -6,8 +6,7 @@
 namespace watchman {
 
 struct RunCodeParams {
-    TaskLauncherType
-        containerType;  // language with suffix, e.g. python_check, cpp_practice, go_playground
+    TaskLauncherType taskLauncherType;
     std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
 };
 
@@ -21,7 +20,7 @@ struct RunProjectParams : RunCodeParams {
 };
 
 struct RunPracticeParams {
-    TaskLauncherType containerType;
+    TaskLauncherType taskLauncherType;
     std::string userCmdLineArgs;  // args for command line while running code
     std::string pathToMainFile;
     Practice practice;

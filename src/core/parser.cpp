@@ -157,7 +157,7 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
 
     RunCodeParams params;
 
-    params.containerType =
+    params.taskLauncherType =
         constructTaskLauncher(document.getString(getContainerTypeString(api)), api);
 
     if (document.hasField(cmdLineArgs, false)) {
@@ -182,7 +182,7 @@ RunTaskParams parseTask(std::string const & body) {
     RunCodeParams codeParams = parseCommon(document, Api::Check);
 
     RunTaskParams taskParams;
-    taskParams.containerType = codeParams.containerType;
+    taskParams.taskLauncherType = codeParams.taskLauncherType;
     taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;
     taskParams.sourceTest = document.getString(sourceTest);
@@ -214,7 +214,7 @@ RunProjectParams parsePlayground(std::string const & body) {
     RunCodeParams codeParams = parseCommon(document, Api::Playground);
 
     RunProjectParams projectParams;
-    projectParams.containerType = codeParams.containerType;
+    projectParams.taskLauncherType = codeParams.taskLauncherType;
     projectParams.cmdLineArgs = codeParams.cmdLineArgs;
     projectParams.project = parseProject(document.getProject());
 
@@ -232,7 +232,7 @@ RunPracticeParams parsePractice(std::string const & body) {
 
     RunPracticeParams params;
 
-    params.containerType = constructTaskLauncher(
+    params.taskLauncherType = constructTaskLauncher(
         document.getString(getContainerTypeString(Api::Practice)), Api::Practice);
     params.practice.project = parseProject(document.getPractice());
     params.practice.action = getPracticeAction(document.getPracticeAction());

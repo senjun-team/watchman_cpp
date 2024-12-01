@@ -9,14 +9,10 @@
 
 namespace watchman {
 
-struct ContainerTypeInfo {
+struct TaskLauncherInfo {
     std::string imageName;
     uint32_t launched{0};
 };
-
-using Language = ContainerTypeInfo;
-using Playground = ContainerTypeInfo;
-using PracticeContainer = ContainerTypeInfo;
 
 enum class TaskLauncherType {
     CPP_COURSE,
@@ -38,12 +34,11 @@ enum class TaskLauncherType {
 };
 
 struct Config {
-    using CodeLauncherType = TaskLauncherType;  // python/rust/go/haskell
     std::size_t threadPoolSize;
     uint32_t maxContainersAmount{0};
-    std::unordered_map<CodeLauncherType, Language> courses;
-    std::unordered_map<CodeLauncherType, Playground> playgrounds;
-    std::unordered_map<CodeLauncherType, PracticeContainer> practices;
+    std::unordered_map<TaskLauncherType, TaskLauncherInfo> courses;
+    std::unordered_map<TaskLauncherType, TaskLauncherInfo> playgrounds;
+    std::unordered_map<TaskLauncherType, TaskLauncherInfo> practices;
 };
 
 std::optional<Config> getConfig();

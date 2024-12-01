@@ -25,11 +25,13 @@ TEST(Service, ReadConfig) {
     ASSERT_TRUE(cfg.threadPoolSize == 10);
     ASSERT_TRUE(cfg.maxContainersAmount == 8);
 
-    watchman::Language const & python = cfg.courses.at(watchman::TaskLauncherType::PYTHON_COURSE);
-    ASSERT_TRUE(python.launched == 1 && python.imageName == "senjun_courses_python");
+    auto taskLauncherInfo = cfg.courses.at(watchman::TaskLauncherType::PYTHON_COURSE);
+    ASSERT_TRUE(taskLauncherInfo.launched == 1
+                && taskLauncherInfo.imageName == "senjun_courses_python");
 
-    watchman::Language const & rust = cfg.courses.at(watchman::TaskLauncherType::RUST_COURSE);
-    ASSERT_TRUE(rust.launched == 1 && rust.imageName == "senjun_courses_rust");
+    taskLauncherInfo = cfg.courses.at(watchman::TaskLauncherType::RUST_COURSE);
+    ASSERT_TRUE(taskLauncherInfo.launched == 1
+                && taskLauncherInfo.imageName == "senjun_courses_rust");
 }
 
 TEST(Service, Run) {

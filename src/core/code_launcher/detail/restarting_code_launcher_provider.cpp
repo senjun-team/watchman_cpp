@@ -14,7 +14,7 @@ RestartingCodeLauncherProvider::RestartingCodeLauncherProvider(Config && config)
 }
 
 std::unique_ptr<CodeLauncherInterface>
-RestartingCodeLauncherProvider::getCodeLauncher(Config::CodeLauncherType const & type) {
+RestartingCodeLauncherProvider::getCodeLauncher(TaskLauncherType type) {
     if (!codeLauncherTypeIsValid(type)) {
         return nullptr;
     }

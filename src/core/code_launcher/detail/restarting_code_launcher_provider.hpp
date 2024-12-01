@@ -2,7 +2,6 @@
 
 #include "common/config.hpp"
 #include "core/code_launcher/code_launcher_provider_interface.hpp"
-#include "core/code_launcher/detail/code_launchers.hpp"
 #include "core/code_launcher/detail/container_manipulator.hpp"
 #include "core/code_launcher/detail/storage.hpp"
 
@@ -20,14 +19,13 @@ public:
     operator=(RestartingCodeLauncherProvider const & other) = delete;
     RestartingCodeLauncherProvider & operator=(RestartingCodeLauncherProvider && other) = delete;
 
-    std::unique_ptr<CodeLauncherInterface>
-    getCodeLauncher(Config::CodeLauncherType const & type) override;
+    std::unique_ptr<CodeLauncherInterface> getCodeLauncher(TaskLauncherType type) override;
 
 private:
     void restartCodeLauncher(CodeLauncherInfo const & info);
     bool codeLauncherTypeIsValid(TaskLauncherType const & name) const;
 
-    ExtractingStorage<Config::CodeLauncherType, BaseCodeLauncher> m_storage;
+    ExtractingStorage<TaskLauncherType, BaseCodeLauncher> m_storage;
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 

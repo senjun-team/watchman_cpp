@@ -38,10 +38,10 @@ Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getPlaygroungResponse(result.message);
 }
 
-PracticeCodeLauncher::PracticeCodeLauncher(std::string id, Config::CodeLauncherType type)
+PracticeCodeLauncher::PracticeCodeLauncher(std::string id, TaskLauncherType type)
     : BaseCodeLauncher(std::move(id), std::move(type)) {}
 
-PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, Config::CodeLauncherType type)
+PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, TaskLauncherType type)
     : BaseCodeLauncher(std::move(id), type) {}
 
 Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
@@ -57,10 +57,10 @@ Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getCourseResponse(result.message);
 }
 
-CourseCodeLauncher::CourseCodeLauncher(std::string id, Config::CodeLauncherType type)
+CourseCodeLauncher::CourseCodeLauncher(std::string id, TaskLauncherType type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-BaseCodeLauncher::BaseCodeLauncher(std::string id, Config::CodeLauncherType type)
+BaseCodeLauncher::BaseCodeLauncher(std::string id, TaskLauncherType type)
     : containerId(std::move(id))
     , type(std::move(type)) {}
 

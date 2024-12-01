@@ -76,7 +76,7 @@ std::string_view findConfig() {
 
 template<typename Ptree>
 void fillTable(Ptree const & taskType,
-               std::unordered_map<TaskLauncherType, ContainerTypeInfo> & table, Api api) {
+               std::unordered_map<TaskLauncherType, TaskLauncherInfo> & table, Api api) {
     if (!taskType.has_value()) {
         Log::error("Required field `{}` is absent", requiredApiField(api));
         std::terminate();

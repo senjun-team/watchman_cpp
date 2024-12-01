@@ -1,5 +1,6 @@
 #include "container_manipulator.hpp"
 
+#include "common/config.hpp"
 #include "common/logging.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 
@@ -56,7 +57,7 @@ void CodeLauncherOSManipulator::asyncRemoveCodeLauncher(std::string const & id) 
         | unifex::then([this, &id] { removeCodeLauncher(id); }) | unifex::sync_wait();
 }
 
-void CodeLauncherOSManipulator::asyncCreateCodeLauncher(Config::CodeLauncherType type,
+void CodeLauncherOSManipulator::asyncCreateCodeLauncher(TaskLauncherType type,
                                                         std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         auto container = createCodeLauncher({"", image, type});

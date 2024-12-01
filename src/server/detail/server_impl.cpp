@@ -93,7 +93,7 @@ std::string ServerImpl::processRequest(std::string_view apiString, std::string c
 
 std::string ServerImpl::processCheck(std::string const & body) {
     auto const params = parseTask(body);
-    if (params.containerType == TaskLauncherType::UNKNOWN) {
+    if (params.taskLauncherType == TaskLauncherType::UNKNOWN) {
         return {};
     }
 
@@ -102,7 +102,7 @@ std::string ServerImpl::processCheck(std::string const & body) {
 
 std::string ServerImpl::processPlayground(std::string const & body) {
     auto const params = parsePlayground(body);
-    if (params.containerType == TaskLauncherType::UNKNOWN) {
+    if (params.taskLauncherType == TaskLauncherType::UNKNOWN) {
         return {};
     }
 
@@ -111,7 +111,7 @@ std::string ServerImpl::processPlayground(std::string const & body) {
 
 std::string ServerImpl::processPractice(std::string const & body) {
     auto const params = parsePractice(body);
-    if (params.containerType == TaskLauncherType::UNKNOWN) {
+    if (params.taskLauncherType == TaskLauncherType::UNKNOWN) {
         return {};
     }
 
