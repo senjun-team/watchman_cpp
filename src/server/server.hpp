@@ -1,23 +1,22 @@
 #pragma once
 
-#include "core/service.hpp"
+#include "common/config.hpp"
 
-#include <string>
+#include <memory>
+
+namespace watchman::detail {
+class ServerImpl;
+}
 
 namespace watchman {
 class Server {
 public:
     explicit Server(Config && config);
+    ~Server();
+
     void start(size_t threadPoolSize);
 
 private:
-    std::string processRequest(std::string_view handle, std::string const & body);
-
-    // handles
-    std::string processCheck(std::string const & body);
-    std::string processPlayground(std::string const & body);
-    std::string processPractice(std::string const & body);
-
-    Service m_service;
+    std::unique_ptr<detail::ServerImpl> m_impl;
 };
 }  // namespace watchman

@@ -1,5 +1,8 @@
 #include "parser.hpp"
 
+#include "common/common.hpp"
+#include "common/config.hpp"
+#include "common/detail/project_utils.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
 
@@ -139,7 +142,7 @@ std::string getContainerTypeString(Api api) {
     throw std::logic_error{"getContainerTypeString logic error"};
 }
 
-RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
+RequiredParams parseCommon(DocumentKeeper const & document, Api api) {
     // Optional json fields
     std::string const cmdLineArgs = "cmd_line_args";
 
@@ -152,9 +155,10 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
         }
     }
 
-    RunCodeParams params;
+    RequiredParams params;
 
-    params.containerType = document.getString(getContainerTypeString(api));
+    params.taskLauncherType =
+        constructTaskLauncher(document.getString(getContainerTypeString(api)), api);
 
     if (document.hasField(cmdLineArgs, false)) {
         if (!document.isArray(cmdLineArgs)) {
@@ -167,7 +171,7 @@ RunCodeParams parseCommon(DocumentKeeper const & document, Api api) {
     return params;
 }
 
-RunTaskParams parseTask(std::string const & body) {
+CourseTaskParams parseTask(std::string const & body) {
     std::string const sourceTest = "source_test";
 
     DocumentKeeper document(body);
@@ -175,10 +179,10 @@ RunTaskParams parseTask(std::string const & body) {
         return {};
     }
 
-    RunCodeParams codeParams = parseCommon(document, Api::Check);
+    RequiredParams codeParams = parseCommon(document, Api::Check);
 
-    RunTaskParams taskParams;
-    taskParams.containerType = codeParams.containerType + "_check";
+    CourseTaskParams taskParams;
+    taskParams.taskLauncherType = codeParams.taskLauncherType;
     taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;
     taskParams.sourceTest = document.getString(sourceTest);
@@ -187,7 +191,7 @@ RunTaskParams parseTask(std::string const & body) {
 }
 
 Project parseProject(std::string const & json) {
-    auto const directory = jsonToDirectory(json);
+    auto const directory = detail::jsonToDirectory(json);
     return {directory.name, getPathsToFiles(directory)};
 }
 
@@ -199,7 +203,7 @@ PracticeAction getPracticeAction(std::string const & action) {
     return PracticeAction::Test;
 }
 
-RunProjectParams parsePlayground(std::string const & body) {
+PlaygroundTaskParams parsePlayground(std::string const & body) {
     std::string const project = "project";
 
     DocumentKeeper document(body);
@@ -207,11 +211,10 @@ RunProjectParams parsePlayground(std::string const & body) {
         return {};
     }
 
-    RunCodeParams codeParams = parseCommon(document, Api::Playground);
-    codeParams.containerType += "_playground";  // todo make it better?
+    RequiredParams codeParams = parseCommon(document, Api::Playground);
 
-    RunProjectParams projectParams;
-    projectParams.containerType = codeParams.containerType;
+    PlaygroundTaskParams projectParams;
+    projectParams.taskLauncherType = codeParams.taskLauncherType;
     projectParams.cmdLineArgs = codeParams.cmdLineArgs;
     projectParams.project = parseProject(document.getProject());
 
@@ -228,11 +231,13 @@ RunPracticeParams parsePractice(std::string const & body) {
     }
 
     RunPracticeParams params;
-    params.containerType = document.getString(getContainerTypeString(Api::Practice)) + "_practice";
+
+    params.taskLauncherType = constructTaskLauncher(
+        document.getString(getContainerTypeString(Api::Practice)), Api::Practice);
     params.practice.project = parseProject(document.getPractice());
     params.practice.action = getPracticeAction(document.getPracticeAction());
     params.userCmdLineArgs = document.getString(kUserCmdLineArgs);
-    params.pathToMainFile = getMainFile(params.practice.project.pathsContents);
+    params.pathToMainFile = detail::getMainFile(params.practice.project.pathsContents);
 
     return params;
 }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "project.hpp"
-
 #include <chrono>
+#include <string>
+#include <vector>
 
 namespace watchman {
 
@@ -11,27 +11,15 @@ std::string const kFilenameTaskTests = "task_tests";
 
 enum class Api { Check, Playground, Practice };
 
-struct RunCodeParams {
-    std::string
-        containerType;  // language with suffix, e.g. python_check, cpp_practice, go_playground
-    std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
-};
+inline std::string requiredApiField(Api api) {
+    switch (api) {
+    case Api::Check: return "courses";
+    case Api::Playground: return "playground";
+    case Api::Practice: return "practice";
+    }
 
-struct RunTaskParams : RunCodeParams {
-    std::string sourceRun;
-    std::string sourceTest;
-};
-
-struct RunProjectParams : RunCodeParams {
-    Project project;
-};
-
-struct RunPracticeParams {
-    std::string containerType;
-    std::string userCmdLineArgs;  // args for command line while running code
-    std::string pathToMainFile;
-    Practice practice;
-};
+    return {};
+}
 
 size_t getCpuCount();
 

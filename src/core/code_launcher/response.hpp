@@ -21,10 +21,4 @@ struct Response {
     std::optional<std::string> testsOutput;
 };
 
-struct CodeLauncherInfo {
-    std::string containerId;
-    std::string image;
-    std::string containerType;
-};
-
 }  // namespace watchman

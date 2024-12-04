@@ -12,9 +12,10 @@ set(CORE_SOURCES
         core/docker_wrapper.cpp
         core/parser.cpp
         core/detail/directory_traverser.cpp
+        core/detail/data_run_prepare.cpp
         common/common.cpp
         common/logging.cpp
-        common/project.cpp
+        common/detail/project_utils.cpp
         core/code_launcher/detail/container_manipulator.cpp
         core/code_launcher/detail/process_courses.cpp
         core/code_launcher/detail/process_playground.cpp
@@ -49,6 +50,7 @@ set(SERVER_HEADERS
 set(SERVER_SOURCES
         main.cpp
         server/server.cpp
+        server/detail/server_impl.cpp
         common/detail/answer_common.cpp
 )
 

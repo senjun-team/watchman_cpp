@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "common.hpp"
+#include "common/config.hpp"
 #include "core/service.hpp"
 
 #include <thread>
@@ -9,11 +10,11 @@
 
 namespace {
 
-watchman::RunTaskParams getTaskParams(std::string const & containerType,
-                                      std::vector<std::string> const & cmdLineArgs,
-                                      std::string const & sourceCode,
-                                      std::string const & testCode) {
-    return {{containerType, cmdLineArgs}, sourceCode, testCode};
+watchman::CourseTaskParams getTaskParams(watchman::TaskLauncherType type,
+                                         std::vector<std::string> const & cmdLineArgs,
+                                         std::string const & sourceCode,
+                                         std::string const & testCode) {
+    return {{type, cmdLineArgs}, sourceCode, testCode};
 }
 
 }  // namespace
@@ -24,20 +25,22 @@ TEST(Service, ReadConfig) {
     ASSERT_TRUE(cfg.threadPoolSize == 10);
     ASSERT_TRUE(cfg.maxContainersAmount == 8);
 
-    watchman::Language const & python = cfg.languages.at("python_check");
-    ASSERT_TRUE(python.launched == 1 && python.imageName == "senjun_courses_python");
+    auto taskLauncherInfo = cfg.courses.at(watchman::TaskLauncherType::PYTHON_COURSE);
+    ASSERT_TRUE(taskLauncherInfo.launched == 1
+                && taskLauncherInfo.imageName == "senjun_courses_python");
 
-    watchman::Language const & rust = cfg.languages.at("rust_check");
-    ASSERT_TRUE(rust.launched == 1 && rust.imageName == "senjun_courses_rust");
+    taskLauncherInfo = cfg.courses.at(watchman::TaskLauncherType::RUST_COURSE);
+    ASSERT_TRUE(taskLauncherInfo.launched == 1
+                && taskLauncherInfo.imageName == "senjun_courses_rust");
 }
 
 TEST(Service, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "python_check";
+    auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
     std::string sourceCode = "print(42)\nprint(42)";
     std::string testingCode = "print(42)";
 
-    watchman::RunTaskParams const params =
+    watchman::CourseTaskParams const params =
         getTaskParams(containerType, {"-v code"}, sourceCode, testingCode);
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
@@ -47,12 +50,12 @@ TEST(Service, Run) {
 
 TEST(Service, TestError) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "python_check";
+    auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
     std::string sourceCode = "print(2, 2)\nprint(3, 3)";
     std::string testingCode =
         "from io import StringIO\nimport sys\n\n\nold_stdout = sys.stdout\nsys.stdout = mystdout = StringIO()\n\nprint(2, 2)\nprint(3, 3)\n\nsys.stdout = old_stdout\n\nif 'err_service_unavailable' not in locals():\n    print(\"There is no `err_service_unavailable` variable\")\n    exit(1)\n\nif type(err_service_unavailable) is not int:\n    print(\"Variable is not an integer\")\n    exit(1)\n\nif err_service_unavailable != 503:\n    print(\"Variable value is not 503\")\n    exit(1)";
 
-    watchman::RunTaskParams const params =
+    watchman::CourseTaskParams const params =
         getTaskParams(containerType, {"-v code"}, sourceCode, testingCode);
     auto response = service.runTask(params);
     ASSERT_EQ(response.sourceCode, 2);
@@ -62,12 +65,12 @@ TEST(Service, TestError) {
 
 TEST(Service, UserSyntaxError) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "python_check";
+    auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
     std::string sourceCode = "err_service_unavailable = 503)";
     std::string testingCode =
         "from io import StringIO\nimport sys\n\n\nold_stdout = sys.stdout\nsys.stdout = mystdout = StringIO()\n\nprint(2, 2)\nprint(3, 3)\n\nsys.stdout = old_stdout\n\nif 'err_service_unavailable' not in locals():\n    print(\"There is no `err_service_unavailable` variable\")\n    exit(1)\n\nif type(err_service_unavailable) is not int:\n    print(\"Variable is not an integer\")\n    exit(1)\n\nif err_service_unavailable != 503:\n    print(\"Variable value is not 503\")\n    exit(1)";
 
-    watchman::RunTaskParams const params =
+    watchman::CourseTaskParams const params =
         getTaskParams(containerType, {"-v code"}, sourceCode, testingCode);
     auto response = service.runTask(params);
     ASSERT_EQ(response.sourceCode, 1);
@@ -79,10 +82,10 @@ TEST(Service, UserSyntaxError) {
 
 TEST(Service, UnknownContainerType) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "pythn";
+    auto containerType = watchman::TaskLauncherType::UNKNOWN;
     std::string sourceCode = "prnt(42)";
     std::string testingCode = "print(42)";
-    watchman::RunTaskParams const params =
+    watchman::CourseTaskParams const params =
         getTaskParams(containerType, {}, sourceCode, testingCode);
     auto response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == watchman::kInvalidCode);
@@ -91,10 +94,10 @@ TEST(Service, UnknownContainerType) {
 
 TEST(Service, Sleep) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "python_check";
+    auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
     std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
     std::string testingCode = "print(42)";
-    watchman::RunTaskParams const params =
+    watchman::CourseTaskParams const params =
         getTaskParams(containerType, {}, sourceCode, testingCode);
 
     auto response = service.runTask(params);
@@ -104,13 +107,13 @@ TEST(Service, Sleep) {
 
 TEST(Service, Golang) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    std::string containerType = "golang_check";
+    auto containerType = watchman::TaskLauncherType::GO_COURSE;
     std::string sourceCode =
         "package main\nimport \"fmt\"\nfunc main() {\tfmt.Println(\"Hello, 世界\")}";
     std::string testingCode =
         "package main\nimport (\"fmt\"\n\"testing\")\nfunc TestMain(m *testing.M) {\tfmt.Println(\"tests are ok\")}";
 
-    watchman::RunTaskParams const params =
+    watchman::CourseTaskParams const params =
         getTaskParams(containerType, {}, sourceCode, testingCode);
 
     auto response = service.runTask(params);
@@ -123,10 +126,10 @@ TEST(Service, RaceCondition) {
     // it is assumed, that python containers less than threads
     watchman::Service service(watchman::readConfig(kParams.config));
     std::thread t1([&service]() {
-        std::string containerType = "python_check";
+        auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
         std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
         std::string testingCode = "print(42)";
-        watchman::RunTaskParams const params =
+        watchman::CourseTaskParams const params =
             getTaskParams(containerType, {"-v code"}, sourceCode, testingCode);
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
@@ -134,10 +137,10 @@ TEST(Service, RaceCondition) {
     });
 
     std::thread t2([&service]() {
-        std::string containerType = "python_check";
+        auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
         std::string sourceCode = "print(69)";
         std::string testingCode = "print(42)";
-        watchman::RunTaskParams const params =
+        watchman::CourseTaskParams const params =
             getTaskParams(containerType, {"-v code"}, sourceCode, testingCode);
         auto response = service.runTask(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
@@ -152,10 +155,10 @@ TEST(Service, AnswerTypes) {
     watchman::Service service(watchman::readConfig(kParams.config));
 
     // code and tests are ok
-    std::string const containerType = "python_check";
+    auto containerType = watchman::TaskLauncherType::PYTHON_COURSE;
     std::string sourceCode = "print(42)";
     std::string testingCode = "print(69)";
-    watchman::RunTaskParams params =
+    watchman::CourseTaskParams params =
         getTaskParams(containerType, {"-v code"}, sourceCode, testingCode);
 
     auto response = service.runTask(params);

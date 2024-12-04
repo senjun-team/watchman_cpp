@@ -3,21 +3,20 @@
 #include "common/config.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 #include "core/code_launcher/detail/storage.hpp"
-#include "core/code_launcher/response.hpp"
 #include "core/docker_wrapper.hpp"
 
 #include <unifex/single_thread_context.hpp>
 
 namespace watchman::detail {
 
-using Storage = ExtractingStorage<Config::CodeLauncherType, BaseCodeLauncher>;
+using Storage = ExtractingStorage<TaskLauncherType, BaseCodeLauncher>;
 
 class CodeLauncherOSManipulator {
 public:
     CodeLauncherOSManipulator(Config && config, Storage & storage);
 
     void asyncRemoveCodeLauncher(std::string const & id);
-    void asyncCreateCodeLauncher(Config::CodeLauncherType type, std::string const & image);
+    void asyncCreateCodeLauncher(TaskLauncherType type, std::string const & image);
 
 private:
     void syncRemoveRunningCodeLanchers(Config const & config);

@@ -5,23 +5,11 @@
 
 namespace watchman {
 
-struct File {
-    std::string name;
-    std::string content;
-    bool isMain = false;
-};
-
-struct Directory {
-    std::string name;
-    std::vector<File> files;
-    std::vector<Directory> directories;
-};
-
 struct PathContent {
     std::string path;
     std::string content;
     bool isMain = false;
-    bool isDir = false;
+    bool isDir = false; // isDir == false means file
 };
 
 struct Project {
@@ -35,11 +23,5 @@ struct Practice {
     Project project;
     PracticeAction action;
 };
-
-std::vector<PathContent> getPathsToFiles(Directory const & directory);
-std::string getMainFile(std::vector<PathContent> const & pathContents);
-
-std::string makeProjectTar(Project const & project);
-Directory jsonToDirectory(std::string const & json);
 
 }  // namespace watchman

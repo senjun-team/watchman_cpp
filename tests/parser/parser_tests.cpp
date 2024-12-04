@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../service/common.hpp"
+#include "common/detail/project_utils.hpp"
 #include "core/parser.hpp"
 
 #include <fstream>
@@ -30,7 +31,7 @@ TEST(Parser, DirectoriesParser) {
     std::stringstream json;
     json << file.rdbuf();
 
-    watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
+    watchman::detail::Directory rootDirectory = watchman::detail::jsonToDirectory(json.str());
     ASSERT_EQ(rootDirectory.name, "watchman_cpp_dir");
     ASSERT_EQ(rootDirectory.files.size(), 3u);
     ASSERT_EQ(rootDirectory.directories.size(), 1u);
@@ -52,7 +53,7 @@ TEST(Parser, FillPaths) {
     std::stringstream json;
     json << file.rdbuf();
 
-    watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
+    watchman::detail::Directory rootDirectory = watchman::detail::jsonToDirectory(json.str());
     auto paths = getPathsToFiles(rootDirectory);
     ASSERT_EQ(paths.size(), 12u);
 }
@@ -62,7 +63,7 @@ TEST(Parser, TarDir) {
     std::stringstream json;
     json << file.rdbuf();
 
-    watchman::Directory rootDirectory = watchman::jsonToDirectory(json.str());
+    watchman::detail::Directory rootDirectory = watchman::detail::jsonToDirectory(json.str());
     auto pathsContents = getPathsToFiles(rootDirectory);
 
     {

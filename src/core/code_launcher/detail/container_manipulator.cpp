@@ -1,5 +1,6 @@
 #include "container_manipulator.hpp"
 
+#include "common/config.hpp"
 #include "common/logging.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 
@@ -18,7 +19,6 @@ CodeLauncherOSManipulator::createCodeLauncher(CodeLauncherInfo const & info) {
 
     std::string id = m_dockerWrapper.run(std::move(params));
     if (id.empty()) {
-        Log::warning("Internal error: can't run container of type {}", info.containerType);
         return nullptr;
     }
 
@@ -26,11 +26,11 @@ CodeLauncherOSManipulator::createCodeLauncher(CodeLauncherInfo const & info) {
 
     std::unique_ptr<BaseCodeLauncher> container;
     if (info.image.find("playground") != std::string::npos) {
-        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), info.containerType);
+        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), info.type);
     } else if (info.image.find("course") != std::string::npos) {
-        container = std::make_unique<CourseCodeLauncher>(std::move(id), info.containerType);
+        container = std::make_unique<CourseCodeLauncher>(std::move(id), info.type);
     } else if (info.image.find("practice") != std::string::npos) {
-        container = std::make_unique<PracticeCodeLauncher>(std::move(id), info.containerType);
+        container = std::make_unique<PracticeCodeLauncher>(std::move(id), info.type);
     } else {
         throw std::logic_error{"Wrong image name: " + info.image};
     }
@@ -57,7 +57,7 @@ void CodeLauncherOSManipulator::asyncRemoveCodeLauncher(std::string const & id) 
         | unifex::then([this, &id] { removeCodeLauncher(id); }) | unifex::sync_wait();
 }
 
-void CodeLauncherOSManipulator::asyncCreateCodeLauncher(Config::CodeLauncherType type,
+void CodeLauncherOSManipulator::asyncCreateCodeLauncher(TaskLauncherType type,
                                                         std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         auto container = createCodeLauncher({"", image, type});
@@ -83,7 +83,7 @@ void CodeLauncherOSManipulator::syncRemoveRunningCodeLanchers(Config const & con
         }
     };
 
-    killContainers(config.languages);
+    killContainers(config.courses);
     killContainers(config.playgrounds);
     killContainers(config.practices);
 }
@@ -106,7 +106,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         }
     };
 
-    launchContainers(config.languages);
+    launchContainers(config.courses);
     launchContainers(config.playgrounds);
     launchContainers(config.practices);
 }

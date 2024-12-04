@@ -1,15 +1,18 @@
 #include "service.hpp"
 
+#include "common/common.hpp"
 #include "common/logging.hpp"
 #include "common/project.hpp"
 #include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
 #include "core/code_launcher/response.hpp"
+#include "core/detail/data_run_prepare.hpp"
 #include "fmt/core.h"
 
 namespace watchman {
 
 Service::Service(Config && config)
-    : m_codeLauncherProvider(std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
+    : m_codeLauncherProvider(
+          std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgs(std::string const & filename,
@@ -57,55 +60,51 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
     return runArgs;
 }
 
-Response Service::runTask(RunTaskParams const & runTaskParams) {
+Response Service::runTask(CourseTaskParams const & runTaskParams) {
     if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
         Log::warning("Empty files with code and test");
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        runTaskParams.containerType);  // here we have got a race
+        runTaskParams.taskLauncherType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
-        return {kInvalidCode,
-                fmt::format("Probably wrong container type: {}", runTaskParams.containerType)};
+        return {kInvalidCode, fmt::format("Probably wrong containerType")};
     }
 
-    std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
-                                   {runTaskParams.sourceTest, kFilenameTaskTests}};
-
-    auto result = codeLauncher->runCode(makeTar(std::move(data)),
+    auto result = codeLauncher->runCode(detail::prepareData(runTaskParams),
                                         getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
-        Log::error("Error return code {} from container type of {}", result.sourceCode,
-                   runTaskParams.containerType);
+        Log::error("Error return code {} from image {}", result.sourceCode,
+                   codeLauncher->getInfo().image);
     }
     return result;
 }
 
-Response Service::runPlayground(RunProjectParams const & runProjectParams) {
+Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        runProjectParams.containerType);  // here we have got a race
+        runProjectParams.taskLauncherType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
     }
 
     return codeLauncher->runCode(
-        makeProjectTar(std::move(runProjectParams.project)),
+        detail::prepareData(runProjectParams),
         getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {
-    auto codeLauncher =
-        m_codeLauncherProvider->getCodeLauncher(params.containerType);  // here we have got a race
+    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
+        params.taskLauncherType);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
     }
-    auto dockerCmdArgs = getPracticeDockerArgs(params);
 
-    return codeLauncher->runCode(makeProjectTar(params.practice.project), std::move(dockerCmdArgs));
+    auto dockerCmdArgs = getPracticeDockerArgs(params);
+    return codeLauncher->runCode(detail::prepareData(params), std::move(dockerCmdArgs));
 }
 
 }  // namespace watchman
