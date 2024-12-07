@@ -14,7 +14,7 @@ public:
     explicit Server(Config && config);
     ~Server();
 
-    void start(size_t threadPoolSize);
+    void start();
 
 private:
     std::unique_ptr<detail::ServerImpl> m_impl;
