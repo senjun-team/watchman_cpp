@@ -7,8 +7,7 @@ int main() noexcept {
         return -1;
     }
 
-    auto const threadPoolSize = config->threadPoolSize;
     watchman::Server server(std::move(*config));
-    server.start(threadPoolSize);
+    server.start();
     return 0;
 }

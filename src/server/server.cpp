@@ -9,6 +9,6 @@ Server::Server(Config && config)
 
 Server::~Server() = default;
 
-void Server::start(size_t threadPoolSize) { m_impl->start(threadPoolSize); }
+void Server::start() { m_impl->start(); }
 
 }  // namespace watchman

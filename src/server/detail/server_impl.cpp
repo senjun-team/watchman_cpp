@@ -5,7 +5,7 @@
 #include "common/logging.hpp"
 #include "core/parser.hpp"
 
-#include <restinio/all.hpp>
+#include <unifex/then.hpp>
 
 namespace watchman::detail {
 
@@ -32,35 +32,64 @@ std::optional<Api> getApi(std::string_view handle) {
     return std::nullopt;
 }
 
+AsyncContext::AsyncContext(size_t poolSize)
+    : m_threadPool(poolSize) {}
+
+void AsyncContext::schedule(std::function<void()> f) {
+    m_scope.detached_spawn(unifex::schedule(m_threadPool.get_scheduler())
+                           | unifex::then([f = std::move(f)]() { f(); }));
+}
+
 ServerImpl::ServerImpl(Config && config)
-    : m_service(std::move(config)) {}
+    : m_service(std::move(config))
+    , m_context(config.threadPoolSize) {}
 
 ServerImpl::~ServerImpl() = default;
 
-void ServerImpl::start(size_t threadPoolSize) {
-    Log::info("Watchman working on {} port with the {} threads", kPort, threadPoolSize);
-    restinio::run(restinio::on_thread_pool(threadPoolSize)
+void ServerImpl::internalProcessRequest(restinio::request_handle_t req) {
+    LogDuration const duration("Request handling");
+    try {
+        auto const result = processRequest(req->header().path(), req->body());
+        req->create_response()
+            .append_header(restinio::http_field::version,
+                           std::to_string(req->header().http_major()))
+            .append_header(restinio::http_field::content_type, "application/json")
+            .append_header(restinio::http_field::status_uri,
+                           std::to_string(restinio::status_code::ok.raw_code()))
+            .set_body(result)
+            .done();
+
+        Log::info("request handled successfully: {}", result);
+    }
+
+    catch (std::exception const & ex) {
+        req->create_response()
+            .append_header(restinio::http_field::version,
+                           std::to_string(req->header().http_major()))
+            .append_header(restinio::http_field::content_type, "application/json")
+            .append_header(restinio::http_field::status_uri,
+                           std::to_string(restinio::status_code::internal_server_error.raw_code()))
+            .set_body("{'Error':'Something went wrong}")
+            .done();
+
+        Log::info("Exception while processing: {}", ex.what());
+    }
+}
+
+void ServerImpl::start() {
+    Log::info("Watchman working on {} port", kPort);
+    restinio::run(restinio::on_this_thread()
                       .port(kPort)
                       .address(kIpAddress)
                       .request_handler([this](restinio::request_handle_t const & req)
                                            -> restinio::request_handling_status_t {
-                          LogDuration duration("Request handling");
                           if (restinio::http_method_post() != req->header().method()) {
+                              LogDuration const duration("Request handling");
                               Log::error("error while handling: {}", req->body());
                               return restinio::request_rejected();
                           }
 
-                          auto const result = processRequest(req->header().path(), req->body());
-                          req->create_response()
-                              .append_header(restinio::http_field::version,
-                                             std::to_string(req->header().http_major()))
-                              .append_header(restinio::http_field::content_type, "application/json")
-                              .append_header(restinio::http_field::status_uri,
-                                             std::to_string(restinio::status_code::ok.raw_code()))
-                              .set_body(result)
-                              .done();
-
-                          Log::info("request handled successfully: {}", result);
+                          m_context.schedule([this, req = req]() { internalProcessRequest(req); });
                           return restinio::request_accepted();
                       }));
 }
