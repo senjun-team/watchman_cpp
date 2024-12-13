@@ -4,7 +4,7 @@ LABEL ru.senjun.image.authors="Shipilov Dmitry"
 ARG CMAKE_VERSION=3.31.2
 
 RUN apt-get update \
-    && apt install -y ninja-build vim
+    && apt install -y ninja-build
 
 RUN apt-get purge -y  cmake
 
