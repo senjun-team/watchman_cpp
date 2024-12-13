@@ -15,13 +15,13 @@ done
 
 f="$(basename -- $project)"
 
-if ! ( timeout 5s cmake -B /home/code_runner/build /home/code_runner/$f > /tmp/configure.txt ); then
+if ! ( timeout 5s cmake -G Ninja -B /home/code_runner/build /home/code_runner/$f > /tmp/configure.txt ); then
    cat /tmp/configure.txt
    echo user_solution_error_f936a25e
    exit
 fi
 
-if ! ( timeout 10s cmake --build /home/code_runner/build > /tmp/build.txt ); then
+if ! ( timeout 10s cmake -G Ninja --build /home/code_runner/build > /tmp/build.txt ); then
    cat /tmp/build.txt
    echo user_solution_error_f936a25e
    exit
