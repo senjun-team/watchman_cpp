@@ -1,10 +1,12 @@
-FROM gcc:14.2.0
+FROM silkeh/clang:19
 LABEL ru.senjun.image.authors="Shipilov Dmitry"
 
 ARG CMAKE_VERSION=3.31.2
 
 RUN apt-get update \
     && apt install -y ninja-build vim
+
+RUN apt-get purge -y  cmake
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-x86_64.sh \
     -q -O /tmp/cmake-install.sh \
