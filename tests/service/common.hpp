@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include "common/common.hpp"
 
 struct ServiceParams {
     std::string const config = std::string{TEST_DATA_DIR} + "config.json";
@@ -19,11 +18,11 @@ inline fs::path getAssetPath(std::string const & assetName) {
     return dir / asset;
 }
 
-inline std::string getJson(std::string const & path) {
+inline std::string getFileContent(std::string const & path) {
     std::ifstream file(getAssetPath(path));
-    std::stringstream json;
-    json << file.rdbuf();
-    return json.str();
+    std::stringstream content;
+    content << file.rdbuf();
+    return content.str();
 }
 
 std::string const kFilesStructureAssets = "files_structure.json";

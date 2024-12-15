@@ -5,6 +5,8 @@
 #include "common/run_params.hpp"
 #include "core/service.hpp"
 
+constexpr std::string_view kCatch2Asset = "cpp_catch2.cpp";
+
 TEST(Coursess, C_plus_plus) {
     watchman::Service service(watchman::readConfig(kParams.config));
     watchman::TaskLauncherType taskType = watchman::TaskLauncherType::CPP_COURSE;
@@ -23,5 +25,23 @@ TEST(Coursess, C_plus_plus) {
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");
     ASSERT_EQ(response.testsOutput.value(), "Hello, world");
+    ASSERT_TRUE(!response.output.empty());
+}
+
+TEST(Courses, Catch2) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::CPP_COURSE;
+    std::string sourceCode =
+        "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
+    std::string testingCode = getFileContent(kCatch2Asset.data());
+    watchman::CourseTaskParams const params{{
+                                                taskType,
+                                                {},
+                                            },
+                                            std::move(sourceCode),
+                                            std::move(testingCode)};
+    watchman::Response response = service.runTask(params);
+    ASSERT_TRUE(response.sourceCode == 0);
+    ASSERT_EQ(response.output, "Hello, world");
     ASSERT_TRUE(!response.output.empty());
 }

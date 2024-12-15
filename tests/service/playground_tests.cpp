@@ -13,7 +13,7 @@ TEST(Playground, Run) {
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
-    params.project = watchman::parseProject(getJson(kPythonProject));
+    params.project = watchman::parseProject(getFileContent(kPythonProject));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(response.output == "42\r\n");
@@ -26,7 +26,7 @@ TEST(Playground, Go) {
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
-    params.project = watchman::parseProject(getJson(kGoProject));
+    params.project = watchman::parseProject(getFileContent(kGoProject));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "2 2");
@@ -38,7 +38,7 @@ TEST(Playground, DISABLED_Haskell_HelloWorld) {
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
-    params.project = watchman::parseProject(getJson(kHaskellProject));
+    params.project = watchman::parseProject(getFileContent(kHaskellProject));
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "Hello world!\r\n");
 }
@@ -49,7 +49,7 @@ TEST(Playground, Rust_success) {
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
-    params.project = watchman::parseProject(getJson(kRustProject));
+    params.project = watchman::parseProject(getFileContent(kRustProject));
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "Hello world!\r\n");
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
@@ -61,7 +61,7 @@ TEST(Playground, C_plus_plus_success) {
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
-    params.project = watchman::parseProject(getJson(kCppProject));
+    params.project = watchman::parseProject(getFileContent(kCppProject));
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "42");
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
@@ -73,14 +73,14 @@ TEST(Playground, C_plus_plus_failure) {
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
-    params.project = watchman::parseProject(getJson(kCppProjectCompileError));
+    params.project = watchman::parseProject(getFileContent(kCppProjectCompileError));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
 }
 
 TEST(Playground, TarDir) {
     watchman::detail::Directory rootDirectory =
-        watchman::detail::jsonToDirectory(getJson(kFilesStructureAssets));
+        watchman::detail::jsonToDirectory(getFileContent(kFilesStructureAssets));
     auto const pathsContents = getPathsToFiles(rootDirectory);
 
     watchman::DockerWrapper dockerWrapper;
