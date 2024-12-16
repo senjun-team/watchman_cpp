@@ -10,6 +10,16 @@ RUN apt-get update \
     && apt install -y cmake=3.25.1-1
 
 WORKDIR /home/code_runner
+
+# Build catch2 from sources. It is too old from the repository
+RUN wget https://github.com/catchorg/Catch2/archive/refs/tags/v3.7.1.tar.gz \
+    && tar -xvf /home/code_runner/v3.7.1.tar.gz \
+    && cmake -S/home/code_runner/Catch2-3.7.1 -B/home/code_runner/Catch2-3.7.1/build \
+    && cmake --build /home/code_runner/Catch2-3.7.1/build -- -j12 \
+    && cmake --install /home/code_runner/Catch2-3.7.1/build \
+    && rm -rf /home/code_runner/Catch2-3.7.1 \
+    && rm -rf /home/code_runner/v3.7.1.tar.gz
+
 COPY run.sh .
 
 USER code_runner

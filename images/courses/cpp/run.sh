@@ -32,7 +32,7 @@ echo user_code_ok_f936a25e
 
 f="$(basename -- ${file}_tests)"
 cp $f main.cpp # otherwise impossible to compile
-timeout 10s g++ -o $executable main.cpp -std=c++23
+timeout 10s g++ -o $executable main.cpp -std=c++23 -lCatch2Main -lCatch2
 
 if ! ( timeout 10s "./$executable" ); then
    echo tests_cases_error_f936a25e
