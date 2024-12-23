@@ -15,12 +15,14 @@ TEST(Coursess, C_plus_plus) {
     std::string testingCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
 
-    watchman::CourseTaskParams const params{{
+    watchman::CourseTaskParams params{{
                                                 taskType,
                                                 {},
                                             },
                                             std::move(sourceCode),
                                             std::move(testingCode)};
+    params.cmdLineArgs = {"-v code"};
+
     watchman::Response response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");
@@ -34,12 +36,13 @@ TEST(Courses, Catch2) {
     std::string sourceCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
     std::string testingCode = getFileContent(kCatch2Asset.data());
-    watchman::CourseTaskParams const params{{
+    watchman::CourseTaskParams params{{
                                                 taskType,
                                                 {},
                                             },
                                             std::move(sourceCode),
                                             std::move(testingCode)};
+    params.cmdLineArgs = {"-v code"};
     watchman::Response response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");
