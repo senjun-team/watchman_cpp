@@ -10,7 +10,8 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
 # Для всех целей сборки устанавливаем возможность импорта std в 1.
 set(CMAKE_CXX_MODULE_STD 1)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Werror -Wall")
+# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Werror -Wall") uncomment for modules
+# SET(CMAKE_CXX_STANDARD 23) uncomment for compiling with catch2
 
 project(cpp_experiments LANGUAGES CXX)
 
