@@ -37,9 +37,20 @@ fi
 
 f="$(basename -- ${file}_tests)"
 cp $f main.cpp # otherwise impossible to compile
-timeout 10s g++ -o $executable main.cpp -std=c++23 -lCatch2Main -lCatch2
 
-if ! ( timeout 10s "./$executable" ); then
+rm -rf build > /dev/null
+
+if ! ( cmake -B build -G Ninja -Wno-dev > /dev/null ); then
+   echo user_solution_error_f936a25e
+   exit
+fi
+
+if ! ( cmake --build build -- -j4 > /dev/null ); then
+   echo user_solution_error_f936a25e
+   exit
+fi
+
+if ! ( timeout 10s "build/$executable" ); then
    echo tests_cases_error_f936a25e
    exit
 fi
