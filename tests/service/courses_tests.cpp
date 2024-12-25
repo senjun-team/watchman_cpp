@@ -16,13 +16,11 @@ TEST(Coursess, C_plus_plus) {
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
 
     watchman::CourseTaskParams params{{
-                                                taskType,
-                                                {"-v", "code"},
-                                            },
-                                            std::move(sourceCode),
-                                            std::move(testingCode)};
-    params.cmdLineArgs = {"-v code"};
-
+                                          taskType,
+                                          {"-v", "code"},
+                                      },
+                                      std::move(sourceCode),
+                                      std::move(testingCode)};
     watchman::Response response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");
@@ -42,7 +40,6 @@ TEST(Courses, CppModules) {
                                             },
                                             std::move(sourceCode),
                                             std::move(testingCode)};
-    params.cmdLineArgs = {"-v code"};
     watchman::Response response = service.runTask(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");
