@@ -13,44 +13,37 @@ do
     esac
 done
 
-cd /home/code_runner
-
-executable="main"
-f="$(basename -- $file)"
-
-
 # if exists file with user code
 if [ $task_type = "code" ]; then
-    cp $f main.cpp # otherwise impossible to compile
-
-    timeout 10s g++ -o $executable main.cpp -std=c++23
-
-    if ! ( timeout 10s "./$executable" ); then
-        echo user_solution_error_f936a25e
-        exit
-    fi
-    echo user_code_ok_f936a25e
-else
-    echo user_code_ok_f936a25e
+   cp "$(basename -- $file)" main.cpp
 fi
 
+cp "$(basename -- ${file}_tests)" tests.cpp
 
-f="$(basename -- ${file}_tests)"
-cp $f main.cpp # otherwise impossible to compile
+mkdir build && cd build
 
-rm -rf build > /dev/null
-
-if ! ( cmake -B build -G Ninja -Wno-dev > /dev/null ); then
+if ! ( timeout 10s cmake -Wno-dev -GNinja .. > /tmp/configure.txt ); then
+   cat /tmp/configure.txt
    echo user_solution_error_f936a25e
    exit
 fi
 
-if ! ( cmake --build build -- -j4 > /dev/null ); then
+if ! ( timeout 20s ninja  > /tmp/build.txt ); then
+   cat /tmp/build.txt
    echo user_solution_error_f936a25e
    exit
 fi
 
-if ! ( timeout 10s "build/$executable" ); then
+if [ $task_type = "code" ]; then
+   if ! ( timeout 4s ./main ); then
+      echo user_solution_error_f936a25e
+      exit
+   fi
+fi
+
+echo user_code_ok_f936a25e
+
+if ! ( timeout 4s ./tests ); then
    echo tests_cases_error_f936a25e
    exit
 fi
