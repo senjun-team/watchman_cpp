@@ -26,9 +26,6 @@ RUN useradd -ms /bin/bash code_runner \
 COPY run.sh .
 COPY CMakeLists.txt .
 COPY ut.hpp .
-COPY main.cpp .
-
-RUN chown code_runner main.cpp
 
 USER code_runner
 
