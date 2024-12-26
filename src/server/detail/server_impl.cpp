@@ -49,7 +49,7 @@ ServerImpl::~ServerImpl() = default;
 void ServerImpl::internalProcessRequest(restinio::request_handle_t req) {
     LogDuration const duration("Request handling");
     try {
-        auto const result = processRequest(req->header().path(), req->body());
+        std::string const result = processRequest(req->header().path(), req->body());
         req->create_response()
             .append_header(restinio::http_field::version,
                            std::to_string(req->header().http_major()))
@@ -61,7 +61,6 @@ void ServerImpl::internalProcessRequest(restinio::request_handle_t req) {
 
         Log::info("request handled successfully: {}", result);
     }
-
     catch (std::exception const & ex) {
         req->create_response()
             .append_header(restinio::http_field::version,
@@ -69,10 +68,10 @@ void ServerImpl::internalProcessRequest(restinio::request_handle_t req) {
             .append_header(restinio::http_field::content_type, "application/json")
             .append_header(restinio::http_field::status_uri,
                            std::to_string(restinio::status_code::internal_server_error.raw_code()))
-            .set_body("{'Error':'Something went wrong}")
+            .set_body(R"({"error":"something went wrong"})")
             .done();
 
-        Log::info("Exception while processing: {}", ex.what());
+        Log::warning("Exception while processing: {}", ex.what());
     }
 }
 
