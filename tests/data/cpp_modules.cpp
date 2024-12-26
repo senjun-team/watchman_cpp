@@ -1,10 +1,14 @@
-/* Вы можете редактировать и запускать этот код. */
+#include "ut.hpp"
 
 import std;
-// #include "ut.hpp"
 
-int main()
-{
-    std::vector<int> numbers{15, -2, 0, 1};
-    std::print("{}", numbers);
+namespace ut = boost::ut;
+
+int main() {
+    using namespace ut;
+
+    "check user input"_test = [] {
+        std::string str = R"(#INJECT-b585472fa)";
+        expect(true);
+    };
 }

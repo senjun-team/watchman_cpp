@@ -25,6 +25,9 @@ RUN useradd -ms /bin/bash code_runner \
 
 COPY run.sh .
 COPY CMakeLists.txt .
+
+# This is unit testing framework with support for C++23 and modules
+# https://github.com/boost-ext/ut
 COPY ut.hpp .
 
 USER code_runner

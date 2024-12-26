@@ -41,7 +41,8 @@ TEST(Courses, CppModules) {
                                             std::move(sourceCode),
                                             std::move(testingCode)};
     watchman::Response response = service.runTask(params);
-    ASSERT_TRUE(response.sourceCode == 0);
+    ASSERT_EQ(response.sourceCode, 0);
     ASSERT_EQ(response.output, "Hello, world");
-    ASSERT_EQ(response.testsOutput.value(), "[15, -2, 0, 1]");
+    ASSERT_TRUE(response.testsOutput.has_value());
+    ASSERT_NE(response.testsOutput.value().find("all tests passed"), std::string::npos);
 }
