@@ -27,7 +27,7 @@ test_function() {
 
   echo user_code_ok_f936a25e # TODO crutch, delete it
 
-  cd /home/code_runner/$project_directory
+  cd /home/code_runner/practice/$project_directory
   timeout 10s python -m unittest
   if [ "$?" -ne 0 ]; then
    echo tests_cases_error_f936a25e

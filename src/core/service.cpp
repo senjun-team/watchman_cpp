@@ -32,19 +32,20 @@ std::vector<std::string> getArgs(std::string_view type, std::string const & file
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgsCourse(std::string const & filename,
                                        std::vector<std::string> const & cmdLineArgs) {
-    constexpr std::string_view kTaskScript = "task/run-task.sh";
+    constexpr std::string_view kTaskScript = "task/run-task.sh";  // TODO remove this properly
     return getArgs(kTaskScript, filename, cmdLineArgs);
 }
 
 std::vector<std::string> getArgsPlayground(std::string const & filename,
                                            std::vector<std::string> const & cmdLineArgs) {
-    constexpr std::string_view kTaskScript = "playground/run-playground.sh";
+    constexpr std::string_view kTaskScript =
+        "playground/run-playground.sh";  // TODO remove this properly
     return getArgs(kTaskScript, filename, cmdLineArgs);
 }
 
 std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params) {
     std::string const cmd = "sh";
-    std::string const script = "run.sh";
+    std::string const script = "practice/run-practice.sh";  // TODO remove this properly
     std::vector<std::string> runArgs;
 
     runArgs.emplace_back(cmd);
@@ -52,7 +53,8 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
 
     // see run.sh for python pracitce
     auto runAction = [&runArgs, &params]() {
-        runArgs.emplace_back(fmt::format("-p {}", params.pathToMainFile));
+        runArgs.emplace_back(
+            fmt::format("-p practice/{}", params.pathToMainFile));  // TODO remove this properly
         runArgs.emplace_back(fmt::format("-o {}", params.userCmdLineArgs));
         runArgs.emplace_back(fmt::format("-r"));
     };

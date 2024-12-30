@@ -13,7 +13,7 @@ namespace watchman {
 
 constexpr std::string_view kTaskWorkdir = "/home/code_runner/task";
 constexpr std::string_view kPlaygroundWorkdir = "/home/code_runner/playground";
-constexpr std::string_view kPracticeWorkdir = "/home/code_runner/pracitce";
+constexpr std::string_view kPracticeWorkdir = "/home/code_runner/practice";
 
 std::map<ImageType, std::string_view> kDefaultPaths{{ImageType::Task, kTaskWorkdir},
                                                     {ImageType::Playground, kPlaygroundWorkdir},

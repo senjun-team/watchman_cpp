@@ -3,7 +3,7 @@
   "max-containers-amount": 8,
   "courses": {
     "python": {
-      "image-name": "senjun_courses_python",
+      "image-name": "senjun_python",
       "launched": 1
     },
     "rust": {
@@ -25,7 +25,7 @@
   },
   "playground": {
     "python": {
-      "image-name": "senjun_playground_python",
+      "image-name": "senjun_python",
       "launched": 1
     },
     "rust": {
@@ -47,7 +47,7 @@
   },
   "practice": {
     "python": {
-      "image-name": "senjun_practice_python",
+      "image-name": "senjun_python",
       "launched": 1
     }
   }
