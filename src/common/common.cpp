@@ -14,7 +14,6 @@ size_t getCpuCount() {
     return cpuCount > 0 ? cpuCount : kDefCpuCount;
 }
 
-
 std::string makeTar(std::vector<CodeFilename> && data) {
     std::string stringTar;
     {

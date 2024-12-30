@@ -15,22 +15,21 @@ done
 
 f="$(basename -- $project)"
 
+cd /home/code_runner/$f 
 
-cd /home/code_runner/$f && mkdir build && cd build
-
-if ! ( timeout 5s cmake -Wno-dev -GNinja .. > /tmp/configure.txt ); then
+if ! ( timeout 5s cmake -Bbuild -Wno-dev -GNinja > /tmp/configure.txt ); then
    cat /tmp/configure.txt
    echo user_solution_error_f936a25e
    exit
 fi
 
-if ! ( timeout 10s ninja  > /tmp/build.txt ); then
+if ! ( timeout 10s cmake --build build -- -j4  > /tmp/build.txt ); then
    cat /tmp/build.txt
    echo user_solution_error_f936a25e
    exit
 fi
 
-if ! ( timeout 5s ./cpp_experiments ); then
+if ! ( timeout 5s ./build/cpp_experiments ); then
    echo user_solution_error_f936a25e
    exit
 fi

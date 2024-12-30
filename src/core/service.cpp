@@ -6,7 +6,6 @@
 #include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
 #include "core/code_launcher/response.hpp"
 #include "core/detail/data_run_prepare.hpp"
-#include "fmt/core.h"
 
 namespace watchman {
 
