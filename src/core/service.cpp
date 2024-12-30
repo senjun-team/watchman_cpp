@@ -13,22 +13,33 @@ Service::Service(Config && config)
     : m_codeLauncherProvider(
           std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
-// Returns vector containing sequence: cmd, script, filename, args
-std::vector<std::string> getArgs(std::string const & filename,
+std::vector<std::string> getArgs(std::string type, std::string const & filename,
                                  std::vector<std::string> const & cmdLineArgs) {
     std::string const cmd = "sh";
-    std::string const script = "run.sh";
 
     std::vector<std::string> runArgs;
 
     runArgs.reserve(3 + cmdLineArgs.size());
 
     runArgs.emplace_back(cmd);
-    runArgs.emplace_back(script);
+    runArgs.emplace_back(std::move(type));
     runArgs.emplace_back(fmt::format("-f {}", filename));
 
     runArgs.insert(runArgs.end(), cmdLineArgs.begin(), cmdLineArgs.end());
     return runArgs;
+}
+
+// Returns vector containing sequence: cmd, script, filename, args
+std::vector<std::string> getArgsCourse(std::string const & filename,
+                                       std::vector<std::string> const & cmdLineArgs) {
+    constexpr std::string kTaskScript = "run-task.sh";
+    return getArgs(kTaskScript, filename, cmdLineArgs);
+}
+
+std::vector<std::string> getArgsPlayground(std::string const & filename,
+                                           std::vector<std::string> const & cmdLineArgs) {
+    constexpr std::string kTaskScript = "run-playground.sh";
+    return getArgs(kTaskScript, filename, cmdLineArgs);
 }
 
 std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params) {
@@ -73,7 +84,7 @@ Response Service::runTask(CourseTaskParams const & runTaskParams) {
     }
 
     auto result = codeLauncher->runCode(detail::prepareData(runTaskParams),
-                                        getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+                                        getArgsCourse(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
         Log::error("Error return code {} from image {}", result.sourceCode,
                    codeLauncher->getInfo().image);
@@ -91,7 +102,7 @@ Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
 
     return codeLauncher->runCode(
         detail::prepareData(runProjectParams),
-        getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
+        getArgsPlayground(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {

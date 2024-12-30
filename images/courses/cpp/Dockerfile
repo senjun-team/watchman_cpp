@@ -23,7 +23,9 @@ RUN useradd -ms /bin/bash code_runner \
     && chown root:code_runner /home/code_runner \
     && chmod 1775 /home/code_runner
 
-COPY run.sh .
+# TODO maybe use different directories
+COPY run-task.sh .
+COPY run-playground.sh .
 COPY CMakeLists.txt .
 
 # This is unit testing framework with support for C++23 and modules

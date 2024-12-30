@@ -1,1 +1,1 @@
-docker build -t senjun_courses_cpp .
+docker build -t senjun_cpp .

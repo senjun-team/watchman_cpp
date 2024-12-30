@@ -19,7 +19,7 @@
       "launched": 3
     },
     "cpp": {
-      "image-name": "senjun_courses_cpp",
+      "image-name": "senjun_cpp",
       "launched": 3
     }
   },
@@ -41,7 +41,7 @@
       "launched": 3
     },
     "cpp": {
-      "image-name": "senjun_playground_cpp",
+      "image-name": "senjun_cpp",
       "launched": 3
     }
   },
