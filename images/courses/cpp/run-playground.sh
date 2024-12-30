@@ -15,7 +15,7 @@ done
 
 f="$(basename -- $project)"
 
-cd /home/code_runner/$f 
+cd /home/code_runner/playground/$f 
 
 if ! ( timeout 5s cmake -Bbuild -Wno-dev -GNinja > /tmp/configure.txt ); then
    cat /tmp/configure.txt

@@ -1,18 +1,35 @@
 #include "core/code_launcher/detail/code_launchers.hpp"
 
+#include "common/config.hpp"
 #include "common/logging.hpp"
+
+#include <map>
+#include <stdexcept>
 
 // crutch, redo!
 #include "core/code_launcher/detail/docker_end_answer.hpp"
 
 namespace watchman {
 
-static std::string const kUserSourceFile = "/home/code_runner";
+constexpr std::string_view kTaskWorkdir = "/home/code_runner/task";
+constexpr std::string_view kPlaygroundWorkdir = "/home/code_runner/playground";
+constexpr std::string_view kPracticeWorkdir = "/home/code_runner/pracitce";
 
-bool BaseCodeLauncher::prepareCode(std::string && tarString) {
+std::map<ImageType, std::string_view> kDefaultPaths{{ImageType::Task, kTaskWorkdir},
+                                                    {ImageType::Playground, kPlaygroundWorkdir},
+                                                    {ImageType::Practice, kPracticeWorkdir}
+
+};
+
+bool BaseCodeLauncher::prepareCode(std::string && tarString, ImageType type) {
+    auto defaultPath = kDefaultPaths.find(type);
+    if (defaultPath == kDefaultPaths.end()) {
+        throw std::logic_error{"BaseCodeLauncher::prepareCode: unknown type"};
+    }
+
     PutArchive params;
     params.containerId = containerId;
-    params.path = kUserSourceFile;
+    params.path = defaultPath->second;
     params.archive = std::move(tarString);
     params.copyUIDGID = "1";
 
@@ -26,7 +43,7 @@ bool BaseCodeLauncher::prepareCode(std::string && tarString) {
 
 Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                          std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources))) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Playground)) {
         return {};
     }
 
@@ -46,7 +63,7 @@ PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, TaskLauncherType 
 
 Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                      std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources))) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Task)) {
         return {};
     }
     auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
@@ -70,7 +87,7 @@ CodeLauncherInfo BaseCodeLauncher::getInfo() const {
 
 Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                        std::vector<std::string> && dockerCmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources))) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Practice)) {
         return {};
     }
 

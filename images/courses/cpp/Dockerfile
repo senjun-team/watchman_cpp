@@ -18,19 +18,25 @@ ENV PATH="/usr/bin/cmake/bin:${PATH}"
 
 WORKDIR /home/code_runner
 
+
+# Directory for task launching
+RUN mkdir /home/code_runner/task 
+COPY run-task.sh /home/code_runner/task 
+COPY CMakeLists.txt /home/code_runner/task 
+COPY ut.hpp /home/code_runner/task
+
+# Directory for playground
+RUN mkdir /home/code_runner/playground 
+COPY run-playground.sh /home/code_runner/playground
+
 # change access write for code_runner home directory to root
 RUN useradd -ms /bin/bash code_runner \
     && chown root:code_runner /home/code_runner \
-    && chmod 1775 /home/code_runner
-
-# TODO maybe use different directories
-COPY run-task.sh .
-COPY run-playground.sh .
-COPY CMakeLists.txt .
-
-# This is unit testing framework with support for C++23 and modules
-# https://github.com/boost-ext/ut
-COPY ut.hpp .
+    && chown root:code_runner /home/code_runner/task \
+    && chown root:code_runner /home/code_runner/playground \
+    && chmod 1775 /home/code_runner \
+    && chmod 1775 /home/code_runner/task \
+    && chmod 1775 /home/code_runner/playground 
 
 USER code_runner
 

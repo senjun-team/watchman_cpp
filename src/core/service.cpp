@@ -13,7 +13,7 @@ Service::Service(Config && config)
     : m_codeLauncherProvider(
           std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
-std::vector<std::string> getArgs(std::string type, std::string const & filename,
+std::vector<std::string> getArgs(std::string_view type, std::string const & filename,
                                  std::vector<std::string> const & cmdLineArgs) {
     std::string const cmd = "sh";
 
@@ -32,13 +32,13 @@ std::vector<std::string> getArgs(std::string type, std::string const & filename,
 // Returns vector containing sequence: cmd, script, filename, args
 std::vector<std::string> getArgsCourse(std::string const & filename,
                                        std::vector<std::string> const & cmdLineArgs) {
-    constexpr std::string kTaskScript = "run-task.sh";
+    constexpr std::string_view kTaskScript = "task/run-task.sh";
     return getArgs(kTaskScript, filename, cmdLineArgs);
 }
 
 std::vector<std::string> getArgsPlayground(std::string const & filename,
                                            std::vector<std::string> const & cmdLineArgs) {
-    constexpr std::string kTaskScript = "run-playground.sh";
+    constexpr std::string_view kTaskScript = "playground/run-playground.sh";
     return getArgs(kTaskScript, filename, cmdLineArgs);
 }
 

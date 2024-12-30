@@ -12,7 +12,8 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Werror -Wall")
 
 PROJECT(task_solution LANGUAGES CXX)
 
-IF (EXISTS "/home/code_runner/main.cpp")
+# TODO hardcode path is fragile!
+IF (EXISTS "/home/code_runner/task/main.cpp")
     add_executable(main)
 
     target_sources(main

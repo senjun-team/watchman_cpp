@@ -13,6 +13,8 @@ do
     esac
 done
 
+cd /home/code_runner/task
+
 # if exists file with user code
 if [ $task_type = "code" ]; then
    touch main.cpp
