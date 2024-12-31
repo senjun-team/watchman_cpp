@@ -15,12 +15,9 @@ done
 
 f="$(basename -- $file)"
 
-# clear previous container use
-rm -rf /home/code_runner > /dev/null 2>&1
+cp /home/code_runner/task/$f /home/code_runner/task/user-code/main.go
 
-cp /home/code_runner/$f /home/code_runner/user-code/main.go
-
-cd /home/code_runner/user-code
+cd /home/code_runner/task/user-code
 
 # we call gofmt to prevent compiler errors:
 # go compiler treats formatting errors as compilation errors!
@@ -37,7 +34,7 @@ echo user_code_ok_f936a25e
 f="$(basename -- ${file}_tests)"
 # don't clear previous container use because
 # we don't want to erase main.go
-cp /home/code_runner/$f /home/code_runner/user-code/main_test.go
+cp /home/code_runner/task/$f /home/code_runner/task/user-code/main_test.go
 # here we don't call gofmt because we rely on the fact that
 # the tests are already formatted
 if ! ( timeout 10s go test -v); then

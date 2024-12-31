@@ -16,15 +16,15 @@ done
 f="$(basename -- $file)"
 
 
-cd /home/code_runner/$f
+cd /home/code_runner/playground/$f
 
 # we call gofmt to prevent compiler errors:
 # go compiler treats formatting errors as compilation errors!
 
 # TODO: format go code in online IDE to show user the right way
-timeout 5s gofmt -s -w /home/code_runner/$f
+timeout 5s gofmt -s -w /home/code_runner/playground/$f
 
-if ! ( timeout 10s go run /home/code_runner/$f/cmd); then
+if ! ( timeout 10s go run /home/code_runner/playground/$f/cmd); then
    echo user_solution_error_f936a25e
    exit
 fi

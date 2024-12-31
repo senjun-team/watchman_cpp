@@ -11,7 +11,7 @@
       "launched": 1
     },
     "golang": {
-      "image-name": "senjun_courses_golang",
+      "image-name": "senjun_golang",
       "launched": 1
     },
     "haskell": {
@@ -33,7 +33,7 @@
       "launched": 1
     },
     "golang": {
-      "image-name": "senjun_playground_golang",
+      "image-name": "senjun_golang",
       "launched": 1
     },
     "haskell": {
