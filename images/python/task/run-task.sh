@@ -14,8 +14,6 @@ do
     esac
 done
 
-# clear previous container use
-rm -rf /home/code_runner/task > /dev/null 2>&1
 cd /home/code_runner/task
 
 # if exists file with user code

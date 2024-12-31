@@ -46,3 +46,22 @@ TEST(Courses, CppModules) {
     ASSERT_TRUE(response.testsOutput.has_value());
     ASSERT_NE(response.testsOutput.value().find("all tests passed"), std::string::npos);
 }
+
+TEST(Courses, Rust) {
+    watchman::Service service(watchman::readConfig(kParams.config));
+    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::RUST_COURSE;
+    std::string sourceCode =
+        "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n";
+    std::string testingCode =
+        "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n";
+    watchman::CourseTaskParams const params{{
+                                                taskType,
+                                                {"-v", "code"},
+                                            },
+                                            std::move(sourceCode),
+                                            std::move(testingCode)};
+    watchman::Response response = service.runTask(params);
+    ASSERT_EQ(response.sourceCode, 0);
+    ASSERT_EQ(response.output, "Hello world!\r\n");
+    ASSERT_EQ(response.testsOutput.value(), "Hello world!\r\n");
+}
