@@ -32,7 +32,7 @@ TEST(Playground, Go) {
     ASSERT_EQ(response.output, "2 2");
 }
 
-TEST(Playground, DISABLED_Haskell_HelloWorld) {
+TEST(Playground, Haskell_HelloWorld) {
     watchman::Service service(watchman::readConfig(kParams.config));
     auto taskType = watchman::TaskLauncherType::HASKELL_PLAYGROUND;
 

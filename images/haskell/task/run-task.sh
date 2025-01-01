@@ -19,19 +19,16 @@ then
     stack_additional_opts="${stack_additional_opts} --color ${color}"
 fi
 
-# TODO
-# clear previous container use
-# rm -rf /home/code_runner > /dev/null 2>&1
-
 f="$(basename -- $file)"
 
 f_capture="/tmp/capture.txt"
 rm $f_capture > /dev/null 2>&1
 
+
 # if exists file with user code
 # run user code
 if [ $task_type = "code" ]; then
-    cp /home/code_runner/$f /home/code_runner/user-code/app/Main.hs
+    cp /home/code_runner/task/$f /home/code_runner/user-code/app/Main.hs
 
     # go to /home/code_runner/user_code for stack compiling and running
     cd /home/code_runner/user-code
@@ -47,7 +44,7 @@ fi
 
 
 # run tests
-timeout 10s python3 "/home/code_runner/${f}_tests" $f_capture
+timeout 10s python3 "/home/code_runner/task/${f}_tests" $f_capture
 if [ "$?" -ne 0 ]; then
     echo tests_cases_error_f936a25e
     exit
