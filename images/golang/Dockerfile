@@ -14,10 +14,6 @@ COPY playground/run-playground.sh /home/code_runner/playground
 # USER code_runner
 RUN mkdir -p task/user-code && cd task/user-code && go mod init senjun/user/user-code
 
-# change access write for user-code to root
-# permit to write code for launching
-# forbid go.mod remove
-
 # Change access write for code_runner home directory to root recursively
 RUN useradd -ms /bin/bash -u 1000 code_runner \
     && chown -R code_runner:code_runner /home/code_runner \

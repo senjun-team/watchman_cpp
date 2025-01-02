@@ -30,9 +30,4 @@ RUN stack new user-code \
 
 RUN cd /home/code_runner/user-code/ && stack build
 
-# RUN cp /home/code_runner/task/config.yaml /home/code_runner/.stack 
-# RUN cp /home/code_runner/task/package.yaml /home/code_runner/user-code
-# RUN cd /home/code_runner/user-code 
-# RUN stack build --prefetch
-
 ENTRYPOINT ["bash"]
