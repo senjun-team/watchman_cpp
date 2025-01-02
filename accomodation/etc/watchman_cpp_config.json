@@ -7,7 +7,7 @@
       "launched": 6
     },
     "rust": {
-      "image-name": "senjun_courses_rust",
+      "image-name": "senjun_rust",
       "launched": 3
     },
     "golang": {
@@ -29,7 +29,7 @@
       "launched": 3
     },
     "rust": {
-      "image-name": "senjun_playground_rust",
+      "image-name": "senjun_rust",
       "launched": 3
     },
     "golang": {
