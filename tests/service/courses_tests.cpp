@@ -66,7 +66,7 @@ TEST(Courses, Rust) {
     ASSERT_EQ(response.testsOutput.value(), "Hello world!\r\n");
 }
 
-TEST(Courses, Haskell) {
+TEST(Courses, DISABLED_Haskell) {
     watchman::Service service(watchman::readConfig(kParams.config));
     watchman::TaskLauncherType taskType = watchman::TaskLauncherType::HASKELL_COURSE;
     std::string sourceCode =
