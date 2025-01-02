@@ -14,6 +14,8 @@ struct TaskLauncherInfo {
     uint32_t launched{0};
 };
 
+enum class ImageType { Task, Playground, Practice };
+
 enum class TaskLauncherType {
     CPP_COURSE,
     CPP_PLAYGROUND,

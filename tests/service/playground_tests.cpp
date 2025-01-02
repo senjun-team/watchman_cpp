@@ -84,7 +84,7 @@ TEST(Playground, TarDir) {
     auto const pathsContents = getPathsToFiles(rootDirectory);
 
     watchman::DockerWrapper dockerWrapper;
-    watchman::RunContainer params{.image = "senjun_courses_python", .tty = true, .memory = 7000000};
+    watchman::RunContainer params{.image = "senjun_python", .tty = true, .memory = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
     std::string const pathInContainer = "/home/code_runner";
 

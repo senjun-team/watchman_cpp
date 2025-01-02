@@ -9,7 +9,7 @@
 
 using namespace watchman;
 
-std::string const kPythonImage = "senjun_courses_python";
+std::string const kPythonImage = "senjun_python";
 
 // TODO make containers delete after tests
 
@@ -97,7 +97,7 @@ TEST(DockerWrapper, run_user_code) {
     DockerWrapper dockerWrapper;
     RunContainer params{.image = kPythonImage, .tty = true, .memory = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
-    std::string const pathInContainer = "/home/code_runner";
+    std::string const pathInContainer = "/home/code_runner/task";
 
     bool const success =
         dockerWrapper.putArchive({id, pathInContainer, makeCourseTar("print(42)", "print(42)")});
@@ -105,7 +105,7 @@ TEST(DockerWrapper, run_user_code) {
 
     std::string const reference =
         "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
-    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask),
+    std::vector<std::string> const commands{"sh", "task/run-task.sh", fmt::format("-f {}", kFilenameTask),
                                             fmt::format("-v code")};
 
     auto result = dockerWrapper.exec({id, commands});
@@ -130,7 +130,7 @@ TEST(DockerWrapper, execute_task) {
     DockerWrapper dockerWrapper;
     RunContainer params{.image = kPythonImage, .tty = true, .memory = 7000000};
     std::string const id = dockerWrapper.run(std::move(params));
-    std::string const pathInContainer = "/home/code_runner";
+    std::string const pathInContainer = "/home/code_runner/task";
     std::string const sourceCode = "print(42)\n";
 
     bool const success =
@@ -139,7 +139,7 @@ TEST(DockerWrapper, execute_task) {
 
     std::string const reference =
         "42\r\nuser_code_ok_f936a25e\r\n42\r\nuser_solution_ok_f936a25e\r\n";
-    std::vector<std::string> const commands{"sh", "run.sh", fmt::format("-f {}", kFilenameTask),
+    std::vector<std::string> const commands{"sh", "task/run-task.sh", fmt::format("-f {}", kFilenameTask),
                                             fmt::format("-v code")};
 
     auto result = dockerWrapper.exec({id, commands});

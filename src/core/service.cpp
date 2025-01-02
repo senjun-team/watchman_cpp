@@ -6,7 +6,6 @@
 #include "core/code_launcher/detail/restarting_code_launcher_provider.hpp"
 #include "core/code_launcher/response.hpp"
 #include "core/detail/data_run_prepare.hpp"
-#include "fmt/core.h"
 
 namespace watchman {
 
@@ -14,27 +13,39 @@ Service::Service(Config && config)
     : m_codeLauncherProvider(
           std::make_unique<detail::RestartingCodeLauncherProvider>(std::move(config))) {}
 
-// Returns vector containing sequence: cmd, script, filename, args
-std::vector<std::string> getArgs(std::string const & filename,
+std::vector<std::string> getArgs(std::string_view type, std::string const & filename,
                                  std::vector<std::string> const & cmdLineArgs) {
     std::string const cmd = "sh";
-    std::string const script = "run.sh";
 
     std::vector<std::string> runArgs;
 
     runArgs.reserve(3 + cmdLineArgs.size());
 
     runArgs.emplace_back(cmd);
-    runArgs.emplace_back(script);
+    runArgs.emplace_back(std::move(type));
     runArgs.emplace_back(fmt::format("-f {}", filename));
 
     runArgs.insert(runArgs.end(), cmdLineArgs.begin(), cmdLineArgs.end());
     return runArgs;
 }
 
+// Returns vector containing sequence: cmd, script, filename, args
+std::vector<std::string> getArgsCourse(std::string const & filename,
+                                       std::vector<std::string> const & cmdLineArgs) {
+    constexpr std::string_view kTaskScript = "task/run-task.sh";  // TODO remove this properly
+    return getArgs(kTaskScript, filename, cmdLineArgs);
+}
+
+std::vector<std::string> getArgsPlayground(std::string const & filename,
+                                           std::vector<std::string> const & cmdLineArgs) {
+    constexpr std::string_view kTaskScript =
+        "playground/run-playground.sh";  // TODO remove this properly
+    return getArgs(kTaskScript, filename, cmdLineArgs);
+}
+
 std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params) {
     std::string const cmd = "sh";
-    std::string const script = "run.sh";
+    std::string const script = "practice/run-practice.sh";  // TODO remove this properly
     std::vector<std::string> runArgs;
 
     runArgs.emplace_back(cmd);
@@ -42,7 +53,8 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
 
     // see run.sh for python pracitce
     auto runAction = [&runArgs, &params]() {
-        runArgs.emplace_back(fmt::format("-p {}", params.pathToMainFile));
+        runArgs.emplace_back(
+            fmt::format("-p practice/{}", params.pathToMainFile));  // TODO remove this properly
         runArgs.emplace_back(fmt::format("-o {}", params.userCmdLineArgs));
         runArgs.emplace_back(fmt::format("-r"));
     };
@@ -74,7 +86,7 @@ Response Service::runTask(CourseTaskParams const & runTaskParams) {
     }
 
     auto result = codeLauncher->runCode(detail::prepareData(runTaskParams),
-                                        getArgs(kFilenameTask, runTaskParams.cmdLineArgs));
+                                        getArgsCourse(kFilenameTask, runTaskParams.cmdLineArgs));
     if (errorCodeIsUnexpected(result.sourceCode)) {
         Log::error("Error return code {} from image {}", result.sourceCode,
                    codeLauncher->getInfo().image);
@@ -92,7 +104,7 @@ Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
 
     return codeLauncher->runCode(
         detail::prepareData(runProjectParams),
-        getArgs(runProjectParams.project.name, runProjectParams.cmdLineArgs));
+        getArgsPlayground(runProjectParams.project.name, runProjectParams.cmdLineArgs));
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {

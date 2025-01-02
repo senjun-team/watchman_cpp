@@ -4,38 +4,64 @@
 #include "common/logging.hpp"
 #include "core/code_launcher/detail/code_launchers.hpp"
 
+#include <stdexcept>
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>
 
 namespace watchman::detail {
 
+// TODO remove this function. Use proper combination of language and image type
+ImageType getContainerTypeByImage(TaskLauncherType type) {
+    switch (type) {
+    case TaskLauncherType::CPP_COURSE:
+    case TaskLauncherType::GO_COURSE:
+    case TaskLauncherType::HASKELL_COURSE:
+    case TaskLauncherType::PYTHON_COURSE:
+    case TaskLauncherType::RUST_COURSE: return ImageType::Task;
+
+    case TaskLauncherType::CPP_PLAYGROUND:
+    case TaskLauncherType::GO_PLAYGROUND:
+    case TaskLauncherType::HASKELL_PLAYGROUND:
+    case TaskLauncherType::PYTHON_PLAYGROUND:
+    case TaskLauncherType::RUST_PLAYGROUND: return ImageType::Playground;
+
+    case TaskLauncherType::CPP_PRACTICE:
+    case TaskLauncherType::GO_PRACTICE:
+    case TaskLauncherType::HASKELL_PRACTICE:
+    case TaskLauncherType::PYTHON_PRACTICE:
+    case TaskLauncherType::RUST_PRACTICE: return ImageType::Practice;
+    }
+
+    throw std::logic_error{"getContainerTypeByImage: unknown type"};
+}
+
 std::unique_ptr<BaseCodeLauncher>
-CodeLauncherOSManipulator::createCodeLauncher(CodeLauncherInfo const & info) {
+CodeLauncherOSManipulator::createCodeLauncher(std::string const & image, TaskLauncherType taskType,
+                                              ImageType imageType) {
     RunContainer params;
 
-    params.image = info.image;
+    params.image = image;
     params.tty = true;
-    params.memory = 300'000'000;
+    params.memory = 300'000'000'000;  // haskell needs more memory than others, TODO put it to the config
 
     std::string id = m_dockerWrapper.run(std::move(params));
     if (id.empty()) {
         return nullptr;
     }
 
-    Log::info("Launch container: {}, id: {}", info.image, id);
+    Log::info("Launch container: {}, id: {}", image, id);
 
     std::unique_ptr<BaseCodeLauncher> container;
-    if (info.image.find("playground") != std::string::npos) {
-        container = std::make_unique<PlaygroundCodeLauncher>(std::move(id), info.type);
-    } else if (info.image.find("course") != std::string::npos) {
-        container = std::make_unique<CourseCodeLauncher>(std::move(id), info.type);
-    } else if (info.image.find("practice") != std::string::npos) {
-        container = std::make_unique<PracticeCodeLauncher>(std::move(id), info.type);
-    } else {
-        throw std::logic_error{"Wrong image name: " + info.image};
+
+    switch (imageType) {
+    case ImageType::Task: return std::make_unique<CourseCodeLauncher>(std::move(id), taskType);
+    case ImageType::Playground:
+        return std::make_unique<PlaygroundCodeLauncher>(std::move(id), taskType);
+    case ImageType::Practice:
+        return std::make_unique<PracticeCodeLauncher>(std::move(id), taskType);
     }
 
-    return container;
+    throw std::logic_error{"Unknorn image type while creating code launcher"};
 }
 
 void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
@@ -60,7 +86,7 @@ void CodeLauncherOSManipulator::asyncRemoveCodeLauncher(std::string const & id) 
 void CodeLauncherOSManipulator::asyncCreateCodeLauncher(TaskLauncherType type,
                                                         std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
-        auto container = createCodeLauncher({"", image, type});
+        auto container = createCodeLauncher(image, type, getContainerTypeByImage(type));
         if (container == nullptr) {
             return;
         }
@@ -93,7 +119,8 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         for (auto const & [type, info] : containerTypes) {
             std::list<std::unique_ptr<BaseCodeLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
-                auto container = createCodeLauncher({"", info.imageName, type});
+                auto container =
+                    createCodeLauncher(info.imageName, type, getContainerTypeByImage(type));
                 if (container == nullptr) {
                     continue;
                 }

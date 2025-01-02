@@ -27,11 +27,11 @@ TEST(Service, ReadConfig) {
 
     auto taskLauncherInfo = cfg.courses.at(watchman::TaskLauncherType::PYTHON_COURSE);
     ASSERT_TRUE(taskLauncherInfo.launched == 1
-                && taskLauncherInfo.imageName == "senjun_courses_python");
+                && taskLauncherInfo.imageName == "senjun_python");
 
     taskLauncherInfo = cfg.courses.at(watchman::TaskLauncherType::RUST_COURSE);
     ASSERT_TRUE(taskLauncherInfo.launched == 1
-                && taskLauncherInfo.imageName == "senjun_courses_rust");
+                && taskLauncherInfo.imageName == "senjun_rust");
 }
 
 TEST(Service, Run) {
@@ -76,7 +76,8 @@ TEST(Service, UserSyntaxError) {
     ASSERT_EQ(response.sourceCode, 1);
     ASSERT_EQ(
         response.output,
-        "  File \"/home/code_runner/task\", line 1\r\n    err_service_unavailable = 503)\r\n                                 ^\r\nSyntaxError: unmatched ')'\r\n");
+        "  File \"/home/code_runner/task/task\", line 1\r\n    err_service_unavailable = 503)\r\n                                 ^\r\nSyntaxError: unmatched ')'\r\n"
+);
     ASSERT_FALSE(response.testsOutput.has_value());
 }
 

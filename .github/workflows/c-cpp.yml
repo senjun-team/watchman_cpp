@@ -24,11 +24,11 @@ jobs:
     - name: test_docker
       run: docker version && docker info
     - name: build_images
-      run: cd images/courses/cpp && sh build_image.sh && cd ../golang && sh build_image.sh &&  cd ../python && sh build_image.sh && cd ../rust && sh build_image.sh && cd ../../playground && cd cpp && sh build_image.sh && cd ../golang && sh build_image.sh &&  cd ../python && sh build_image.sh && cd ../rust && sh build_image.sh && cd ../../practice/python && sh build_image.sh
+      run: cd images && sh create_images.sh
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
-      run: cmake -S . -B build -DBUILD_TESTING=1
+      run: cmake -B build -DBUILD_TESTING=TRUE
     - name: build_project
       run: cmake --build build -- -j4
     - name: run_tests
