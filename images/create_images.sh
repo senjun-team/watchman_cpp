@@ -1,7 +1,17 @@
 #!/bin/bash
+set -e
 
-sh cpp/build_image.sh
-sh golang/build_image.sh
-sh haskell/build_image.sh
-sh python/build_image.sh
-sh rust/build_image.sh
+function create_image() {
+    local lang=$1
+    cd $lang
+    sh build_image.sh
+    cd ..
+}
+
+create_image cpp
+create_image golang
+create_image python
+create_image rust
+
+# Uncomment haskell if needed
+# create_image haskell
