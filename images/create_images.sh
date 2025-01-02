@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-function create_image() {
+create_image () {
     local lang=$1
     cd $lang
     sh build_image.sh
