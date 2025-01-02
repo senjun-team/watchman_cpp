@@ -14,11 +14,11 @@ done
 
 f="$(basename -- $file)"
 
-cp -r $f/app playground/user-code/
-cp -r $f/src playground/user-code/
-cp -r $f/test playground/user-code/
+cp -r /home/code_runner/playground/$f/app /home/code_runner/user-code/
+cp -r /home/code_runner/playground/$f/src /home/code_runner/user-code/
+cp -r /home/code_runner/playground/$f/test /home/code_runner/user-code/
 
-cd /home/code_runner/playground/user-code/
+cd /home/code_runner/user-code/
 
 f_capture="/tmp/capture.txt"
 

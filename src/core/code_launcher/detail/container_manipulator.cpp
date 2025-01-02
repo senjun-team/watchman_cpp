@@ -42,7 +42,7 @@ CodeLauncherOSManipulator::createCodeLauncher(std::string const & image, TaskLau
 
     params.image = image;
     params.tty = true;
-    params.memory = 300'000'000;
+    params.memory = 300'000'000'000;  // haskell needs more memory than others, TODO put it to the config
 
     std::string id = m_dockerWrapper.run(std::move(params));
     if (id.empty()) {
