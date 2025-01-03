@@ -10,6 +10,8 @@
 
 namespace watchman::detail {
 
+constexpr std::string_view kSenjunPattern = "senjun";
+
 // TODO remove this function. Use proper combination of language and image type
 ImageType getContainerTypeByImage(TaskLauncherType type) {
     switch (type) {
@@ -42,7 +44,8 @@ CodeLauncherOSManipulator::createCodeLauncher(std::string const & image, TaskLau
 
     params.image = image;
     params.tty = true;
-    params.memory = 300'000'000'000;  // haskell needs more memory than others, TODO put it to the config
+    params.memory =
+        300'000'000'000;  // haskell needs more memory than others, TODO put it to the config
 
     std::string id = m_dockerWrapper.run(std::move(params));
     if (id.empty()) {
@@ -74,7 +77,7 @@ void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
 
 CodeLauncherOSManipulator::CodeLauncherOSManipulator(Config && config, Storage & storage)
     : m_storage(storage) {
-    syncRemoveRunningCodeLanchers(config);
+    syncRemoveRunningCodeLanchers();
     syncCreateCodeLaunchers(config);
 }
 
@@ -94,24 +97,20 @@ void CodeLauncherOSManipulator::asyncCreateCodeLauncher(TaskLauncherType type,
     }) | unifex::sync_wait();
 }
 
-void CodeLauncherOSManipulator::syncRemoveRunningCodeLanchers(Config const & config) {
+void CodeLauncherOSManipulator::syncRemoveRunningCodeLanchers() {
     auto const workingContainers = m_dockerWrapper.getAllContainers();
 
     // todo think about naming, containerTypes is awful
-    auto const killContainers = [this, &workingContainers](auto && containerTypes) {
-        for (auto const & [_, info] : containerTypes) {
-            for (auto const & container : workingContainers) {
-                if (container.image.find(info.imageName) != std::string::npos) {
-                    Log::info("Remove container type: {}, id: {}", info.imageName, container.id);
-                    removeCodeLauncher(container.id);
-                }
+    auto const killContainers = [this, &workingContainers](std::string_view pattern) {
+        for (auto const & container : workingContainers) {
+            if (container.image.find(pattern) != std::string::npos) {
+                Log::info("Remove container type: {}, id: {}", container.image, container.id);
+                removeCodeLauncher(container.id);
             }
         }
     };
 
-    killContainers(config.courses);
-    killContainers(config.playgrounds);
-    killContainers(config.practices);
+    killContainers(kSenjunPattern);
 }
 
 void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
