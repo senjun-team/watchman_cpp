@@ -19,7 +19,7 @@ public:
     void asyncCreateCodeLauncher(TaskLauncherType type, std::string const & image);
 
 private:
-    void syncRemoveRunningCodeLanchers(Config const & config);
+    void syncRemoveRunningCodeLanchers();
     void syncCreateCodeLaunchers(Config const & config);
 
     // todo
