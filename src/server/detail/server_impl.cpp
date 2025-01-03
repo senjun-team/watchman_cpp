@@ -5,6 +5,8 @@
 #include "common/logging.hpp"
 #include "core/parser.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <unifex/then.hpp>
 
 namespace watchman::detail {
@@ -15,6 +17,8 @@ std::string const kIpAddress = "0.0.0.0";
 constexpr std::string_view kCheck = "/check";
 constexpr std::string_view kPlayground = "/playground";
 constexpr std::string_view kPractice = "/practice";
+
+constexpr uint16_t kRequestTimeoutMinutes = 10;
 
 std::optional<Api> getApi(std::string_view handle) {
     if (handle == kCheck) {
@@ -60,8 +64,7 @@ void ServerImpl::internalProcessRequest(restinio::request_handle_t req) {
             .done();
 
         Log::info("request handled successfully: {}", result);
-    }
-    catch (std::exception const & ex) {
+    } catch (std::exception const & ex) {
         req->create_response()
             .append_header(restinio::http_field::version,
                            std::to_string(req->header().http_major()))
@@ -80,6 +83,7 @@ void ServerImpl::start() {
     restinio::run(restinio::on_this_thread()
                       .port(kPort)
                       .address(kIpAddress)
+                      .handle_request_timeout(std::chrono::minutes(kRequestTimeoutMinutes))
                       .request_handler([this](restinio::request_handle_t const & req)
                                            -> restinio::request_handling_status_t {
                           if (restinio::http_method_post() != req->header().method()) {
