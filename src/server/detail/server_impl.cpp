@@ -18,6 +18,8 @@ constexpr std::string_view kCheck = "/check";
 constexpr std::string_view kPlayground = "/playground";
 constexpr std::string_view kPractice = "/practice";
 
+// Timeout for processing each request
+// Connection will be broken after that time
 constexpr uint16_t kRequestTimeoutMinutes = 10;
 
 std::optional<Api> getApi(std::string_view handle) {
