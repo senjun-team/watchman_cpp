@@ -14,7 +14,7 @@ struct BaseCodeLauncher : CodeLauncherInterface {
     BaseCodeLauncher(std::string id, TaskLauncherType type);
 
     // Creates in-memory tar and passes it to docker
-    bool prepareCode(std::string && tarString, ImageType type);
+    bool prepareCode(std::string && tarString, Action type);
     CodeLauncherInfo getInfo() const override;
 };
 

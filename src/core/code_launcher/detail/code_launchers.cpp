@@ -15,13 +15,13 @@ constexpr std::string_view kTaskWorkdir = "/home/code_runner/task";
 constexpr std::string_view kPlaygroundWorkdir = "/home/code_runner/playground";
 constexpr std::string_view kPracticeWorkdir = "/home/code_runner/practice";
 
-std::map<ImageType, std::string_view> kDefaultPaths{{ImageType::Task, kTaskWorkdir},
-                                                    {ImageType::Playground, kPlaygroundWorkdir},
-                                                    {ImageType::Practice, kPracticeWorkdir}
+std::map<Action, std::string_view> kDefaultPaths{{Action::ChapterTask, kTaskWorkdir},
+                                                    {Action::Playground, kPlaygroundWorkdir},
+                                                    {Action::Practice, kPracticeWorkdir}
 
 };
 
-bool BaseCodeLauncher::prepareCode(std::string && tarString, ImageType type) {
+bool BaseCodeLauncher::prepareCode(std::string && tarString, Action type) {
     auto defaultPath = kDefaultPaths.find(type);
     if (defaultPath == kDefaultPaths.end()) {
         throw std::logic_error{"BaseCodeLauncher::prepareCode: unknown type"};
@@ -43,7 +43,7 @@ bool BaseCodeLauncher::prepareCode(std::string && tarString, ImageType type) {
 
 Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                          std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Playground)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Playground)) {
         return {};
     }
 
@@ -63,7 +63,7 @@ PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, TaskLauncherType 
 
 Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                      std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Task)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::ChapterTask)) {
         return {};
     }
     auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
@@ -87,7 +87,7 @@ CodeLauncherInfo BaseCodeLauncher::getInfo() const {
 
 Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                        std::vector<std::string> && dockerCmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Practice)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Practice)) {
         return {};
     }
 

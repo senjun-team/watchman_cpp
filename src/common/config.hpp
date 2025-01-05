@@ -11,10 +11,16 @@ namespace watchman {
 
 struct TaskLauncherInfo {
     std::string imageName;
-    uint32_t launched{0};
+    uint32_t launched{0};  // TODO useless field. We start containers at beginning once
 };
 
-enum class ImageType { Task, Playground, Practice };
+enum class Language { CPP, GO, HASKELL, PYTHON, RUST };
+enum class Action { ChapterTask, Playground, Practice };
+
+struct LanguageAction {
+    Language language;
+    Action action;
+};
 
 enum class TaskLauncherType {
     CPP_COURSE,

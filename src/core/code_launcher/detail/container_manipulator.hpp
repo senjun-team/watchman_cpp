@@ -25,7 +25,7 @@ private:
     // todo
     // user pair, not code launcher info
     std::unique_ptr<BaseCodeLauncher>
-    createCodeLauncher(std::string const & image, TaskLauncherType taskType, ImageType imageType);
+    createCodeLauncher(std::string const & image, TaskLauncherType taskType, Action imageType);
     void removeCodeLauncher(std::string const & id);
 
     // Original storage lies in restarting_code_launcher.hpp

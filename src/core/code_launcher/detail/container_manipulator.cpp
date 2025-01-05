@@ -13,25 +13,25 @@ namespace watchman::detail {
 constexpr std::string_view kSenjunPattern = "senjun";
 
 // TODO remove this function. Use proper combination of language and image type
-ImageType getContainerTypeByImage(TaskLauncherType type) {
+Action getContainerTypeByImage(TaskLauncherType type) {
     switch (type) {
     case TaskLauncherType::CPP_COURSE:
     case TaskLauncherType::GO_COURSE:
     case TaskLauncherType::HASKELL_COURSE:
     case TaskLauncherType::PYTHON_COURSE:
-    case TaskLauncherType::RUST_COURSE: return ImageType::Task;
+    case TaskLauncherType::RUST_COURSE: return Action::ChapterTask;
 
     case TaskLauncherType::CPP_PLAYGROUND:
     case TaskLauncherType::GO_PLAYGROUND:
     case TaskLauncherType::HASKELL_PLAYGROUND:
     case TaskLauncherType::PYTHON_PLAYGROUND:
-    case TaskLauncherType::RUST_PLAYGROUND: return ImageType::Playground;
+    case TaskLauncherType::RUST_PLAYGROUND: return Action::Playground;
 
     case TaskLauncherType::CPP_PRACTICE:
     case TaskLauncherType::GO_PRACTICE:
     case TaskLauncherType::HASKELL_PRACTICE:
     case TaskLauncherType::PYTHON_PRACTICE:
-    case TaskLauncherType::RUST_PRACTICE: return ImageType::Practice;
+    case TaskLauncherType::RUST_PRACTICE: return Action::Practice;
     }
 
     throw std::logic_error{"getContainerTypeByImage: unknown type"};
@@ -39,7 +39,7 @@ ImageType getContainerTypeByImage(TaskLauncherType type) {
 
 std::unique_ptr<BaseCodeLauncher>
 CodeLauncherOSManipulator::createCodeLauncher(std::string const & image, TaskLauncherType taskType,
-                                              ImageType imageType) {
+                                              Action imageType) {
     RunContainer params;
 
     params.image = image;
@@ -57,11 +57,10 @@ CodeLauncherOSManipulator::createCodeLauncher(std::string const & image, TaskLau
     std::unique_ptr<BaseCodeLauncher> container;
 
     switch (imageType) {
-    case ImageType::Task: return std::make_unique<CourseCodeLauncher>(std::move(id), taskType);
-    case ImageType::Playground:
+    case Action::ChapterTask: return std::make_unique<CourseCodeLauncher>(std::move(id), taskType);
+    case Action::Playground:
         return std::make_unique<PlaygroundCodeLauncher>(std::move(id), taskType);
-    case ImageType::Practice:
-        return std::make_unique<PracticeCodeLauncher>(std::move(id), taskType);
+    case Action::Practice: return std::make_unique<PracticeCodeLauncher>(std::move(id), taskType);
     }
 
     throw std::logic_error{"Unknorn image type while creating code launcher"};
