@@ -45,9 +45,7 @@ std::string_view findConfig() {
 }
 
 template<typename Ptree>
-void fillTable(Ptree const & taskType,
-               std::unordered_map<LanguageAction, TaskLauncherInfo, LanguageActionHasher> & table,
-               Api api) {
+void fillTable(Ptree const & taskType, ConfigContainerStorage & table, Api api) {
     if (!taskType.has_value()) {
         Log::error("Required field `{}` is absent", requiredApiField(api));
         std::terminate();
@@ -66,8 +64,8 @@ void fillTable(Ptree const & taskType,
             std::terminate();
         }
 
-        auto const taskLauncher = constructTaskLauncher(configLanguage.first, api);
-        table.insert({taskLauncher,
+        auto const language = getLanguageFromString(configLanguage.first);
+        table.insert({language,
                       {imageName.value().template get_value<std::string>(),
                        launched.value().template get_value<uint32_t>()}});
     }
@@ -91,7 +89,7 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    fillTable(root.get_child_optional("courses"), config.courses, Api::Check);
+    fillTable(root.get_child_optional("courses"), config.courses, Api::ChapterTask);
     fillTable(root.get_child_optional("playground"), config.playgrounds, Api::Playground);
     fillTable(root.get_child_optional("practice"), config.practices, Api::Practice);
     return config;
@@ -116,23 +114,17 @@ std::optional<Config> getConfig() {
         return std::nullopt;
     }
 
-    auto config = readConfig(path);
-    return config;
+    return readConfig(path);
 }
 
-LanguageAction constructTaskLauncher(std::string const & language, Api api) {
+Language getLanguageFromString(std::string const & language) {
     auto iLanguage = kLanguagesMatch.find(language);
     if (iLanguage == kLanguagesMatch.end()) {
         throw std::logic_error{
             fmt::format("constructTaskLauncher: unknown language: {}", language)};
     }
 
-    auto l = iLanguage->second;
-    switch (api) {
-    case Api::Check: return {l, Action::ChapterTask};
-    case Api::Playground: return {l, Action::Playground};
-    case Api::Practice: return {l, Action::Practice};
-    }
+    return iLanguage->second;
 }
 
 }  // namespace watchman

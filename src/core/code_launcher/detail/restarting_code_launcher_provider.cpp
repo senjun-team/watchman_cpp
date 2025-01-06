@@ -20,11 +20,11 @@ RestartingCodeLauncherProvider::getCodeLauncher(LanguageAction type) {
     }
 
     auto launcher = m_storage.extract(type);
+    auto info = launcher->getInfo();
 
     auto ptr = std::make_unique<detail::CallbackedCodeLauncher>(
-        std::move(launcher), [this, codeLauncherInfo = launcher->getInfo()]() {
-            restartCodeLauncher(codeLauncherInfo);
-        });
+        std::move(launcher),
+        [this, restartInfo = std::move(info)]() { restartCodeLauncher(restartInfo); });
 
     return ptr;
 }

@@ -55,10 +55,10 @@ Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getPlaygroungResponse(result.message);
 }
 
-PracticeCodeLauncher::PracticeCodeLauncher(std::string id, LanguageAction type)
+PracticeCodeLauncher::PracticeCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), std::move(type)) {}
 
-PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, LanguageAction type)
+PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), type) {}
 
 Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
@@ -74,15 +74,23 @@ Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getCourseResponse(result.message);
 }
 
-CourseCodeLauncher::CourseCodeLauncher(std::string id, LanguageAction type)
+CourseCodeLauncher::CourseCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-BaseCodeLauncher::BaseCodeLauncher(std::string id, LanguageAction type)
+BaseCodeLauncher::BaseCodeLauncher(std::string id, Language type)
     : containerId(std::move(id))
     , type(std::move(type)) {}
 
-CodeLauncherInfo BaseCodeLauncher::getInfo() const {
-    return {containerId, dockerWrapper.getImage(containerId), type};
+CodeLauncherInfo CourseCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::ChapterTask}};
+}
+
+CodeLauncherInfo PlaygroundCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Playground}};
+}
+
+CodeLauncherInfo PracticeCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Practice}};
 }
 
 Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,

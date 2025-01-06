@@ -79,7 +79,7 @@ Response Service::runTask(CourseTaskParams const & runTaskParams) {
     }
 
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        runTaskParams.taskLauncherType);  // here we have got a race
+        {runTaskParams.language, Action::ChapterTask});  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {kInvalidCode, fmt::format("Probably wrong containerType")};
@@ -96,7 +96,7 @@ Response Service::runTask(CourseTaskParams const & runTaskParams) {
 
 Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        runProjectParams.taskLauncherType);  // here we have got a race
+        {runProjectParams.language, Action::Playground});  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
@@ -109,7 +109,7 @@ Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
 
 Response Service::runPractice(RunPracticeParams const & params) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        params.taskLauncherType);  // here we have got a race
+        {params.language, Action::Practice});  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
