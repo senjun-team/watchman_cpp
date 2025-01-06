@@ -127,28 +127,16 @@ std::string ServerImpl::processRequest(std::string_view apiString, std::string c
 
 std::string ServerImpl::processCheck(std::string const & body) {
     auto const params = parseTask(body);
-    if (params.taskLauncherType == TaskLauncherType::UNKNOWN) {
-        return {};
-    }
-
     return makeJsonCourse(m_service.runTask(params));
 }
 
 std::string ServerImpl::processPlayground(std::string const & body) {
     auto const params = parsePlayground(body);
-    if (params.taskLauncherType == TaskLauncherType::UNKNOWN) {
-        return {};
-    }
-
     return makeJsonPlayground(m_service.runPlayground(params));
 }
 
 std::string ServerImpl::processPractice(std::string const & body) {
     auto const params = parsePractice(body);
-    if (params.taskLauncherType == TaskLauncherType::UNKNOWN) {
-        return {};
-    }
-
     return makeJsonPlayground(m_service.runPractice(params));
 }
 

@@ -14,39 +14,37 @@ struct TaskLauncherInfo {
     uint32_t launched{0};  // TODO useless field. We start containers at beginning once
 };
 
-enum class Language { CPP, GO, HASKELL, PYTHON, RUST };
-enum class Action { ChapterTask, Playground, Practice };
+enum class Language : uint8_t { CPP, GO, HASKELL, PYTHON, RUST };
+enum class Action : uint8_t { ChapterTask, Playground, Practice };
 
 struct LanguageAction {
     Language language;
     Action action;
+
+    bool operator==(LanguageAction const & other) const {
+        return language == other.language && action == other.action;
+    }
 };
 
-enum class TaskLauncherType {
-    CPP_COURSE,
-    CPP_PLAYGROUND,
-    CPP_PRACTICE,
-    GO_COURSE,
-    GO_PLAYGROUND,
-    GO_PRACTICE,
-    HASKELL_COURSE,
-    HASKELL_PLAYGROUND,
-    HASKELL_PRACTICE,
-    PYTHON_COURSE,
-    PYTHON_PLAYGROUND,
-    PYTHON_PRACTICE,
-    RUST_COURSE,
-    RUST_PLAYGROUND,
-    RUST_PRACTICE,
-    UNKNOWN
+struct LanguageActionHasher {
+    size_t operator()(LanguageAction const & l) const {
+        constexpr size_t kBitsInByte = 8;
+        constexpr size_t kShift = sizeof(Language) * kBitsInByte;
+
+        size_t seed = 0;
+        seed ^= static_cast<size_t>(l.language);
+        seed <<= kShift;
+        seed ^= static_cast<size_t>(l.action);
+        return seed;
+    }
 };
 
 struct Config {
     std::size_t threadPoolSize;
     uint32_t maxContainersAmount{0};
-    std::unordered_map<TaskLauncherType, TaskLauncherInfo> courses;
-    std::unordered_map<TaskLauncherType, TaskLauncherInfo> playgrounds;
-    std::unordered_map<TaskLauncherType, TaskLauncherInfo> practices;
+    std::unordered_map<LanguageAction, TaskLauncherInfo, LanguageActionHasher> courses;
+    std::unordered_map<LanguageAction, TaskLauncherInfo, LanguageActionHasher> playgrounds;
+    std::unordered_map<LanguageAction, TaskLauncherInfo, LanguageActionHasher> practices;
 };
 
 std::optional<Config> getConfig();
@@ -54,5 +52,5 @@ std::optional<Config> getConfig();
 // for tests
 Config readConfig(std::string_view configPath);
 
-TaskLauncherType constructTaskLauncher(std::string const & language, Api api);
+LanguageAction constructTaskLauncher(std::string const & language, Api api);
 }  // namespace watchman

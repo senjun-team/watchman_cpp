@@ -16,8 +16,8 @@ constexpr std::string_view kPlaygroundWorkdir = "/home/code_runner/playground";
 constexpr std::string_view kPracticeWorkdir = "/home/code_runner/practice";
 
 std::map<Action, std::string_view> kDefaultPaths{{Action::ChapterTask, kTaskWorkdir},
-                                                    {Action::Playground, kPlaygroundWorkdir},
-                                                    {Action::Practice, kPracticeWorkdir}
+                                                 {Action::Playground, kPlaygroundWorkdir},
+                                                 {Action::Practice, kPracticeWorkdir}
 
 };
 
@@ -55,10 +55,10 @@ Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getPlaygroungResponse(result.message);
 }
 
-PracticeCodeLauncher::PracticeCodeLauncher(std::string id, TaskLauncherType type)
+PracticeCodeLauncher::PracticeCodeLauncher(std::string id, LanguageAction type)
     : BaseCodeLauncher(std::move(id), std::move(type)) {}
 
-PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, TaskLauncherType type)
+PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, LanguageAction type)
     : BaseCodeLauncher(std::move(id), type) {}
 
 Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
@@ -74,10 +74,10 @@ Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getCourseResponse(result.message);
 }
 
-CourseCodeLauncher::CourseCodeLauncher(std::string id, TaskLauncherType type)
+CourseCodeLauncher::CourseCodeLauncher(std::string id, LanguageAction type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-BaseCodeLauncher::BaseCodeLauncher(std::string id, TaskLauncherType type)
+BaseCodeLauncher::BaseCodeLauncher(std::string id, LanguageAction type)
     : containerId(std::move(id))
     , type(std::move(type)) {}
 

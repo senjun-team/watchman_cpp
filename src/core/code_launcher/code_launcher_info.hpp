@@ -6,7 +6,7 @@ namespace watchman {
 struct CodeLauncherInfo {
     std::string containerId;
     std::string image;
-    TaskLauncherType type;
+    LanguageAction type;
 };
 
 }  // namespace watchman

@@ -19,13 +19,13 @@ public:
     operator=(RestartingCodeLauncherProvider const & other) = delete;
     RestartingCodeLauncherProvider & operator=(RestartingCodeLauncherProvider && other) = delete;
 
-    std::unique_ptr<CodeLauncherInterface> getCodeLauncher(TaskLauncherType type) override;
+    std::unique_ptr<CodeLauncherInterface> getCodeLauncher(LanguageAction type) override;
 
 private:
     void restartCodeLauncher(CodeLauncherInfo const & info);
-    bool codeLauncherTypeIsValid(TaskLauncherType const & name) const;
+    bool codeLauncherTypeIsValid(LanguageAction const & name) const;
 
-    ExtractingStorage<TaskLauncherType, BaseCodeLauncher> m_storage;
+    ExtractingStorage<LanguageAction, BaseCodeLauncher, LanguageActionHasher> m_storage;
     std::unique_ptr<CodeLauncherOSManipulator> m_manipulator;
 };
 

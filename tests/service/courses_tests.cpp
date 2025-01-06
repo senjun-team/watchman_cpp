@@ -9,7 +9,8 @@ constexpr std::string_view kCppModulesAsset = "cpp_modules.cpp";
 
 TEST(Coursess, C_plus_plus) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::CPP_COURSE;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::CPP, watchman::Action::ChapterTask};
     std::string sourceCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
     std::string testingCode =
@@ -30,7 +31,8 @@ TEST(Coursess, C_plus_plus) {
 
 TEST(Courses, CppModules) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::CPP_COURSE;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::CPP, watchman::Action::ChapterTask};
     std::string sourceCode =
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
     std::string testingCode = getFileContent(kCppModulesAsset.data());
@@ -49,7 +51,8 @@ TEST(Courses, CppModules) {
 
 TEST(Courses, Rust) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::RUST_COURSE;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::RUST, watchman::Action::ChapterTask};
     std::string sourceCode =
         "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n";
     std::string testingCode =
@@ -68,7 +71,8 @@ TEST(Courses, Rust) {
 
 TEST(Courses, DISABLED_Haskell) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    watchman::TaskLauncherType taskType = watchman::TaskLauncherType::HASKELL_COURSE;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::HASKELL, watchman::Action::ChapterTask};
     std::string sourceCode =
         "{- You can edit and run this code. -}\n\nmodule Main where\n\nmain :: IO ()\nmain = putStrLn (\"Hello world!\")\n";
     std::string testingCode = "print(\"Hello world!\")";  // test written in python

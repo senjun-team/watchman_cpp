@@ -6,7 +6,7 @@
 namespace watchman {
 
 struct RequiredParams {
-    TaskLauncherType taskLauncherType;
+    LanguageAction taskLauncherType;
     std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
 };
 
@@ -23,7 +23,7 @@ struct PlaygroundTaskParams : RequiredParams {
 // rethink this structure
 // it should be like courses/playground
 struct RunPracticeParams {
-    TaskLauncherType taskLauncherType;
+    LanguageAction taskLauncherType;
     std::string userCmdLineArgs;  // args for command line while running code
     std::string pathToMainFile;
     Practice practice;

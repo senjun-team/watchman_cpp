@@ -9,9 +9,9 @@ namespace watchman {
 struct BaseCodeLauncher : CodeLauncherInterface {
     DockerWrapper dockerWrapper;
     std::string containerId;
-    TaskLauncherType type;
+    LanguageAction type;
 
-    BaseCodeLauncher(std::string id, TaskLauncherType type);
+    BaseCodeLauncher(std::string id, LanguageAction type);
 
     // Creates in-memory tar and passes it to docker
     bool prepareCode(std::string && tarString, Action type);
@@ -19,19 +19,19 @@ struct BaseCodeLauncher : CodeLauncherInterface {
 };
 
 struct CourseCodeLauncher final : BaseCodeLauncher {
-    CourseCodeLauncher(std::string id, TaskLauncherType type);
+    CourseCodeLauncher(std::string id, LanguageAction type);
     Response runCode(std::string && inMemoryTarWithSources,
                      std::vector<std::string> && cmdLineArgs) override;
 };
 
 struct PlaygroundCodeLauncher final : BaseCodeLauncher {
-    PlaygroundCodeLauncher(std::string id, TaskLauncherType type);
+    PlaygroundCodeLauncher(std::string id, LanguageAction type);
     Response runCode(std::string && inMemoryTarWithSources,
                      std::vector<std::string> && cmdLineArgs) override;
 };
 
 struct PracticeCodeLauncher final : BaseCodeLauncher {
-    PracticeCodeLauncher(std::string id, TaskLauncherType type);
+    PracticeCodeLauncher(std::string id, LanguageAction type);
     Response runCode(std::string && inMemoryTarWithSources,
                      std::vector<std::string> && dockerCmdLineArgs) override;
 };

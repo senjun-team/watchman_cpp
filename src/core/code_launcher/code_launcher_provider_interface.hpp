@@ -11,7 +11,7 @@ class CodeLauncherProviderInterface {
 public:
     virtual ~CodeLauncherProviderInterface() = default;
 
-    virtual std::unique_ptr<CodeLauncherInterface> getCodeLauncher(TaskLauncherType type) = 0;
+    virtual std::unique_ptr<CodeLauncherInterface> getCodeLauncher(LanguageAction type) = 0;
 };
 
 }  // namespace watchman

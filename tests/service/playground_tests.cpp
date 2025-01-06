@@ -9,7 +9,8 @@
 
 TEST(Playground, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::PYTHON_PLAYGROUND;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::PYTHON, watchman::Action::Playground};
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
@@ -22,7 +23,7 @@ TEST(Playground, Run) {
 
 TEST(Playground, Go) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::GO_PLAYGROUND;
+    auto taskType = watchman::LanguageAction{watchman::Language::GO, watchman::Action::Playground};
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
@@ -34,7 +35,8 @@ TEST(Playground, Go) {
 
 TEST(Playground, DISABLED_Haskell_HelloWorld) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::HASKELL_PLAYGROUND;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::HASKELL, watchman::Action::Playground};
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
@@ -45,7 +47,8 @@ TEST(Playground, DISABLED_Haskell_HelloWorld) {
 
 TEST(Playground, Rust_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::RUST_PLAYGROUND;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::RUST, watchman::Action::Playground};
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
@@ -57,7 +60,7 @@ TEST(Playground, Rust_success) {
 
 TEST(Playground, C_plus_plus_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::CPP_PLAYGROUND;
+    auto taskType = watchman::LanguageAction{watchman::Language::CPP, watchman::Action::Playground};
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
@@ -69,7 +72,8 @@ TEST(Playground, C_plus_plus_success) {
 
 TEST(Playground, C_plus_plus_failure) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::CPP_PLAYGROUND;
+    auto taskType =
+        watchman::LanguageAction{watchman::Language::CPP, watchman::Action::ChapterTask};
 
     watchman::PlaygroundTaskParams params;
     params.taskLauncherType = taskType;
