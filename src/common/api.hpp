@@ -1,18 +1,13 @@
 #pragma once
 
-#include <string>
+#include <cstdint>
 
 namespace watchman {
 
-enum class Api { ChapterTask, Playground, Practice };
-
-struct ContainerInfo {
-    std::string imageName;
-    uint32_t launched{0};
-};
+enum class Api { Chapter, Playground, Practice };
 
 enum class Language : uint8_t { CPP, GO, HASKELL, PYTHON, RUST };
-enum class Action : uint8_t { ChapterTask, Playground, Practice };
+using Action = Api;
 
 struct LanguageAction {
     Language language;

@@ -15,7 +15,7 @@ constexpr std::string_view kTaskWorkdir = "/home/code_runner/task";
 constexpr std::string_view kPlaygroundWorkdir = "/home/code_runner/playground";
 constexpr std::string_view kPracticeWorkdir = "/home/code_runner/practice";
 
-std::map<Action, std::string_view> kDefaultPaths{{Action::ChapterTask, kTaskWorkdir},
+std::map<Action, std::string_view> kDefaultPaths{{Action::Chapter, kTaskWorkdir},
                                                  {Action::Playground, kPlaygroundWorkdir},
                                                  {Action::Practice, kPracticeWorkdir}
 
@@ -61,9 +61,9 @@ PracticeCodeLauncher::PracticeCodeLauncher(std::string id, Language type)
 PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
+Response ChapterCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                      std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), Action::ChapterTask)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Chapter)) {
         return {};
     }
     auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
@@ -74,15 +74,15 @@ Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getCourseResponse(result.message);
 }
 
-CourseCodeLauncher::CourseCodeLauncher(std::string id, Language type)
+ChapterCodeLauncher::ChapterCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), type) {}
 
 BaseCodeLauncher::BaseCodeLauncher(std::string id, Language type)
     : containerId(std::move(id))
     , type(std::move(type)) {}
 
-CodeLauncherInfo CourseCodeLauncher::getInfo() const {
-    return {containerId, dockerWrapper.getImage(containerId), {type, Action::ChapterTask}};
+CodeLauncherInfo ChapterCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Chapter}};
 }
 
 CodeLauncherInfo PlaygroundCodeLauncher::getInfo() const {

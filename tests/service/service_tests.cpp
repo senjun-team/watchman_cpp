@@ -10,7 +10,7 @@
 
 namespace {
 
-watchman::CourseTaskParams getTaskParams(watchman::Language language,
+watchman::ChapterTaskParams getTaskParams(watchman::Language language,
                                          std::vector<std::string> const & cmdLineArgs,
                                          std::string const & sourceCode,
                                          std::string const & testCode) {
@@ -37,9 +37,9 @@ TEST(Service, Run) {
     std::string sourceCode = "print(42)\nprint(42)";
     std::string testingCode = "print(42)";
 
-    watchman::CourseTaskParams const params =
+    watchman::ChapterTaskParams const params =
         getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-    auto response = service.runTask(params);
+    auto response = service.runChapter(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "42\r\n42\r\n");
     ASSERT_TRUE(!response.output.empty());
@@ -51,9 +51,9 @@ TEST(Service, TestError) {
     std::string testingCode =
         "from io import StringIO\nimport sys\n\n\nold_stdout = sys.stdout\nsys.stdout = mystdout = StringIO()\n\nprint(2, 2)\nprint(3, 3)\n\nsys.stdout = old_stdout\n\nif 'err_service_unavailable' not in locals():\n    print(\"There is no `err_service_unavailable` variable\")\n    exit(1)\n\nif type(err_service_unavailable) is not int:\n    print(\"Variable is not an integer\")\n    exit(1)\n\nif err_service_unavailable != 503:\n    print(\"Variable value is not 503\")\n    exit(1)";
 
-    watchman::CourseTaskParams const params =
+    watchman::ChapterTaskParams const params =
         getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-    auto response = service.runTask(params);
+    auto response = service.runChapter(params);
     ASSERT_EQ(response.sourceCode, 2);
     ASSERT_EQ(response.output, "2 2\r\n3 3\r\n");
     ASSERT_EQ(response.testsOutput, "There is no `err_service_unavailable` variable\r\n");
@@ -65,9 +65,9 @@ TEST(Service, UserSyntaxError) {
     std::string testingCode =
         "from io import StringIO\nimport sys\n\n\nold_stdout = sys.stdout\nsys.stdout = mystdout = StringIO()\n\nprint(2, 2)\nprint(3, 3)\n\nsys.stdout = old_stdout\n\nif 'err_service_unavailable' not in locals():\n    print(\"There is no `err_service_unavailable` variable\")\n    exit(1)\n\nif type(err_service_unavailable) is not int:\n    print(\"Variable is not an integer\")\n    exit(1)\n\nif err_service_unavailable != 503:\n    print(\"Variable value is not 503\")\n    exit(1)";
 
-    watchman::CourseTaskParams const params =
+    watchman::ChapterTaskParams const params =
         getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-    auto response = service.runTask(params);
+    auto response = service.runChapter(params);
     ASSERT_EQ(response.sourceCode, 1);
     ASSERT_EQ(
         response.output,
@@ -79,10 +79,10 @@ TEST(Service, Sleep) {
     watchman::Service service(watchman::readConfig(kParams.config));
     std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
     std::string testingCode = "print(42)";
-    watchman::CourseTaskParams const params =
+    watchman::ChapterTaskParams const params =
         getTaskParams(watchman::Language::PYTHON, {}, sourceCode, testingCode);
 
-    auto response = service.runTask(params);
+    auto response = service.runChapter(params);
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
     ASSERT_TRUE(!response.output.empty());
 }
@@ -94,10 +94,10 @@ TEST(Service, Golang) {
     std::string testingCode =
         "package main\nimport (\"fmt\"\n\"testing\")\nfunc TestMain(m *testing.M) {\tfmt.Println(\"tests are ok\")}";
 
-    watchman::CourseTaskParams const params =
+    watchman::ChapterTaskParams const params =
         getTaskParams(watchman::Language::GO, {}, sourceCode, testingCode);
 
-    auto response = service.runTask(params);
+    auto response = service.runChapter(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_TRUE(!response.output.empty());
     ASSERT_TRUE(response.testsOutput.has_value());
@@ -109,9 +109,9 @@ TEST(Service, RaceCondition) {
     std::thread t1([&service]() {
         std::string sourceCode = "import time\ntime.sleep(2)\nprint(42)";
         std::string testingCode = "print(42)";
-        watchman::CourseTaskParams const params =
+        watchman::ChapterTaskParams const params =
             getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-        auto response = service.runTask(params);
+        auto response = service.runChapter(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "42\r\n");
     });
@@ -119,9 +119,9 @@ TEST(Service, RaceCondition) {
     std::thread t2([&service]() {
         std::string sourceCode = "print(69)";
         std::string testingCode = "print(42)";
-        watchman::CourseTaskParams const params =
+        watchman::ChapterTaskParams const params =
             getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-        auto response = service.runTask(params);
+        auto response = service.runChapter(params);
         ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
         ASSERT_EQ(response.output, "69\r\n");
     });
@@ -135,10 +135,10 @@ TEST(Service, AnswerTypes) {
 
     std::string sourceCode = "print(42)";
     std::string testingCode = "print(69)";
-    watchman::CourseTaskParams params =
+    watchman::ChapterTaskParams params =
         getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
 
-    auto response = service.runTask(params);
+    auto response = service.runChapter(params);
     ASSERT_TRUE(response.sourceCode == watchman::kSuccessCode);
     ASSERT_TRUE(response.output == "42\r\n");
     ASSERT_TRUE(response.testsOutput == "69\r\n");
@@ -148,7 +148,7 @@ TEST(Service, AnswerTypes) {
     testingCode = "lalalala";
     params = getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
 
-    response = service.runTask(params);
+    response = service.runChapter(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
     ASSERT_TRUE(!response.testsOutput.has_value());
@@ -157,7 +157,7 @@ TEST(Service, AnswerTypes) {
     sourceCode = "raise";
     testingCode = "lalalala";
     params = getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-    response = service.runTask(params);
+    response = service.runChapter(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);
     ASSERT_TRUE(!response.testsOutput.has_value());
@@ -166,7 +166,7 @@ TEST(Service, AnswerTypes) {
     sourceCode = "print(42)";
     testingCode = "raise";
     params = getTaskParams(watchman::Language::PYTHON, {"-v code"}, sourceCode, testingCode);
-    response = service.runTask(params);
+    response = service.runChapter(params);
 
     ASSERT_TRUE(response.sourceCode == watchman::kTestsError);
     ASSERT_TRUE(response.output == "42\r\n");

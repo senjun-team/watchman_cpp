@@ -124,7 +124,7 @@ private:
 
 std::vector<std::string> getRequiredFields(Api api) {
     switch (api) {
-    case Api::ChapterTask: return {kContainerType, kSourceRun};
+    case Api::Chapter: return {kContainerType, kSourceRun};
     case Api::Playground: return {kContainerType};
     case Api::Practice: return {};
     }
@@ -135,7 +135,7 @@ std::vector<std::string> getRequiredFields(Api api) {
 
 std::string getContainerTypeString(Api api) {
     switch (api) {
-    case Api::ChapterTask:
+    case Api::Chapter:
     case Api::Playground: return kContainerType;
     case Api::Practice: return kCourseId;
     }
@@ -157,8 +157,7 @@ RequiredParams parseCommon(DocumentKeeper const & document, Api api) {
 
     RequiredParams params;
 
-    params.language =
-        getLanguageFromString(document.getString(getContainerTypeString(api)));
+    params.language = getLanguageFromString(document.getString(getContainerTypeString(api)));
 
     if (document.hasField(cmdLineArgs, false)) {
         if (!document.isArray(cmdLineArgs)) {
@@ -171,7 +170,7 @@ RequiredParams parseCommon(DocumentKeeper const & document, Api api) {
     return params;
 }
 
-CourseTaskParams parseTask(std::string const & body) {
+ChapterTaskParams parseTask(std::string const & body) {
     std::string const sourceTest = "source_test";
 
     DocumentKeeper document(body);
@@ -179,9 +178,9 @@ CourseTaskParams parseTask(std::string const & body) {
         return {};
     }
 
-    RequiredParams codeParams = parseCommon(document, Api::ChapterTask);
+    RequiredParams codeParams = parseCommon(document, Api::Chapter);
 
-    CourseTaskParams taskParams;
+    ChapterTaskParams taskParams;
     taskParams.language = codeParams.language;
     taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;

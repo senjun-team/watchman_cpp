@@ -1,6 +1,8 @@
 #pragma once
 #include "common/api.hpp"
 
+#include <string>
+
 namespace watchman {
 
 struct CodeLauncherInfo {

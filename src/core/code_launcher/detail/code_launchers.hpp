@@ -16,8 +16,8 @@ struct BaseCodeLauncher : CodeLauncherInterface {
     bool prepareCode(std::string && tarString, Action type);
 };
 
-struct CourseCodeLauncher final : BaseCodeLauncher {
-    CourseCodeLauncher(std::string id, Language type);
+struct ChapterCodeLauncher final : BaseCodeLauncher {
+    ChapterCodeLauncher(std::string id, Language type);
     Response runCode(std::string && inMemoryTarWithSources,
                      std::vector<std::string> && cmdLineArgs) override;
     CodeLauncherInfo getInfo() const override;

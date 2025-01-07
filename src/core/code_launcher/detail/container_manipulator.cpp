@@ -35,7 +35,7 @@ CodeLauncherOSManipulator::createCodeLauncher(std::string const & image,
     auto const l = languageAction.language;
 
     switch (languageAction.action) {
-    case Action::ChapterTask: return std::make_unique<CourseCodeLauncher>(std::move(id), l);
+    case Action::Chapter: return std::make_unique<ChapterCodeLauncher>(std::move(id), l);
     case Action::Playground: return std::make_unique<PlaygroundCodeLauncher>(std::move(id), l);
     case Action::Practice: return std::make_unique<PracticeCodeLauncher>(std::move(id), l);
     }
@@ -107,7 +107,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         }
     };
 
-    launchContainers(config.courses, Action::ChapterTask);
+    launchContainers(config.courses, Action::Chapter);
     launchContainers(config.playgrounds, Action::Playground);
     launchContainers(config.practices, Action::Practice);
 }

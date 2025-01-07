@@ -24,7 +24,7 @@ constexpr uint16_t kRequestTimeoutMinutes = 10;
 
 std::optional<Api> getApi(std::string_view handle) {
     if (handle == kCheck) {
-        return Api::ChapterTask;
+        return Api::Chapter;
     }
 
     if (handle == kPlayground) {
@@ -111,7 +111,7 @@ std::string ServerImpl::processRequest(std::string_view apiString, std::string c
 
     try {
         switch (*api) {
-        case Api::ChapterTask: return processCheck(body);
+        case Api::Chapter: return processCheck(body);
         case Api::Playground: return processPlayground(body);
         case Api::Practice: return processPractice(body);
         }
@@ -127,7 +127,7 @@ std::string ServerImpl::processRequest(std::string_view apiString, std::string c
 
 std::string ServerImpl::processCheck(std::string const & body) {
     auto const params = parseTask(body);
-    return makeJsonCourse(m_service.runTask(params));
+    return makeJsonCourse(m_service.runChapter(params));
 }
 
 std::string ServerImpl::processPlayground(std::string const & body) {

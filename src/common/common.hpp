@@ -13,7 +13,7 @@ std::string const kFilenameTaskTests = "task_tests";
 
 inline std::string requiredApiField(Api api) {
     switch (api) {
-    case Api::ChapterTask: return "courses";
+    case Api::Chapter: return "courses";
     case Api::Playground: return "playground";
     case Api::Practice: return "practice";
     }

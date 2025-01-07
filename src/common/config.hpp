@@ -9,6 +9,11 @@
 
 namespace watchman {
 
+struct ContainerInfo {
+    std::string imageName;
+    uint32_t launched{0};
+};
+
 using ConfigContainerStorage = std::unordered_map<Language, ContainerInfo>;
 
 struct Config {

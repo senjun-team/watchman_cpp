@@ -6,7 +6,7 @@
 
 namespace watchman::detail {
 
-std::string prepareData(CourseTaskParams const & runTaskParams) {
+std::string prepareData(ChapterTaskParams const & runTaskParams) {
     std::vector<CodeFilename> data{{runTaskParams.sourceRun, kFilenameTask},
                                    {runTaskParams.sourceTest, kFilenameTaskTests}};
     return makeTar(std::move(data));

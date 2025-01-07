@@ -89,7 +89,7 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    fillTable(root.get_child_optional("courses"), config.courses, Api::ChapterTask);
+    fillTable(root.get_child_optional("courses"), config.courses, Api::Chapter);
     fillTable(root.get_child_optional("playground"), config.playgrounds, Api::Playground);
     fillTable(root.get_child_optional("practice"), config.practices, Api::Practice);
     return config;

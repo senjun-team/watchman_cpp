@@ -10,7 +10,7 @@ struct RequiredParams {
     std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
 };
 
-struct CourseTaskParams : RequiredParams {
+struct ChapterTaskParams : RequiredParams {
     std::string sourceRun;
     std::string sourceTest;
 };
