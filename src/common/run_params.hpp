@@ -1,16 +1,16 @@
 #pragma once
 
-#include "common/config.hpp"
+#include "common/api.hpp"
 #include "project.hpp"
 
 namespace watchman {
 
 struct RequiredParams {
-    TaskLauncherType taskLauncherType;
+    Language language;
     std::vector<std::string> cmdLineArgs;  // args for launching scripts inside container
 };
 
-struct CourseTaskParams : RequiredParams {
+struct ChapterTaskParams : RequiredParams {
     std::string sourceRun;
     std::string sourceTest;
 };
@@ -23,7 +23,7 @@ struct PlaygroundTaskParams : RequiredParams {
 // rethink this structure
 // it should be like courses/playground
 struct RunPracticeParams {
-    TaskLauncherType taskLauncherType;
+    Language language;
     std::string userCmdLineArgs;  // args for command line while running code
     std::string pathToMainFile;
     Practice practice;

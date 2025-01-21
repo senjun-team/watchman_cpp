@@ -9,10 +9,8 @@
 
 TEST(Playground, Run) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::PYTHON_PLAYGROUND;
-
     watchman::PlaygroundTaskParams params;
-    params.taskLauncherType = taskType;
+    params.language = watchman::Language::PYTHON;
     params.project = watchman::parseProject(getFileContent(kPythonProject));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
@@ -22,10 +20,8 @@ TEST(Playground, Run) {
 
 TEST(Playground, Go) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::GO_PLAYGROUND;
-
     watchman::PlaygroundTaskParams params;
-    params.taskLauncherType = taskType;
+    params.language = watchman::Language::GO;
     params.project = watchman::parseProject(getFileContent(kGoProject));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == 0);
@@ -34,10 +30,8 @@ TEST(Playground, Go) {
 
 TEST(Playground, DISABLED_Haskell_HelloWorld) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::HASKELL_PLAYGROUND;
-
     watchman::PlaygroundTaskParams params;
-    params.taskLauncherType = taskType;
+    params.language = watchman::Language::HASKELL;
     params.project = watchman::parseProject(getFileContent(kHaskellProject));
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "Hello world!\r\n");
@@ -45,10 +39,9 @@ TEST(Playground, DISABLED_Haskell_HelloWorld) {
 
 TEST(Playground, Rust_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::RUST_PLAYGROUND;
 
     watchman::PlaygroundTaskParams params;
-    params.taskLauncherType = taskType;
+    params.language = watchman::Language::RUST;
     params.project = watchman::parseProject(getFileContent(kRustProject));
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "Hello world!\r\n");
@@ -57,10 +50,8 @@ TEST(Playground, Rust_success) {
 
 TEST(Playground, C_plus_plus_success) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::CPP_PLAYGROUND;
-
     watchman::PlaygroundTaskParams params;
-    params.taskLauncherType = taskType;
+    params.language = watchman::Language::CPP;
     params.project = watchman::parseProject(getFileContent(kCppProject));
     auto response = service.runPlayground(params);
     ASSERT_EQ(response.output, "42");
@@ -69,10 +60,9 @@ TEST(Playground, C_plus_plus_success) {
 
 TEST(Playground, C_plus_plus_failure) {
     watchman::Service service(watchman::readConfig(kParams.config));
-    auto taskType = watchman::TaskLauncherType::CPP_PLAYGROUND;
 
     watchman::PlaygroundTaskParams params;
-    params.taskLauncherType = taskType;
+    params.language = watchman::Language::CPP;
     params.project = watchman::parseProject(getFileContent(kCppProjectCompileError));
     auto response = service.runPlayground(params);
     ASSERT_TRUE(response.sourceCode == watchman::kUserCodeError);

@@ -1,12 +1,14 @@
 #pragma once
-#include "common/config.hpp"
+#include "common/api.hpp"
+
+#include <string>
 
 namespace watchman {
 
 struct CodeLauncherInfo {
     std::string containerId;
     std::string image;
-    TaskLauncherType type;
+    LanguageAction type;
 };
 
 }  // namespace watchman

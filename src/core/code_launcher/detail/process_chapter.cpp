@@ -20,7 +20,7 @@ std::string getUserOutput(std::string const & message) {
     return message.substr(0, message.size() - getStringLength(ExitCodes::UserError));
 }
 
-Response processCourse(std::string const & message) {
+Response processChapter(std::string const & message) {
     ExitCodes const exitCode = getExitCode(message);
     switch (exitCode) {
     case ExitCodes::Ok: {
@@ -53,9 +53,9 @@ namespace watchman {
 Response getCourseResponse(std::string const & message) {
     if (detail::hasEscapeSequence(message)) {
         auto noEscapeMessage = detail::removeEscapeSequencesTender(message);
-        return detail::processCourse(noEscapeMessage);
+        return detail::processChapter(noEscapeMessage);
     }
 
-    return detail::processCourse(message);
+    return detail::processChapter(message);
 }
 }  // namespace watchman

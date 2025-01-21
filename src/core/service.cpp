@@ -72,14 +72,14 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
     return runArgs;
 }
 
-Response Service::runTask(CourseTaskParams const & runTaskParams) {
+Response Service::runChapter(ChapterTaskParams const & runTaskParams) {
     if (runTaskParams.sourceRun.empty() && runTaskParams.sourceTest.empty()) {
         Log::warning("Empty files with code and test");
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        runTaskParams.taskLauncherType);  // here we have got a race
+        {runTaskParams.language, Action::Chapter});  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {kInvalidCode, fmt::format("Probably wrong containerType")};
@@ -96,7 +96,7 @@ Response Service::runTask(CourseTaskParams const & runTaskParams) {
 
 Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        runProjectParams.taskLauncherType);  // here we have got a race
+        {runProjectParams.language, Action::Playground});  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
@@ -109,7 +109,7 @@ Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
 
 Response Service::runPractice(RunPracticeParams const & params) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        params.taskLauncherType);  // here we have got a race
+        {params.language, Action::Practice});  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};

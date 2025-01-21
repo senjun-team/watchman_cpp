@@ -15,13 +15,13 @@ constexpr std::string_view kTaskWorkdir = "/home/code_runner/task";
 constexpr std::string_view kPlaygroundWorkdir = "/home/code_runner/playground";
 constexpr std::string_view kPracticeWorkdir = "/home/code_runner/practice";
 
-std::map<ImageType, std::string_view> kDefaultPaths{{ImageType::Task, kTaskWorkdir},
-                                                    {ImageType::Playground, kPlaygroundWorkdir},
-                                                    {ImageType::Practice, kPracticeWorkdir}
+std::map<Action, std::string_view> kDefaultPaths{{Action::Chapter, kTaskWorkdir},
+                                                 {Action::Playground, kPlaygroundWorkdir},
+                                                 {Action::Practice, kPracticeWorkdir}
 
 };
 
-bool BaseCodeLauncher::prepareCode(std::string && tarString, ImageType type) {
+bool BaseCodeLauncher::prepareCode(std::string && tarString, Action type) {
     auto defaultPath = kDefaultPaths.find(type);
     if (defaultPath == kDefaultPaths.end()) {
         throw std::logic_error{"BaseCodeLauncher::prepareCode: unknown type"};
@@ -43,7 +43,7 @@ bool BaseCodeLauncher::prepareCode(std::string && tarString, ImageType type) {
 
 Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                          std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Playground)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Playground)) {
         return {};
     }
 
@@ -55,15 +55,15 @@ Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getPlaygroungResponse(result.message);
 }
 
-PracticeCodeLauncher::PracticeCodeLauncher(std::string id, TaskLauncherType type)
+PracticeCodeLauncher::PracticeCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), std::move(type)) {}
 
-PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, TaskLauncherType type)
+PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
+Response ChapterCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                      std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Task)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Chapter)) {
         return {};
     }
     auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
@@ -74,20 +74,28 @@ Response CourseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
     return getCourseResponse(result.message);
 }
 
-CourseCodeLauncher::CourseCodeLauncher(std::string id, TaskLauncherType type)
+ChapterCodeLauncher::ChapterCodeLauncher(std::string id, Language type)
     : BaseCodeLauncher(std::move(id), type) {}
 
-BaseCodeLauncher::BaseCodeLauncher(std::string id, TaskLauncherType type)
+BaseCodeLauncher::BaseCodeLauncher(std::string id, Language type)
     : containerId(std::move(id))
     , type(std::move(type)) {}
 
-CodeLauncherInfo BaseCodeLauncher::getInfo() const {
-    return {containerId, dockerWrapper.getImage(containerId), type};
+CodeLauncherInfo ChapterCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Chapter}};
+}
+
+CodeLauncherInfo PlaygroundCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Playground}};
+}
+
+CodeLauncherInfo PracticeCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Practice}};
 }
 
 Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
                                        std::vector<std::string> && dockerCmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), ImageType::Practice)) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Practice)) {
         return {};
     }
 

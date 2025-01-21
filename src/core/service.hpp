@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/config.hpp"
 #include "common/run_params.hpp"
 #include "core/code_launcher/code_launcher_provider_interface.hpp"
 
@@ -16,7 +17,7 @@ public:
     Service & operator=(Service const &) = delete;
     Service & operator=(Service &&) = delete;
 
-    Response runTask(CourseTaskParams const & runTaskParams);
+    Response runChapter(ChapterTaskParams const & runTaskParams);
     Response runPlayground(PlaygroundTaskParams const & runProjectParams);
     Response runPractice(RunPracticeParams const & params);
 

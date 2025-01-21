@@ -1,5 +1,7 @@
 #pragma once
 
+#include "api.hpp"
+
 #include <chrono>
 #include <string>
 #include <vector>
@@ -9,11 +11,9 @@ namespace watchman {
 std::string const kFilenameTask = "task";
 std::string const kFilenameTaskTests = "task_tests";
 
-enum class Api { Check, Playground, Practice };
-
 inline std::string requiredApiField(Api api) {
     switch (api) {
-    case Api::Check: return "courses";
+    case Api::Chapter: return "courses";
     case Api::Playground: return "playground";
     case Api::Practice: return "practice";
     }

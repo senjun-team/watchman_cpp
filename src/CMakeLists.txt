@@ -17,7 +17,7 @@ set(CORE_SOURCES
         common/logging.cpp
         common/detail/project_utils.cpp
         core/code_launcher/detail/container_manipulator.cpp
-        core/code_launcher/detail/process_courses.cpp
+        core/code_launcher/detail/process_chapter.cpp
         core/code_launcher/detail/process_playground.cpp
         core/code_launcher/detail/process_practice.cpp
         core/code_launcher/detail/code_launchers.cpp

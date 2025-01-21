@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/common.hpp"
+#include "common/api.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -9,38 +9,20 @@
 
 namespace watchman {
 
-struct TaskLauncherInfo {
+struct ContainerInfo {
     std::string imageName;
     uint32_t launched{0};
 };
 
-enum class ImageType { Task, Playground, Practice };
-
-enum class TaskLauncherType {
-    CPP_COURSE,
-    CPP_PLAYGROUND,
-    CPP_PRACTICE,
-    GO_COURSE,
-    GO_PLAYGROUND,
-    GO_PRACTICE,
-    HASKELL_COURSE,
-    HASKELL_PLAYGROUND,
-    HASKELL_PRACTICE,
-    PYTHON_COURSE,
-    PYTHON_PLAYGROUND,
-    PYTHON_PRACTICE,
-    RUST_COURSE,
-    RUST_PLAYGROUND,
-    RUST_PRACTICE,
-    UNKNOWN
-};
+using ConfigContainerStorage = std::unordered_map<Language, ContainerInfo>;
 
 struct Config {
     std::size_t threadPoolSize;
     uint32_t maxContainersAmount{0};
-    std::unordered_map<TaskLauncherType, TaskLauncherInfo> courses;
-    std::unordered_map<TaskLauncherType, TaskLauncherInfo> playgrounds;
-    std::unordered_map<TaskLauncherType, TaskLauncherInfo> practices;
+
+    ConfigContainerStorage courses;
+    ConfigContainerStorage playgrounds;
+    ConfigContainerStorage practices;
 };
 
 std::optional<Config> getConfig();
@@ -48,5 +30,5 @@ std::optional<Config> getConfig();
 // for tests
 Config readConfig(std::string_view configPath);
 
-TaskLauncherType constructTaskLauncher(std::string const & language, Api api);
+Language getLanguageFromString(std::string const & language);
 }  // namespace watchman

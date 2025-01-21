@@ -8,7 +8,7 @@
 namespace watchman {
 
 // parse request
-CourseTaskParams parseTask(std::string const & body);
+ChapterTaskParams parseTask(std::string const & body);
 PlaygroundTaskParams parsePlayground(std::string const & body);
 Project parseProject(std::string const & json);
 

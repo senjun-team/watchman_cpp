@@ -124,7 +124,7 @@ private:
 
 std::vector<std::string> getRequiredFields(Api api) {
     switch (api) {
-    case Api::Check: return {kContainerType, kSourceRun};
+    case Api::Chapter: return {kContainerType, kSourceRun};
     case Api::Playground: return {kContainerType};
     case Api::Practice: return {};
     }
@@ -135,7 +135,7 @@ std::vector<std::string> getRequiredFields(Api api) {
 
 std::string getContainerTypeString(Api api) {
     switch (api) {
-    case Api::Check:
+    case Api::Chapter:
     case Api::Playground: return kContainerType;
     case Api::Practice: return kCourseId;
     }
@@ -157,8 +157,7 @@ RequiredParams parseCommon(DocumentKeeper const & document, Api api) {
 
     RequiredParams params;
 
-    params.taskLauncherType =
-        constructTaskLauncher(document.getString(getContainerTypeString(api)), api);
+    params.language = getLanguageFromString(document.getString(getContainerTypeString(api)));
 
     if (document.hasField(cmdLineArgs, false)) {
         if (!document.isArray(cmdLineArgs)) {
@@ -171,7 +170,7 @@ RequiredParams parseCommon(DocumentKeeper const & document, Api api) {
     return params;
 }
 
-CourseTaskParams parseTask(std::string const & body) {
+ChapterTaskParams parseTask(std::string const & body) {
     std::string const sourceTest = "source_test";
 
     DocumentKeeper document(body);
@@ -179,10 +178,10 @@ CourseTaskParams parseTask(std::string const & body) {
         return {};
     }
 
-    RequiredParams codeParams = parseCommon(document, Api::Check);
+    RequiredParams codeParams = parseCommon(document, Api::Chapter);
 
-    CourseTaskParams taskParams;
-    taskParams.taskLauncherType = codeParams.taskLauncherType;
+    ChapterTaskParams taskParams;
+    taskParams.language = codeParams.language;
     taskParams.sourceRun = document.getString(kSourceRun);
     taskParams.cmdLineArgs = codeParams.cmdLineArgs;
     taskParams.sourceTest = document.getString(sourceTest);
@@ -214,7 +213,7 @@ PlaygroundTaskParams parsePlayground(std::string const & body) {
     RequiredParams codeParams = parseCommon(document, Api::Playground);
 
     PlaygroundTaskParams projectParams;
-    projectParams.taskLauncherType = codeParams.taskLauncherType;
+    projectParams.language = codeParams.language;
     projectParams.cmdLineArgs = codeParams.cmdLineArgs;
     projectParams.project = parseProject(document.getProject());
 
@@ -232,8 +231,8 @@ RunPracticeParams parsePractice(std::string const & body) {
 
     RunPracticeParams params;
 
-    params.taskLauncherType = constructTaskLauncher(
-        document.getString(getContainerTypeString(Api::Practice)), Api::Practice);
+    params.language =
+        getLanguageFromString(document.getString(getContainerTypeString(Api::Practice)));
     params.practice.project = parseProject(document.getPractice());
     params.practice.action = getPracticeAction(document.getPracticeAction());
     params.userCmdLineArgs = document.getString(kUserCmdLineArgs);

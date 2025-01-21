@@ -6,6 +6,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -21,36 +22,10 @@ std::string const kHaskell = "haskell";
 std::string const kPython = "python";
 std::string const kRust = "rust";
 
-std::unordered_map<std::string, TaskLauncherType> const kCoursesMatch{
-    {kCpp, TaskLauncherType::CPP_COURSE},         {kGolang, TaskLauncherType::GO_COURSE},
-    {kHaskell, TaskLauncherType::HASKELL_COURSE}, {kPython, TaskLauncherType::PYTHON_COURSE},
-    {kRust, TaskLauncherType::RUST_COURSE},
+std::unordered_map<std::string, Language> const kLanguagesMatch{
+    {kCpp, Language::CPP},       {kGolang, Language::GO}, {kHaskell, Language::HASKELL},
+    {kPython, Language::PYTHON}, {kRust, Language::RUST},
 };
-
-std::unordered_map<std::string, TaskLauncherType> const kPlaygroundMatch{
-    {kCpp, TaskLauncherType::CPP_PLAYGROUND},
-    {kGolang, TaskLauncherType::GO_PLAYGROUND},
-    {kHaskell, TaskLauncherType::HASKELL_PLAYGROUND},
-    {kPython, TaskLauncherType::PYTHON_PLAYGROUND},
-    {kRust, TaskLauncherType::RUST_PLAYGROUND},
-};
-
-std::unordered_map<std::string, TaskLauncherType> const kPracticeMatch{
-    {kCpp, TaskLauncherType::CPP_PRACTICE},
-    {kGolang, TaskLauncherType::GO_PRACTICE},
-    {kHaskell, TaskLauncherType::HASKELL_PRACTICE},
-    {kPython, TaskLauncherType::PYTHON_PRACTICE},
-    {kRust, TaskLauncherType::RUST_PRACTICE}};
-
-TaskLauncherType getTaskLauncherType(std::unordered_map<std::string, TaskLauncherType> const & m,
-                                     std::string const & language) {
-    auto type = m.find(language);
-    if (type == m.end()) {
-        return TaskLauncherType::UNKNOWN;
-    }
-
-    return type->second;
-}
 
 std::string_view findConfig() {
     bool const existsNearBinary = std::filesystem::exists(kConfig);
@@ -70,8 +45,7 @@ std::string_view findConfig() {
 }
 
 template<typename Ptree>
-void fillTable(Ptree const & taskType,
-               std::unordered_map<TaskLauncherType, TaskLauncherInfo> & table, Api api) {
+void fillTable(Ptree const & taskType, ConfigContainerStorage & table, Api api) {
     if (!taskType.has_value()) {
         Log::error("Required field `{}` is absent", requiredApiField(api));
         std::terminate();
@@ -90,8 +64,8 @@ void fillTable(Ptree const & taskType,
             std::terminate();
         }
 
-        auto const taskLauncher = constructTaskLauncher(configLanguage.first, api);
-        table.insert({taskLauncher,
+        auto const language = getLanguageFromString(configLanguage.first);
+        table.insert({language,
                       {imageName.value().template get_value<std::string>(),
                        launched.value().template get_value<uint32_t>()}});
     }
@@ -115,7 +89,7 @@ Config fillConfig(Ptree const & root) {
     }
     config.maxContainersAmount = maxContainersAmount.value().template get_value<uint32_t>();
 
-    fillTable(root.get_child_optional("courses"), config.courses, Api::Check);
+    fillTable(root.get_child_optional("courses"), config.courses, Api::Chapter);
     fillTable(root.get_child_optional("playground"), config.playgrounds, Api::Playground);
     fillTable(root.get_child_optional("practice"), config.practices, Api::Practice);
     return config;
@@ -140,18 +114,17 @@ std::optional<Config> getConfig() {
         return std::nullopt;
     }
 
-    auto config = readConfig(path);
-    return config;
+    return readConfig(path);
 }
 
-TaskLauncherType constructTaskLauncher(std::string const & language, Api api) {
-    switch (api) {
-    case Api::Check: return getTaskLauncherType(kCoursesMatch, language);
-    case Api::Playground: return getTaskLauncherType(kPlaygroundMatch, language);
-    case Api::Practice: return getTaskLauncherType(kPracticeMatch, language);
+Language getLanguageFromString(std::string const & language) {
+    auto iLanguage = kLanguagesMatch.find(language);
+    if (iLanguage == kLanguagesMatch.end()) {
+        throw std::logic_error{
+            fmt::format("constructTaskLauncher: unknown language: {}", language)};
     }
 
-    return TaskLauncherType::UNKNOWN;
+    return iLanguage->second;
 }
 
 }  // namespace watchman
