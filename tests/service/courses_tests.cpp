@@ -15,16 +15,15 @@ TEST(Coursess, C_plus_plus) {
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
 
     watchman::ChapterTaskParams params{{
-                                          watchman::Language::CPP,
-                                          {"-v", "code"},
-                                      },
-                                      std::move(sourceCode),
-                                      std::move(testingCode)};
+                                           watchman::Language::CPP,
+                                           {"-v", "code"},
+                                       },
+                                       std::move(sourceCode),
+                                       std::move(testingCode)};
     watchman::Response response = service.runChapter(params);
     ASSERT_TRUE(response.sourceCode == 0);
     ASSERT_EQ(response.output, "Hello, world");
     ASSERT_EQ(response.testsOutput.value(), "Hello, world");
-    ASSERT_TRUE(!response.output.empty());
 }
 
 TEST(Courses, CppModules) {
@@ -33,11 +32,11 @@ TEST(Courses, CppModules) {
         "#include <iostream>\nusing namespace std;\n int main(){\n\tcout<<\"Hello, world\";}";
     std::string testingCode = getFileContent(kCppModulesAsset.data());
     watchman::ChapterTaskParams const params{{
-                                                watchman::Language::CPP,
-                                                {"-v", "code"},
-                                            },
-                                            std::move(sourceCode),
-                                            std::move(testingCode)};
+                                                 watchman::Language::CPP,
+                                                 {"-v", "code"},
+                                             },
+                                             std::move(sourceCode),
+                                             std::move(testingCode)};
     watchman::Response response = service.runChapter(params);
     ASSERT_EQ(response.sourceCode, 0);
     ASSERT_EQ(response.output, "Hello, world");
@@ -51,12 +50,8 @@ TEST(Courses, Rust) {
         "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n";
     std::string testingCode =
         "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n";
-    watchman::ChapterTaskParams const params{{
-                                                watchman::Language::RUST,
-                                                {"-v", "code"},
-                                            },
-                                            std::move(sourceCode),
-                                            std::move(testingCode)};
+    watchman::ChapterTaskParams const params{
+        {watchman::Language::RUST}, std::move(sourceCode), std::move(testingCode)};
     watchman::Response response = service.runChapter(params);
     ASSERT_EQ(response.sourceCode, 0);
     ASSERT_EQ(response.output, "Hello world!\r\n");
@@ -69,11 +64,11 @@ TEST(Courses, DISABLED_Haskell) {
         "{- You can edit and run this code. -}\n\nmodule Main where\n\nmain :: IO ()\nmain = putStrLn (\"Hello world!\")\n";
     std::string testingCode = "print(\"Hello world!\")";  // test written in python
     watchman::ChapterTaskParams const params{{
-                                                watchman::Language::HASKELL,
-                                                {"-v", "code"},
-                                            },
-                                            std::move(sourceCode),
-                                            std::move(testingCode)};
+                                                 watchman::Language::HASKELL,
+                                                 {"-v", "code"},
+                                             },
+                                             std::move(sourceCode),
+                                             std::move(testingCode)};
     watchman::Response response = service.runChapter(params);
     ASSERT_EQ(response.sourceCode, 0);
     ASSERT_EQ(response.output, "Hello world!\r\n");

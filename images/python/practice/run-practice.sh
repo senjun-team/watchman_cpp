@@ -17,7 +17,7 @@ run_function() {
     exit
   fi
 
-  echo user_code_ok_f936a25e # TODO crutch, delete it
+  echo user_code_ok_f936a25e # TODO crutch, make it better
   echo user_solution_ok_f936a25e
 }
 
@@ -25,7 +25,7 @@ run_function() {
 test_function() {
   project_directory=$1
 
-  echo user_code_ok_f936a25e # TODO crutch, delete it
+  echo user_code_ok_f936a25e # TODO crutch, make it better
 
   cd /home/code_runner/practice/$project_directory
   timeout 10s python -m unittest
@@ -58,7 +58,6 @@ do
           ;;
     esac
 done
-
 
 # e.g: sh run.sh -p path_to_main.py -o user_options -r
 if [ ${run+x} ]; then

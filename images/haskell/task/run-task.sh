@@ -2,11 +2,10 @@
 
 # parse flags - single letters prefixed fith hyphen before each argument
 # example: sh run.sh -c never -j 4
-while getopts c:j:f:v: flag
+while getopts c:f:v: flag
 do
     case "${flag}" in
         c) color=${OPTARG};;
-        j) jobs=${OPTARG};;
         f) file=${OPTARG};;
         v) task_type=${OPTARG};;
     esac
@@ -24,6 +23,8 @@ f="$(basename -- $file)"
 f_capture="/tmp/capture.txt"
 rm $f_capture > /dev/null 2>&1
 
+# TODO it's suspicious that only "code" type of task
+# and if it is not "code" user code is ok by default
 
 # if exists file with user code
 # run user code
@@ -37,11 +38,8 @@ if [ $task_type = "code" ]; then
         echo user_solution_error_f936a25e
         exit
     fi
-    echo user_code_ok_f936a25e
-else
-    echo user_code_ok_f936a25e
 fi
-
+echo user_code_ok_f936a25e
 
 # run tests
 timeout 10s python3 "/home/code_runner/task/${f}_tests" $f_capture

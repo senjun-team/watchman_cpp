@@ -3,11 +3,9 @@
 # parse flags - single letters prefixed fith hyphen before each argument
 # example: sh run.sh -f task -v code
 
-while getopts c:j:f:t:v: flag
+while getopts f:t:v: flag
 do
     case "${flag}" in
-        c) color=${OPTARG};;
-        j) jobs=${OPTARG};;
         f) file=${OPTARG};;
         t) type_check=${OPTARG};;
         v) task_type=${OPTARG};;
@@ -32,11 +30,8 @@ if [ $task_type = "code" ]; then
             echo user_solution_error_f936a25e
             exit
         fi
-
-        echo user_code_ok_f936a25e
-else
-    echo user_code_ok_f936a25e
 fi
+echo user_code_ok_f936a25e
 
 
 timeout 10s python ${file}_tests

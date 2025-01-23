@@ -16,6 +16,6 @@ RUN cd task && cargo new user-code && rm user-code/src/main.rs
 # Change access write for code_runner home directory to root recursively
 RUN useradd -ms /bin/bash -u 1000 code_runner \
     && chown -R code_runner:code_runner /home/code_runner \
-    && chmod -R 755 /home/code_runner
+    && chmod -R 1750 /home/code_runner
 
 ENTRYPOINT ["bash"]
