@@ -24,7 +24,7 @@ jobs:
     - name: test_docker
       run: docker version && docker info
     - name: build_images
-      run: cd images && sh create_images.sh
+      run: cd third_party/senjun-images && sh create_images.sh
     - name: setup_project
       run: git submodule update --init --recursive
     - name: configure_project
