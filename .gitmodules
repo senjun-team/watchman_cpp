@@ -5,3 +5,6 @@
 [submodule "third_party/structarus"]
 	path = third_party/structarus
 	url = https://github.com/senjun-team/structarus
+[submodule "third_party/senjun-images"]
+	path = third_party/senjun-images
+	url = https://github.com/senjun-team/senjun-images.git
