@@ -51,6 +51,9 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
     runArgs.emplace_back(cmd);
     runArgs.emplace_back(script);
 
+    runArgs.emplace_back(fmt::format("-f {}", params.practice.project.name));
+
+    // TODO check -f parameter. It's absent for C++ practice. Do we need it?
     // see run.sh for python pracitce
     auto runAction = [&runArgs, &params]() {
         runArgs.emplace_back(
@@ -60,7 +63,6 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
     };
 
     auto testAction = [&runArgs, &params]() {
-        runArgs.emplace_back(fmt::format("-f {}", params.practice.project.name));
         runArgs.emplace_back(fmt::format("-t"));
     };
 

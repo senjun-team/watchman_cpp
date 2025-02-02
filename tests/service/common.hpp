@@ -41,3 +41,6 @@ std::string const kHaskellProject = "haskell_playground.json";
 
 std::string const kPythonPracticeRun = "practice/python_run.json";
 std::string const kPythonPracticeTest = "practice/python_test.json";
+
+std::string const kCppPracticeRun = "practice/cpp_run.json";
+std::string const kCppPracticeTest = "practice/cpp_test.json";
