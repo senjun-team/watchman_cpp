@@ -58,13 +58,13 @@ std::vector<std::string> getPracticeDockerArgs(RunPracticeParams const & params)
     auto runAction = [&runArgs, &params]() {
         runArgs.emplace_back(
             fmt::format("-p practice/{}", params.pathToMainFile));  // TODO remove this properly
-        runArgs.emplace_back(fmt::format("-o {}", params.userCmdLineArgs));
+        if (!params.userCmdLineArgs.empty()) {
+            runArgs.emplace_back(fmt::format("-o {}", params.userCmdLineArgs));
+        }
         runArgs.emplace_back(fmt::format("-r"));
     };
 
-    auto testAction = [&runArgs, &params]() {
-        runArgs.emplace_back(fmt::format("-t"));
-    };
+    auto testAction = [&runArgs, &params]() { runArgs.emplace_back(fmt::format("-t")); };
 
     switch (params.practice.action) {
     case PracticeAction::Run: runAction(); break;
