@@ -22,7 +22,7 @@ add_subdirectory(third_party/expected-lite-0.6.3)
 add_subdirectory(third_party/libunifex-0.4.0)
 
 set(RESTINIO_ASIO_SOURCE "boost")
-add_subdirectory(third_party/restinio-v.0.7.0/dev/restinio)
+add_subdirectory(third_party/restinio-v.0.7.4/dev/restinio)
 
 # TODO make it compile
 #add_compile_options(-Werror -Wpedantic)
