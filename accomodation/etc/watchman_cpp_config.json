@@ -49,6 +49,10 @@
     "python": {
       "image-name": "senjun_python",
       "launched": 3
+    },
+    "cpp": {
+      "image-name": "senjun_cpp",
+      "launched": 3
     }
   }
 }
