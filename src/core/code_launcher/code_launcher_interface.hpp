@@ -13,7 +13,7 @@ public:
     virtual ~CodeLauncherInterface() = default;
 
     virtual Response runCode(std::string && inMemoryTarWithSources,
-                             std::vector<std::string> && cmdLineArgs) = 0;
+                             std::vector<std::string> && cmdLineArgs, Action action) = 0;
 
     virtual CodeLauncherInfo getInfo() const = 0;
 };

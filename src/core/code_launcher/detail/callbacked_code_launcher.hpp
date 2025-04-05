@@ -18,7 +18,7 @@ public:
     CallbackedCodeLauncher & operator=(CallbackedCodeLauncher &&) = delete;
 
     Response runCode(std::string && inMemoryTarWithSources,
-                     std::vector<std::string> && cmdLineArgs) override;
+                     std::vector<std::string> && cmdLineArgs, Action action) override;
 
     CodeLauncherInfo getInfo() const override;
 

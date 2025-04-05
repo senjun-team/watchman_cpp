@@ -21,6 +21,10 @@ std::map<Action, std::string_view> kDefaultPaths{{Action::Chapter, kTaskWorkdir}
 
 };
 
+BaseCodeLauncher::BaseCodeLauncher(std::string id, Language language)
+    : containerId(std::move(id))
+    , type(std::move(language)) {}
+
 bool BaseCodeLauncher::prepareCode(std::string && tarString, Action type) {
     auto defaultPath = kDefaultPaths.find(type);
     if (defaultPath == kDefaultPaths.end()) {
@@ -41,71 +45,33 @@ bool BaseCodeLauncher::prepareCode(std::string && tarString, Action type) {
     return true;
 }
 
-Response PlaygroundCodeLauncher::runCode(std::string && inMemoryTarWithSources,
-                                         std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Playground)) {
+Response BaseCodeLauncher::runCode(std::string && inMemoryTarWithSources,
+                                   std::vector<std::string> && cmdLineArgs, Action action) {
+    if (!prepareCode(std::move(inMemoryTarWithSources), action)) {
         return {};
     }
 
     auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
+
     if (!result.success) {
         return {result.success, result.message};
     }
 
-    return getPlaygroungResponse(result.message);
-}
+    switch (action) {
+    case Action::Chapter: return getCourseResponse(result.message);
 
-PracticeCodeLauncher::PracticeCodeLauncher(std::string id, Language type)
-    : BaseCodeLauncher(std::move(id), std::move(type)) {}
+    case Action::Playground: return getPlaygroungResponse(result.message);
 
-PlaygroundCodeLauncher::PlaygroundCodeLauncher(std::string id, Language type)
-    : BaseCodeLauncher(std::move(id), type) {}
+    case Action::Practice: return getPracticeResponse(result.message);
 
-Response ChapterCodeLauncher::runCode(std::string && inMemoryTarWithSources,
-                                     std::vector<std::string> && cmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Chapter)) {
-        return {};
-    }
-    auto result = dockerWrapper.exec({.containerId = containerId, .cmd = std::move(cmdLineArgs)});
-    if (!result.success) {
-        return {result.success, result.message};
+    default: break;
     }
 
-    return getCourseResponse(result.message);
+    throw std::logic_error{"Error: unknown action"};
 }
 
-ChapterCodeLauncher::ChapterCodeLauncher(std::string id, Language type)
-    : BaseCodeLauncher(std::move(id), type) {}
-
-BaseCodeLauncher::BaseCodeLauncher(std::string id, Language type)
-    : containerId(std::move(id))
-    , type(std::move(type)) {}
-
-CodeLauncherInfo ChapterCodeLauncher::getInfo() const {
-    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Chapter}};
-}
-
-CodeLauncherInfo PlaygroundCodeLauncher::getInfo() const {
-    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Playground}};
-}
-
-CodeLauncherInfo PracticeCodeLauncher::getInfo() const {
-    return {containerId, dockerWrapper.getImage(containerId), {type, Action::Practice}};
-}
-
-Response PracticeCodeLauncher::runCode(std::string && inMemoryTarWithSources,
-                                       std::vector<std::string> && dockerCmdLineArgs) {
-    if (!prepareCode(std::move(inMemoryTarWithSources), Action::Practice)) {
-        return {};
-    }
-
-    auto result =
-        dockerWrapper.exec({.containerId = containerId, .cmd = std::move(dockerCmdLineArgs)});
-    if (!result.success) {
-        return {result.success, result.message};
-    }
-
-    return getPracticeResponse(result.message);
+CodeLauncherInfo BaseCodeLauncher::getInfo() const {
+    return {containerId, dockerWrapper.getImage(containerId), type};
 }
 
 }  // namespace watchman

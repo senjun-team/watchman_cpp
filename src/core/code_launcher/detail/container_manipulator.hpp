@@ -9,14 +9,14 @@
 
 namespace watchman::detail {
 
-using Storage = ExtractingStorage<LanguageAction, BaseCodeLauncher, LanguageActionHasher>;
+using Storage = ExtractingStorage<Language, BaseCodeLauncher>;
 
 class CodeLauncherOSManipulator {
 public:
     CodeLauncherOSManipulator(Config && config, Storage & storage);
 
     void asyncRemoveCodeLauncher(std::string const & id);
-    void asyncCreateCodeLauncher(LanguageAction type, std::string const & image);
+    void asyncCreateCodeLauncher(Language type, std::string const & image);
 
 private:
     void syncRemoveRunningCodeLanchers();
@@ -25,7 +25,7 @@ private:
     // todo
     // user pair, not code launcher info
     std::unique_ptr<BaseCodeLauncher> createCodeLauncher(std::string const & image,
-                                                         LanguageAction taskType);
+                                                         Language language);
     void removeCodeLauncher(std::string const & id);
 
     // Original storage lies in restarting_code_launcher.hpp

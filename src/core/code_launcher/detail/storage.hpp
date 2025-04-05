@@ -12,7 +12,7 @@ namespace watchman::detail {
 // Each element can be accessed only one time
 // It is required to add new element after extracting
 
-template<typename K, typename V, typename H>
+template<typename K, typename V>
 class ExtractingStorage {
 public:
     bool contains(K const & key) const { return storage.contains(key); }
@@ -44,7 +44,7 @@ public:
 private:
     std::mutex mutex;
     std::condition_variable storageFree;
-    std::unordered_map<K, std::list<std::unique_ptr<V>>, H> storage;
+    std::unordered_map<K, std::list<std::unique_ptr<V>>> storage;
 };
 
 }  // namespace watchman::detail

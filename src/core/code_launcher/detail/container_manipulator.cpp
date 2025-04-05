@@ -15,8 +15,7 @@ namespace watchman::detail {
 constexpr std::string_view kSenjunPattern = "senjun";
 
 std::unique_ptr<BaseCodeLauncher>
-CodeLauncherOSManipulator::createCodeLauncher(std::string const & image,
-                                              LanguageAction languageAction) {
+CodeLauncherOSManipulator::createCodeLauncher(std::string const & image, Language language) {
     RunContainer params;
 
     params.image = image;
@@ -31,16 +30,7 @@ CodeLauncherOSManipulator::createCodeLauncher(std::string const & image,
 
     Log::info("Launch container: {}, id: {}", image, id);
 
-    std::unique_ptr<BaseCodeLauncher> container;
-    auto const l = languageAction.language;
-
-    switch (languageAction.action) {
-    case Action::Chapter: return std::make_unique<ChapterCodeLauncher>(std::move(id), l);
-    case Action::Playground: return std::make_unique<PlaygroundCodeLauncher>(std::move(id), l);
-    case Action::Practice: return std::make_unique<PracticeCodeLauncher>(std::move(id), l);
-    }
-
-    throw std::logic_error{"Unknorn image type while creating code launcher"};
+    return std::make_unique<BaseCodeLauncher>(std::move(id), language);
 }
 
 void CodeLauncherOSManipulator::removeCodeLauncher(std::string const & id) {
@@ -62,8 +52,7 @@ void CodeLauncherOSManipulator::asyncRemoveCodeLauncher(std::string const & id) 
         | unifex::then([this, &id] { removeCodeLauncher(id); }) | unifex::sync_wait();
 }
 
-void CodeLauncherOSManipulator::asyncCreateCodeLauncher(LanguageAction type,
-                                                        std::string const & image) {
+void CodeLauncherOSManipulator::asyncCreateCodeLauncher(Language type, std::string const & image) {
     unifex::schedule(m_containersContext.get_scheduler()) | unifex::then([this, type, image] {
         auto container = createCodeLauncher(image, type);
         if (container == nullptr) {
@@ -94,7 +83,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         for (auto const & [language, info] : containerTypes) {
             std::list<std::unique_ptr<BaseCodeLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
-                auto container = createCodeLauncher(info.imageName, {language, action});
+                auto container = createCodeLauncher(info.imageName, language);
                 if (container == nullptr) {
                     continue;
                 }
@@ -102,7 +91,7 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
             }
 
             if (!containers.empty()) {
-                m_storage.addValues({language, action}, std::move(containers));
+                m_storage.addValues(language, std::move(containers));
             }
         }
     };
