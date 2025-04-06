@@ -38,7 +38,9 @@ public:
     }
 
     void addValues(K const & key, std::list<std::unique_ptr<V>> values) {
-        storage.emplace(key, std::move(values));
+        for (auto && value : values) {
+            storage[key].push_back(std::move(value));
+        }
     }
 
 private:

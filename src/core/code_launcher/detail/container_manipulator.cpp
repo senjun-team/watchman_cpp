@@ -79,7 +79,7 @@ void CodeLauncherOSManipulator::syncRemoveRunningCodeLanchers() {
 }
 
 void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
-    auto const launchContainers = [this](auto && containerTypes, Action action) {
+    auto const launchContainers = [this](auto && containerTypes) {
         for (auto const & [language, info] : containerTypes) {
             std::list<std::unique_ptr<BaseCodeLauncher>> containers;
             for (size_t index = 0; index < info.launched; ++index) {
@@ -96,9 +96,9 @@ void CodeLauncherOSManipulator::syncCreateCodeLaunchers(Config const & config) {
         }
     };
 
-    launchContainers(config.courses, Action::Chapter);
-    launchContainers(config.playgrounds, Action::Playground);
-    launchContainers(config.practices, Action::Practice);
+    launchContainers(config.courses);
+    launchContainers(config.playgrounds);
+    launchContainers(config.practices);
 }
 
 }  // namespace watchman::detail
