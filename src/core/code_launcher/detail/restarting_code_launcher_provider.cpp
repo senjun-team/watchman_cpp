@@ -14,12 +14,12 @@ RestartingCodeLauncherProvider::RestartingCodeLauncherProvider(Config && config)
 }
 
 std::unique_ptr<CodeLauncherInterface>
-RestartingCodeLauncherProvider::getCodeLauncher(LanguageAction type) {
-    if (!codeLauncherTypeIsValid(type)) {
+RestartingCodeLauncherProvider::getCodeLauncher(Language language) {
+    if (!codeLauncherTypeIsValid(language)) {
         return nullptr;
     }
 
-    auto launcher = m_storage.extract(type);
+    auto launcher = m_storage.extract(language);
     auto info = launcher->getInfo();
 
     auto ptr = std::make_unique<detail::CallbackedCodeLauncher>(
@@ -37,8 +37,8 @@ void RestartingCodeLauncherProvider::restartCodeLauncher(CodeLauncherInfo const 
     m_manipulator->asyncCreateCodeLauncher(restartInfo.type, image);
 }
 
-bool RestartingCodeLauncherProvider::codeLauncherTypeIsValid(LanguageAction const & name) const {
-    return m_storage.contains(name);
+bool RestartingCodeLauncherProvider::codeLauncherTypeIsValid(Language language) const {
+    return m_storage.contains(language);
 }
 
 RestartingCodeLauncherProvider::~RestartingCodeLauncherProvider() = default;

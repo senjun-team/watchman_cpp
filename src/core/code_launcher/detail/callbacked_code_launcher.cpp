@@ -10,8 +10,8 @@ CallbackedCodeLauncher::CallbackedCodeLauncher(std::unique_ptr<CodeLauncherInter
 CallbackedCodeLauncher::~CallbackedCodeLauncher() { m_releaser(); }
 
 Response CallbackedCodeLauncher::runCode(std::string && inMemoryTarWithSources,
-                                         std::vector<std::string> && cmdLineArgs) {
-    return m_codeLauncher->runCode(std::move(inMemoryTarWithSources), std::move(cmdLineArgs));
+                                         std::vector<std::string> && cmdLineArgs, Action action) {
+    return m_codeLauncher->runCode(std::move(inMemoryTarWithSources), std::move(cmdLineArgs), action);
 }
 
 CodeLauncherInfo CallbackedCodeLauncher::getInfo() const { return m_codeLauncher->getInfo(); }

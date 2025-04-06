@@ -8,7 +8,7 @@ namespace watchman {
 struct CodeLauncherInfo {
     std::string containerId;
     std::string image;
-    LanguageAction type;
+    Language type;
 };
 
 }  // namespace watchman

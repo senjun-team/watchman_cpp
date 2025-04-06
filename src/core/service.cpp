@@ -78,15 +78,16 @@ Response Service::runChapter(ChapterTaskParams const & runTaskParams) {
         return {kUserCodeError, "Sources and tests are not provided", ""};
     }
 
-    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        {runTaskParams.language, Action::Chapter});  // here we have got a race
+    auto codeLauncher =
+        m_codeLauncherProvider->getCodeLauncher(runTaskParams.language);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {kInvalidCode, fmt::format("Probably wrong containerType")};
     }
 
     auto result = codeLauncher->runCode(detail::prepareData(runTaskParams),
-                                        getArgsCourse(kFilenameTask, runTaskParams.cmdLineArgs));
+                                        getArgsCourse(kFilenameTask, runTaskParams.cmdLineArgs),
+                                        Action::Chapter);
     if (errorCodeIsUnexpected(result.sourceCode)) {
         Log::error("Error return code {} from image {}", result.sourceCode,
                    codeLauncher->getInfo().image);
@@ -96,7 +97,7 @@ Response Service::runChapter(ChapterTaskParams const & runTaskParams) {
 
 Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
     auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        {runProjectParams.language, Action::Playground});  // here we have got a race
+        runProjectParams.language);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
@@ -104,19 +105,21 @@ Response Service::runPlayground(PlaygroundTaskParams const & runProjectParams) {
 
     return codeLauncher->runCode(
         detail::prepareData(runProjectParams),
-        getArgsPlayground(runProjectParams.project.name, runProjectParams.cmdLineArgs));
+        getArgsPlayground(runProjectParams.project.name, runProjectParams.cmdLineArgs),
+        Action::Playground);
 }
 
 Response Service::runPractice(RunPracticeParams const & params) {
-    auto codeLauncher = m_codeLauncherProvider->getCodeLauncher(
-        {params.language, Action::Practice});  // here we have got a race
+    auto codeLauncher =
+        m_codeLauncherProvider->getCodeLauncher(params.language);  // here we have got a race
 
     if (codeLauncher == nullptr) {
         return {};
     }
 
     auto dockerCmdArgs = getPracticeDockerArgs(params);
-    return codeLauncher->runCode(detail::prepareData(params), std::move(dockerCmdArgs));
+    return codeLauncher->runCode(detail::prepareData(params), std::move(dockerCmdArgs),
+                                 Action::Practice);
 }
 
 }  // namespace watchman
