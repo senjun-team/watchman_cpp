@@ -51,7 +51,7 @@ TEST(Courses, Rust) {
     std::string testingCode =
         "/* You can edit and run this code. */\n\nfn main() {\n    println!(\"Hello world!\");\n}\n";
     watchman::ChapterTaskParams const params{
-        {watchman::Language::RUST}, std::move(sourceCode), std::move(testingCode)};
+        {watchman::Language::RUST, {}}, std::move(sourceCode), std::move(testingCode)};
     watchman::Response response = service.runChapter(params);
     ASSERT_EQ(response.sourceCode, 0);
     ASSERT_EQ(response.output, "Hello world!\r\n");
