@@ -21,3 +21,5 @@ sh accomodation/build_rpm/docker_run.sh
 + exit 0
 ```
 После этого в папке accomodation/build_rpm появится папка **RPMS** с артефактами сборки.
+
+В `docker_run.sh` при монтировании тома используется флаг `z` для SELinux. Он чинит ошибку доступа при обращении из контейнера к `/mnt/watchman_cpp/accomodation/build_rpm/build_rpm.sh`. Если вы не используете механизм SELinux, можете этот флаг убрать. 
