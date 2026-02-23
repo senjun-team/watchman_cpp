@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(watchman_cpp)
 
 set(CMAKE_CXX_STANDARD 20)
-
 set(BUILD_SHARED_LIBS FALSE)
+
+set(CMAKE_CXX_FLAGS
+    "${CMAKE_CXX_FLAGS} -Wno-template-body")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
